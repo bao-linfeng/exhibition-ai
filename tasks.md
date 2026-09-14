@@ -140,17 +140,17 @@ docker compose --env-file .env -f infra/compose.dev.yaml down
 
 ### M1
 
-- [ ] **T006 实现登录、Session 和账号安全** — [Issue 正文](docs/issues/T006.md)
+- [x] **T006 实现登录、Session 和账号安全** — [Issue 正文](docs/issues/T006.md)
 
-  阶段：M1；前置：[T003 #3](https://github.com/bao-linfeng/exhibition-ai/issues/3)、[T004 #4](https://github.com/bao-linfeng/exhibition-ai/issues/4)；状态：todo；GitHub Issue：[#6](https://github.com/bao-linfeng/exhibition-ai/issues/6)；PR：—。
+  阶段：M1；前置：[T003 #3](https://github.com/bao-linfeng/exhibition-ai/issues/3)、[T004 #4](https://github.com/bao-linfeng/exhibition-ai/issues/4)；状态：done；GitHub Issue：[#6](https://github.com/bao-linfeng/exhibition-ai/issues/6)；PR：待创建。
 
   需求：FR-01、AC-02、NFR-06。目录：packages/backend/src/modules/auth；packages/backend/src/modules/users；packages/db；apps/api/src/modules/auth；apps/api/src/plugins；apps/web/src/modules/auth。
 
   范围：实现登录/退出/me、Argon2id、数据库Session、Origin/CSRF、限流、首登改密和本人改密；受控容器命令初始化管理员及重置临时密码。
 
-  - [ ] 空闲8小时/绝对7天过期、退出和停用失效；凭证不进localStorage
+  - [x] 空闲8小时/绝对7天过期、退出和停用失效；凭证不进localStorage
   - [ ] 可信Origin/CSRF及登录限流有正反测试；生产Cookie配置符合基线
-  - [ ] 无默认生产密码，容器命令不打印密码；首登必须改密
+  - [x] 无默认生产密码，容器命令不打印密码；首登必须改密
 
 - [ ] **T007 实现客户、项目、成员和范围授权** — [Issue 正文](docs/issues/T007.md)
 

@@ -1,0 +1,38 @@
+{
+  "name": "exhibition-ai",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@10.34.5",
+  "engines": {
+    "node": "24.15.0",
+    "pnpm": "10.34.5"
+  },
+  "scripts": {
+    "setup": "node scripts/setup.mjs",
+    "build": "pnpm -r build",
+    "typecheck": "pnpm -r typecheck",
+    "lint": "eslint apps packages scripts",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "check:boundaries": "node scripts/check-boundaries.mjs",
+    "api:generate": "node --import tsx --conditions=development scripts/api-generate.mjs",
+    "api:check": "node --import tsx --conditions=development scripts/api-generate.mjs --check",
+    "check": "pnpm lint && pnpm typecheck && pnpm check:boundaries && pnpm api:check && pnpm format:check",
+    "db:migrate": "node --import tsx --conditions=development scripts/db-migrate.mjs",
+    "storage:init": "node --import tsx --conditions=development scripts/storage-init.mjs",
+    "test:integration": "node --import tsx --conditions=development scripts/smoke.mjs"
+  },
+  "devDependencies": {
+    "@exhibition/backend": "workspace:*",
+    "@exhibition/db": "workspace:*",
+    "@types/node": "24.13.4",
+    "eslint": "10.10.0",
+    "eslint-plugin-vue": "10.11.0",
+    "openapi-typescript": "7.13.0",
+    "prettier": "3.9.6",
+    "tsx": "4.23.13",
+    "typescript": "5.9.3",
+    "typescript-eslint": "8.70.0",
+    "vue-eslint-parser": "10.4.1"
+  }
+}

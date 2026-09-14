@@ -1,0 +1,29 @@
+{
+  "name": "@exhibition/backend",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": {
+      "development": "./src/index.ts",
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@exhibition/db": "workspace:*",
+    "@exhibition/contracts": "workspace:*",
+    "drizzle-orm": "0.37.0",
+    "redis": "6.2.1",
+    "ioredis": "5.11.1",
+    "bullmq": "6.3.6",
+    "@aws-sdk/client-s3": "3.1131.0"
+  },
+  "devDependencies": {
+    "@types/node": "24.13.4"
+  }
+}

@@ -1,0 +1,178 @@
+name: exhibition-ai
+
+x-app: &app
+  image: exhibition-ai-dev:local
+  build:
+    context: ..
+    dockerfile: infra/docker/dev.Dockerfile
+  working_dir: /workspace
+  init: true
+  env_file: ../.env
+  environment:
+    NODE_ENV: development
+    CHOKIDAR_USEPOLLING: 'true'
+    npm_config_registry: https://registry.npmjs.org
+  volumes:
+    - ..:/workspace
+    - root_modules:/workspace/node_modules
+    - web_modules:/workspace/apps/web/node_modules
+    - api_modules:/workspace/apps/api/node_modules
+    - worker_modules:/workspace/apps/worker/node_modules
+    - contracts_modules:/workspace/packages/contracts/node_modules
+    - client_modules:/workspace/packages/api-client/node_modules
+    - backend_modules:/workspace/packages/backend/node_modules
+    - db_modules:/workspace/packages/db/node_modules
+    - pnpm_store:/pnpm/store
+  networks: [development]
+
+services:
+  postgres:
+    image: pgvector/pgvector:pg17@sha256:cf134a767f474095eeba57e0117be8e568e011a63f33fbf252f14c9b760f8e6f
+    environment:
+      POSTGRES_DB: ${PGDATABASE:-exhibition}
+      POSTGRES_USER: ${PGUSER:-exhibition}
+      POSTGRES_PASSWORD: ${PGPASSWORD:?Run setup first}
+    ports: ['127.0.0.1:${POSTGRES_PORT:-55432}:5432']
+    volumes: [postgres_data:/var/lib/postgresql/data]
+    healthcheck:
+      test: [CMD-SHELL, 'pg_isready -U "$$POSTGRES_USER" -d "$$POSTGRES_DB"']
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    networks: [development]
+
+  redis:
+    image: redis:7.4-alpine@sha256:ff02b58f971e7d7d156a1267e283fcbbeee91773b6aa36c49dac28ecfe28eadf
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD:?Run setup first}
+    command:
+      [
+        sh,
+        -c,
+        'exec redis-server --appendonly yes --requirepass "$$REDIS_PASSWORD"',
+      ]
+    ports: ['127.0.0.1:${REDIS_PORT_HOST:-56379}:6379']
+    volumes: [redis_data:/data]
+    healthcheck:
+      test:
+        [
+          CMD-SHELL,
+          'REDISCLI_AUTH="$$REDIS_PASSWORD" redis-cli ping | grep -q PONG',
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    networks: [development]
+
+  rustfs:
+    image: rustfs/rustfs@sha256:97171b3d72cd47dc81000f92ea84de25608bfc35a94c965501afaeb5d99f6035
+    environment:
+      RUSTFS_ACCESS_KEY: ${S3_ACCESS_KEY:?Run setup first}
+      RUSTFS_SECRET_KEY: ${S3_SECRET_KEY:?Run setup first}
+      RUSTFS_CONSOLE_ENABLE: 'true'
+      RUSTFS_REGION: ${S3_REGION:-us-east-1}
+    command: [rustfs, server, /data]
+    ports:
+      - '127.0.0.1:${S3_PORT:-19000}:9000'
+      - '127.0.0.1:${S3_CONSOLE_PORT:-19001}:9001'
+    volumes: [rustfs_data:/data]
+    healthcheck:
+      test: [CMD, curl, --fail, --silent, http://localhost:9000/health]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 15s
+    networks: [development]
+
+  devtools:
+    <<: *app
+    profiles: [tools]
+    command: [pnpm, check]
+
+  migrate:
+    <<: *app
+    profiles: [tools]
+    command: [pnpm, db:migrate]
+    depends_on:
+      postgres: { condition: service_healthy }
+
+  storage-init:
+    <<: *app
+    profiles: [tools]
+    command: [pnpm, storage:init]
+    depends_on:
+      rustfs: { condition: service_healthy }
+
+  api:
+    <<: *app
+    command: [pnpm, --filter, '@exhibition/api', dev]
+    ports: ['127.0.0.1:${API_PORT:-3000}:3000']
+    depends_on:
+      postgres: { condition: service_healthy }
+      redis: { condition: service_healthy }
+      rustfs: { condition: service_healthy }
+    healthcheck:
+      test:
+        [
+          CMD,
+          node,
+          -e,
+          "fetch('http://127.0.0.1:3000/api/ready').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 15
+
+  worker:
+    <<: *app
+    command: [pnpm, --filter, '@exhibition/worker', dev]
+    depends_on:
+      postgres: { condition: service_healthy }
+      redis: { condition: service_healthy }
+      rustfs: { condition: service_healthy }
+    healthcheck:
+      test:
+        [
+          CMD,
+          node,
+          -e,
+          "const f=require('node:fs');try{process.exit(Date.now()-f.statSync('/tmp/exhibition-worker-health').mtimeMs<30000?0:1)}catch{process.exit(1)}",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  web:
+    <<: *app
+    command: [pnpm, --filter, '@exhibition/web', dev]
+    ports: ['127.0.0.1:${WEB_PORT:-5173}:5173']
+    depends_on:
+      api: { condition: service_healthy }
+    healthcheck:
+      test:
+        [
+          CMD,
+          node,
+          -e,
+          "fetch('http://127.0.0.1:5173/').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+networks:
+  development:
+
+volumes:
+  postgres_data:
+  redis_data:
+  rustfs_data:
+  root_modules:
+  web_modules:
+  api_modules:
+  worker_modules:
+  contracts_modules:
+  client_modules:
+  backend_modules:
+  db_modules:
+  pnpm_store:
