@@ -32,7 +32,8 @@ export async function buildApp(services?: ReturnType<typeof createServices>) {
   // Register plugins
   await app.register(sensible);
   await app.register(cookie, {
-    secret: process.env.COOKIE_SECRET || 'development-secret-change-in-production',
+    secret:
+      process.env.COOKIE_SECRET || 'development-secret-change-in-production',
   });
   await app.register(swagger, {
     openapi: {

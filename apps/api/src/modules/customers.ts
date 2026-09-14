@@ -10,14 +10,16 @@ import {
   UpdateCustomerResponseSchema,
   UuidSchema,
 } from '@exhibition/contracts';
-import type { CreateCustomerRequest, UpdateCustomerRequest } from '@exhibition/contracts';
+import type {
+  CreateCustomerRequest,
+  UpdateCustomerRequest,
+} from '@exhibition/contracts';
 
 export async function customerRoutes(app: FastifyInstance) {
-  if (!app.services) throw new Error('Services not initialized');
-  const services = app.services;
-
   async function currentUser(sessionId: string | undefined) {
-    return sessionId ? services.authService.validateSession(sessionId) : null;
+    return sessionId
+      ? app.services!.authService.validateSession(sessionId)
+      : null;
   }
   // GET /api/v1/customers
   app.get(
@@ -33,9 +35,17 @@ export async function customerRoutes(app: FastifyInstance) {
         },
       },
     },
-    async (request, reply) => {
-      if (!(await currentUser(request.cookies.sessionId))) throw app.httpErrors.unauthorized('Not authenticated');
-      return services.customerService.listCustomers(request.query as { status?: 'active' | 'inactive'; search?: string; cursor?: string; limit?: number });
+    async (request, _reply) => {
+      if (!(await currentUser(request.cookies.sessionId)))
+        throw app.httpErrors.unauthorized('Not authenticated');
+      return app.services!.customerService.listCustomers(
+        request.query as {
+          status?: 'active' | 'inactive';
+          search?: string;
+          cursor?: string;
+          limit?: number;
+        },
+      );
     },
   );
 
@@ -56,7 +66,10 @@ export async function customerRoutes(app: FastifyInstance) {
     async (request, reply) => {
       const user = await currentUser(request.cookies.sessionId);
       if (!user) throw app.httpErrors.unauthorized('Not authenticated');
-      const customer = await services.customerService.createCustomer(request.body as CreateCustomerRequest, user.id);
+      const customer = await app.services!.customerService.createCustomer(
+        request.body as CreateCustomerRequest,
+        user.id,
+      );
       return reply.code(201).send({ data: customer });
     },
   );
@@ -76,8 +89,11 @@ export async function customerRoutes(app: FastifyInstance) {
       },
     },
     async (request) => {
-      if (!(await currentUser(request.cookies.sessionId))) throw app.httpErrors.unauthorized('Not authenticated');
-      const customer = await services.customerService.getCustomer((request.params as { id: string }).id);
+      if (!(await currentUser(request.cookies.sessionId)))
+        throw app.httpErrors.unauthorized('Not authenticated');
+      const customer = await app.services!.customerService.getCustomer(
+        (request.params as { id: string }).id,
+      );
       if (!customer) throw app.httpErrors.notFound('Customer not found');
       return { data: customer };
     },
@@ -99,10 +115,16 @@ export async function customerRoutes(app: FastifyInstance) {
       },
     },
     async (request) => {
-      if (!(await currentUser(request.cookies.sessionId))) throw app.httpErrors.unauthorized('Not authenticated');
+      if (!(await currentUser(request.cookies.sessionId)))
+        throw app.httpErrors.unauthorized('Not authenticated');
       const body = request.body as UpdateCustomerRequest;
-      const result = await services.customerService.updateCustomer((request.params as { id: string }).id, body, body.expectedRevision);
-      if (result === 'conflict') throw app.httpErrors.conflict('Customer revision conflict');
+      const result = await app.services!.customerService.updateCustomer(
+        (request.params as { id: string }).id,
+        body,
+        body.expectedRevision,
+      );
+      if (result === 'conflict')
+        throw app.httpErrors.conflict('Customer revision conflict');
       if (!result) throw app.httpErrors.notFound('Customer not found');
       return { data: result };
     },

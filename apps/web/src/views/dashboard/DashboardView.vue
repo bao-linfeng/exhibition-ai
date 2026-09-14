@@ -25,23 +25,33 @@ function goTo(path: string) {
 
     <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
       <!-- Welcome Card -->
-      <div class="rounded-xl border bg-card text-card-foreground shadow-sm relative overflow-hidden group">
+      <div
+        class="rounded-xl border bg-card text-card-foreground shadow-sm relative overflow-hidden group"
+      >
         <div class="p-6">
           <div class="flex items-center gap-4 mb-4">
-            <div class="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
+            <div
+              class="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center"
+            >
               <Building2 class="h-6 w-6 text-primary" />
             </div>
             <div>
               <h3 class="font-semibold text-lg">客户管理</h3>
-              <p class="text-sm text-muted-foreground">管理客户信息，记录联系人</p>
+              <p class="text-sm text-muted-foreground">
+                管理客户信息，记录联系人
+              </p>
             </div>
           </div>
           <div class="flex gap-3">
-            <Button @click="goTo('/customers/new')" class="w-full">
+            <Button class="w-full" @click="goTo('/customers/new')">
               <Plus class="mr-2 h-4 w-4" />
               新建客户
             </Button>
-            <Button @click="goTo('/customers')" variant="outline" class="w-full">
+            <Button
+              variant="outline"
+              class="w-full"
+              @click="goTo('/customers')"
+            >
               查看全部
             </Button>
           </div>
@@ -49,31 +59,39 @@ function goTo(path: string) {
       </div>
 
       <!-- Quick Action Card -->
-      <div class="rounded-xl border bg-card text-card-foreground shadow-sm relative overflow-hidden group">
+      <div
+        class="rounded-xl border bg-card text-card-foreground shadow-sm relative overflow-hidden group"
+      >
         <div class="p-6">
           <div class="flex items-center gap-4 mb-4">
-            <div class="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
+            <div
+              class="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center"
+            >
               <FolderKanban class="h-6 w-6 text-primary" />
             </div>
             <div>
               <h3 class="font-semibold text-lg">项目管理</h3>
-              <p class="text-sm text-muted-foreground">创建新项目，跟进设计进度</p>
+              <p class="text-sm text-muted-foreground">
+                创建新项目，跟进设计进度
+              </p>
             </div>
           </div>
           <div class="flex gap-3">
-            <Button @click="goTo('/projects/new')" class="w-full">
+            <Button class="w-full" @click="goTo('/projects/new')">
               <Plus class="mr-2 h-4 w-4" />
               新建项目
             </Button>
-            <Button @click="goTo('/projects')" variant="outline" class="w-full">
+            <Button variant="outline" class="w-full" @click="goTo('/projects')">
               查看全部
             </Button>
           </div>
         </div>
       </div>
-      
+
       <!-- Stats Placeholder -->
-      <div class="rounded-xl border bg-card text-card-foreground shadow-sm relative overflow-hidden flex flex-col justify-between">
+      <div
+        class="rounded-xl border bg-card text-card-foreground shadow-sm relative overflow-hidden flex flex-col justify-between"
+      >
         <div class="p-6">
           <h3 class="font-semibold text-lg mb-2">本月概览</h3>
           <div class="flex items-end justify-between mt-6">

@@ -1,6 +1,10 @@
 import { computed } from 'vue';
 import { useRouter } from 'vue-router';
-import { useMeQuery, useLoginMutation, useLogoutMutation } from '../api/queries/auth.js';
+import {
+  useMeQuery,
+  useLoginMutation,
+  useLogoutMutation,
+} from '../api/queries/auth.js';
 import { useUserStore } from '../stores/user.js';
 
 export function useAuth() {

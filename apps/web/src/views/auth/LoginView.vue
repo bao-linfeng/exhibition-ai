@@ -22,8 +22,9 @@ async function handleSubmit() {
     await login(email.value, password.value);
     const redirect = router.currentRoute.value.query.redirect as string;
     router.push(redirect || '/dashboard');
-  } catch (error) {
-    errorMessage.value = loginError.value?.message || '登录失败，请检查邮箱和密码';
+  } catch {
+    errorMessage.value =
+      loginError.value?.message || '登录失败，请检查邮箱和密码';
   }
 }
 </script>
@@ -34,7 +35,7 @@ async function handleSubmit() {
       <h1 class="login-title">展台 AI 设计平台</h1>
       <p class="login-subtitle">请登录您的账号</p>
 
-      <form @submit.prevent="handleSubmit" class="login-form">
+      <form class="login-form" @submit.prevent="handleSubmit">
         <div class="form-group">
           <label for="email" class="form-label">邮箱</label>
           <input
@@ -67,11 +68,7 @@ async function handleSubmit() {
           {{ errorMessage }}
         </div>
 
-        <button
-          type="submit"
-          class="submit-button"
-          :disabled="isLoginPending"
-        >
+        <button type="submit" class="submit-button" :disabled="isLoginPending">
           {{ isLoginPending ? '登录中...' : '登录' }}
         </button>
       </form>
@@ -96,7 +93,9 @@ async function handleSubmit() {
 .login-card {
   background: white;
   border-radius: 1rem;
-  box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+  box-shadow:
+    0 20px 25px -5px rgb(0 0 0 / 0.1),
+    0 8px 10px -6px rgb(0 0 0 / 0.1);
   padding: 2.5rem;
   width: 100%;
   max-width: 420px;

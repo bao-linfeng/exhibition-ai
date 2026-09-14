@@ -2,18 +2,25 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/vue-query';
 import { apiClient } from '../client.js';
 import type { paths } from '@exhibition/api-client';
 
-type CreateCustomerBody = paths['/api/v1/customers']['post']['requestBody']['content']['application/json'];
-type UpdateCustomerBody = paths['/api/v1/customers/{id}']['patch']['requestBody']['content']['application/json'];
+type CreateCustomerBody =
+  paths['/api/v1/customers']['post']['requestBody']['content']['application/json'];
+type UpdateCustomerBody =
+  paths['/api/v1/customers/{id}']['patch']['requestBody']['content']['application/json'];
 
 export const customerKeys = {
   all: () => ['customers'] as const,
   lists: () => [...customerKeys.all(), 'list'] as const,
-  list: (params: Record<string, unknown>) => [...customerKeys.lists(), params] as const,
+  list: (params: Record<string, unknown>) =>
+    [...customerKeys.lists(), params] as const,
   details: () => [...customerKeys.all(), 'detail'] as const,
   detail: (id: string) => [...customerKeys.details(), id] as const,
 };
 
-export function useCustomersQuery(params?: { status?: 'active' | 'inactive'; search?: string; cursor?: string }) {
+export function useCustomersQuery(params?: {
+  status?: 'active' | 'inactive';
+  search?: string;
+  cursor?: string;
+}) {
   return useQuery({
     queryKey: customerKeys.list(params || {}),
     queryFn: async () => {
@@ -63,7 +70,13 @@ export function useCreateCustomerMutation() {
 export function useUpdateCustomerMutation() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id, body }: { id: string; body: UpdateCustomerBody }) => {
+    mutationFn: async ({
+      id,
+      body,
+    }: {
+      id: string;
+      body: UpdateCustomerBody;
+    }) => {
       const { data, error } = await apiClient.PATCH('/api/v1/customers/{id}', {
         params: { path: { id } },
         body,

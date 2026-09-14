@@ -8,9 +8,9 @@ defineProps<{
 </script>
 
 <template>
-  <TableRow v-for="i in (rows || 3)" :key="i">
+  <TableRow v-for="i in rows || 3" :key="i">
     <TableCell v-for="j in columns" :key="j">
-      <div class="h-4 w-full max-w-[80%] rounded bg-muted animate-pulse"></div>
+      <div class="h-4 w-full max-w-[80%] rounded bg-muted animate-pulse" />
     </TableCell>
   </TableRow>
 </template>
