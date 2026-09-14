@@ -1,0 +1,12 @@
+.git
+.env
+.env.*
+!.env.example
+.local
+.pnpm-store
+**/node_modules
+**/dist
+**/coverage
+**/.vite
+test-results
+playwright-report
