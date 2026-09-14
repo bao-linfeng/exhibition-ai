@@ -1013,5 +1013,11 @@
       "prUrl": null,
       "status": "todo"
     }
-  ]
+  ],
+  "documentationPr": {
+    "number": 42,
+    "url": "https://github.com/bao-linfeng/exhibition-ai/pull/42",
+    "branch": "docs/issue-5-development-plan",
+    "purpose": "planning_only_does_not_close_implementation_issues"
+  }
 }

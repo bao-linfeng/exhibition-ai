@@ -2,7 +2,7 @@
 
 更新日期：2026-09-14。需求来源：[完整需求规范](docs/REQUIREMENTS_AI_DEVELOPMENT.md)。本轮明确：**所有开发服务使用 Docker；所有功能以 GitHub Issue 跟踪，并按 Issue 建分支、提交 PR。**
 
-已在 [bao-linfeng/exhibition-ai](https://github.com/bao-linfeng/exhibition-ai/issues) 发布并回读核验全部 41 个任务（#1～#41），本地编号与真实 Issue 一一映射。功能全部未实现、未勾选；功能 PR 尚未创建。逐项正文与发布映射见 [docs/issues](docs/issues/README.md)。规划文档 PR 仅记录本计划，不关闭任何功能 Issue。
+已在 [bao-linfeng/exhibition-ai](https://github.com/bao-linfeng/exhibition-ai/issues) 发布并回读核验全部 41 个任务（#1～#41），本地编号与真实 Issue 一一映射。功能全部未实现、未勾选；功能 PR 尚未创建。逐项正文与发布映射见 [docs/issues](docs/issues/README.md)。[规划文档 PR #42](https://github.com/bao-linfeng/exhibition-ai/pull/42) 仅记录本计划，不关闭任何功能 Issue；各任务的 PR 字段专用于后续功能实现。
 
 ## 完成与依赖规则
 
