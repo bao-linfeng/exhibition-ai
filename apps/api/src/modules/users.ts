@@ -13,11 +13,10 @@ import {
 import type { ListUsersQuery, UpdateUserRequest } from '@exhibition/contracts';
 
 export async function userRoutes(app: FastifyInstance) {
-  if (!app.services) throw new Error('Services not initialized');
-  const services = app.services;
-
   async function currentUser(sessionId: string | undefined) {
-    return sessionId ? services.authService.validateSession(sessionId) : null;
+    return sessionId
+      ? app.services!.authService.validateSession(sessionId)
+      : null;
   }
   // GET /api/v1/users
   app.get(
@@ -36,8 +35,12 @@ export async function userRoutes(app: FastifyInstance) {
     async (request) => {
       const user = await currentUser(request.cookies.sessionId);
       if (!user) throw app.httpErrors.unauthorized('Not authenticated');
-      const result = await services.userService.listUsers(request.query as ListUsersQuery, user);
-      if (result === 'forbidden') throw app.httpErrors.forbidden('Administrator access required');
+      const result = await app.services!.userService.listUsers(
+        request.query as ListUsersQuery,
+        user,
+      );
+      if (result === 'forbidden')
+        throw app.httpErrors.forbidden('Administrator access required');
       return result;
     },
   );
@@ -59,8 +62,12 @@ export async function userRoutes(app: FastifyInstance) {
     async (request) => {
       const user = await currentUser(request.cookies.sessionId);
       if (!user) throw app.httpErrors.unauthorized('Not authenticated');
-      const result = await services.userService.getUser((request.params as { id: string }).id, user);
-      if (result === 'forbidden') throw app.httpErrors.forbidden('Administrator access required');
+      const result = await app.services!.userService.getUser(
+        (request.params as { id: string }).id,
+        user,
+      );
+      if (result === 'forbidden')
+        throw app.httpErrors.forbidden('Administrator access required');
       if (!result) throw app.httpErrors.notFound('User not found');
       return { data: result };
     },
@@ -84,9 +91,15 @@ export async function userRoutes(app: FastifyInstance) {
     async (request) => {
       const user = await currentUser(request.cookies.sessionId);
       if (!user) throw app.httpErrors.unauthorized('Not authenticated');
-      const result = await services.userService.updateUser((request.params as { id: string }).id, request.body as UpdateUserRequest, user);
-      if (result === 'forbidden') throw app.httpErrors.forbidden('Administrator access required');
-      if (result === 'conflict') throw app.httpErrors.conflict('User revision conflict');
+      const result = await app.services!.userService.updateUser(
+        (request.params as { id: string }).id,
+        request.body as UpdateUserRequest,
+        user,
+      );
+      if (result === 'forbidden')
+        throw app.httpErrors.forbidden('Administrator access required');
+      if (result === 'conflict')
+        throw app.httpErrors.conflict('User revision conflict');
       if (!result) throw app.httpErrors.notFound('User not found');
       return { data: result };
     },
@@ -110,8 +123,13 @@ export async function userRoutes(app: FastifyInstance) {
       const user = await currentUser(request.cookies.sessionId);
       if (!user) throw app.httpErrors.unauthorized('Not authenticated');
       const query = request.query as { search?: string; limit?: number };
-      const result = await services.userService.listOptions(query.search, query.limit, user);
-      if (result === 'forbidden') throw app.httpErrors.forbidden('Administrator access required');
+      const result = await app.services!.userService.listOptions(
+        query.search,
+        query.limit,
+        user,
+      );
+      if (result === 'forbidden')
+        throw app.httpErrors.forbidden('Administrator access required');
       return { data: result };
     },
   );

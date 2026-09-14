@@ -941,6 +941,18 @@ export interface operations {
           };
         };
       };
+      /** @description Default Response */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': {
+            error?: string;
+            message?: string;
+          };
+        };
+      };
     };
   };
   getMe: {
@@ -971,6 +983,18 @@ export interface operations {
               /** Format: date-time */
               createdAt: string;
             };
+          };
+        };
+      };
+      /** @description Default Response */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': {
+            error?: string;
+            message?: string;
           };
         };
       };
@@ -1040,6 +1064,30 @@ export interface operations {
           [name: string]: unknown;
         };
         content?: never;
+      };
+      /** @description Default Response */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': {
+            error?: string;
+            message?: string;
+          };
+        };
+      };
+      /** @description Default Response */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': {
+            error?: string;
+            message?: string;
+          };
+        };
       };
     };
   };
