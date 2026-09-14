@@ -1,0 +1,12 @@
+pnpm-lock.yaml
+node_modules
+dist
+.local
+.pnpm-store
+docs/TECH_STACK_AI_UI.md
+docs/REQUIREMENTS_AI_DEVELOPMENT.md
+docs/issues
+tasks.md
+AGENTS.md
+CLAUDE.md
+docs/database-er-diagram.md
