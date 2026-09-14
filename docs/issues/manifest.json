@@ -1,0 +1,1017 @@
+{
+  "schemaVersion": 1,
+  "repository": "bao-linfeng/exhibition-ai",
+  "defaultBranch": "main",
+  "publicationStatus": "published_verified",
+  "tasks": [
+    {
+      "id": "T001",
+      "phase": "M0",
+      "title": "锁定技术栈并建立 Monorepo 工程",
+      "deps": [],
+      "dirs": "apps/*；packages/*；根配置；docs/DEPENDENCY_BASELINE.md",
+      "refs": "§5、§6",
+      "scope": "核实并锁定 Node/pnpm/框架兼容版本；建立三应用和五个共享包的最小有效入口；配置 TS ESM、显式 exports、唯一锁文件和格式检查。",
+      "checks": [
+        "记录官方来源、peer dependencies 和安装/构建结果，不使用 floating latest",
+        "容器内 frozen-lockfile 安装及三应用独立构建成功",
+        "Web 不依赖 Node 服务端包；不创建空业务模块或第二套目录"
+      ],
+      "bodyFile": "docs/issues/T001.md",
+      "issueNumber": 1,
+      "issueUrl": "https://github.com/bao-linfeng/exhibition-ai/issues/1",
+      "branch": null,
+      "prNumber": null,
+      "prUrl": null,
+      "status": "todo"
+    },
+    {
+      "id": "T002",
+      "phase": "M0",
+      "title": "实现 Docker Compose 全服务开发环境",
+      "deps": [
+        "T001"
+      ],
+      "dirs": "infra/compose.dev.yaml；infra/docker/*；infra/nginx/*；scripts/*；docs/DEVELOPMENT.md；.env.example",
+      "refs": "§6、§11；本轮 Docker 要求",
+      "scope": "Web/Vite、API、Worker、PostgreSQL、Redis、RustFS 全部容器运行；提供 devtools、migrate、storage-init 一次性服务；实现源码热更新、独立依赖卷、内部网络和浏览器可达对象入口。",
+      "checks": [
+        "干净检出仅需 Git、Docker Engine/Desktop 与 Compose v2即可启动，不要求宿主机 Node/pnpm/数据库",
+        "Windows PowerShell 与 Linux 验证热更新、Vite HMR、API代理、容器DNS和实际端口；宿主机 node_modules 不挂入容器",
+        "down/up 和应用重建后数据仍在；默认停止命令不含 -v；记录初始化顺序、失败诊断及无明文凭证的配置示例"
+      ],
+      "bodyFile": "docs/issues/T002.md",
+      "issueNumber": 2,
+      "issueUrl": "https://github.com/bao-linfeng/exhibition-ai/issues/2",
+      "branch": null,
+      "prNumber": null,
+      "prUrl": null,
+      "status": "todo"
+    },
+    {
+      "id": "T003",
+      "phase": "M0",
+      "title": "建立 API 契约、错误协议和共享代码边界",
+      "deps": [
+        "T001",
+        "T002"
+      ],
+      "dirs": "packages/contracts；packages/api-client；apps/api/src/plugins；scripts；docs/api",
+      "refs": "§6、§9",
+      "scope": "建立 /api/v1、TypeBox 请求/响应校验、错误映射、分页/revision/幂等协议；导出 OpenAPI 并生成客户端类型；落实跨包和 Web 模块依赖检查。",
+      "checks": [
+        "容器内 api:generate/api:check 通过且生成无需真实模型",
+        "Fastify 示例接口与 Web 类型化调用贯通，错误不泄露堆栈",
+        "跨 app、跨包私有 src、服务端进入 Web、循环依赖违规样例能被检查拒绝"
+      ],
+      "bodyFile": "docs/issues/T003.md",
+      "issueNumber": 3,
+      "issueUrl": "https://github.com/bao-linfeng/exhibition-ai/issues/3",
+      "branch": null,
+      "prNumber": null,
+      "prUrl": null,
+      "status": "todo"
+    },
+    {
+      "id": "T004",
+      "phase": "M0",
+      "title": "建立数据库迁移、配置和日志基础",
+      "deps": [
+        "T001",
+        "T002"
+      ],
+      "dirs": "packages/db；packages/backend/src/infrastructure；apps/api/src/health；apps/worker/src",
+      "refs": "§7、§11.2、§11.5",
+      "scope": "实现单例连接与事务注入、迁移runner、dev/test seed入口、环境Schema、Pino脱敏和进程健康/优雅退出；各业务表随后由所属Issue增加。 提供追加式审计基础表/服务，供认证和业务Issue同步埋点。",
+      "checks": [
+        "空数据库迁移和重复执行成功，seed 在生产被拒绝",
+        "缺少生产必填配置明确退出，日志隐藏凭证与签名query",
+        "API live/ready和Worker心跳可观测，关闭能停止接新任务并释放连接"
+      ],
+      "bodyFile": "docs/issues/T004.md",
+      "issueNumber": 4,
+      "issueUrl": "https://github.com/bao-linfeng/exhibition-ai/issues/4",
+      "branch": null,
+      "prNumber": null,
+      "prUrl": null,
+      "status": "todo"
+    },
+    {
+      "id": "T005",
+      "phase": "M0",
+      "title": "建立容器 CI 与 Issue/PR 交付门禁",
+      "deps": [
+        "T002",
+        "T003",
+        "T004"
+      ],
+      "dirs": " .github/workflows；.github/pull_request_template.md；scripts；tests；docs/DEVELOPMENT.md",
+      "refs": "§13.3、§15；tasks.md",
+      "scope": "CI 在隔离 Compose 环境执行 lint/typecheck/boundaries/api:check/unit/build；提供真实依赖集成与E2E入口；PR模板要求Issue、目录、迁移、Docker验证与未验证项。",
+      "checks": [
+        "干净runner可重建镜像并执行检查，不读取开发数据卷",
+        "CI只使用无敏感数据与Mock，不自动调用付费模型",
+        "PR可追踪关联Issue及依赖；失败检查阻止标记完成，模板不把未运行CI预填为通过"
+      ],
+      "bodyFile": "docs/issues/T005.md",
+      "issueNumber": 5,
+      "issueUrl": "https://github.com/bao-linfeng/exhibition-ai/issues/5",
+      "branch": null,
+      "prNumber": null,
+      "prUrl": null,
+      "status": "todo"
+    },
+    {
+      "id": "T006",
+      "phase": "M1",
+      "title": "实现登录、Session 和账号安全",
+      "deps": [
+        "T003",
+        "T004"
+      ],
+      "dirs": "packages/backend/src/modules/auth；packages/backend/src/modules/users；packages/db；apps/api/src/modules/auth；apps/api/src/plugins；apps/web/src/modules/auth",
+      "refs": "FR-01、AC-02、NFR-06",
+      "scope": "实现登录/退出/me、Argon2id、数据库Session、Origin/CSRF、限流、首登改密和本人改密；受控容器命令初始化管理员及重置临时密码。",
+      "checks": [
+        "空闲8小时/绝对7天过期、退出和停用失效；凭证不进localStorage",
+        "可信Origin/CSRF及登录限流有正反测试；生产Cookie配置符合基线",
+        "无默认生产密码，容器命令不打印密码；首登必须改密"
+      ],
+      "bodyFile": "docs/issues/T006.md",
+      "issueNumber": 6,
+      "issueUrl": "https://github.com/bao-linfeng/exhibition-ai/issues/6",
+      "branch": null,
+      "prNumber": null,
+      "prUrl": null,
+      "status": "todo"
+    },
+    {
+      "id": "T007",
+      "phase": "M1",
+      "title": "实现客户、项目、成员和范围授权",
+      "deps": [
+        "T006"
+      ],
+      "dirs": "packages/backend/src/modules/{customers,projects}；packages/db；apps/api/src/modules；apps/web/src/modules/{customers,projects}",
+      "refs": "FR-01～FR-03、AC-02、AC-09",
+      "scope": "实现客户可见/编辑/停用、项目创建/编辑/过滤/分页、负责人转交、成员管理和共享授权Policy；创建项目事务创建默认会话记录；状态审核操作留T026。",
+      "checks": [
+        "admin/designer/sales/viewer及负责人交叉矩阵通过，最后负责人不可直接移除",
+        "对象越权404、操作不足403；客户停用不破坏历史项目",
+        "revision冲突409保留本地输入；列表无跨项目泄漏，游标稳定"
+      ],
+      "bodyFile": "docs/issues/T007.md",
+      "issueNumber": 7,
+      "issueUrl": "https://github.com/bao-linfeng/exhibition-ai/issues/7",
+      "branch": null,
+      "prNumber": null,
+      "prUrl": null,
+      "status": "todo"
+    },
+    {
+      "id": "T008",
+      "phase": "M1",
+      "title": "实现 Web 应用壳、路由和缓存约定",
+      "deps": [
+        "T003",
+        "T006",
+        "T007"
+      ],
+      "dirs": "apps/web/src/app；apps/web/src/shared；apps/web/src/stores；apps/web/src/modules/dashboard",
+      "refs": "§4、§6.2、FR-03",
+      "scope": "集成 shadcn-vue/Tailwind、显式懒加载路由、页面布局、统一错误与空状态；实现可见项目/任务摘要接口及dashboard；Query 管服务端数据，Pinia限UI与用户摘要。",
+      "checks": [
+        "登录返回地址仅站内、深链/404正确；未交付功能不显示占位菜单",
+        "Query key隔离用户/项目，退出和切换项目不闪现旧数据",
+        "基础页面loading/empty/error/forbidden、键盘焦点与窄屏可用"
+      ],
+      "bodyFile": "docs/issues/T008.md",
+      "issueNumber": 8,
+      "issueUrl": "https://github.com/bao-linfeng/exhibition-ai/issues/8",
+      "branch": null,
+      "prNumber": null,
+      "prUrl": null,
+      "status": "todo"
+    },
+    {
+      "id": "T009",
+      "phase": "M1",
+      "title": "实现结构化 Brief 版本与确认",
+      "deps": [
+        "T007",
+        "T008"
+      ],
+      "dirs": "packages/backend/src/modules/briefs；packages/db；packages/contracts；apps/api/src/modules/briefs；apps/web/src/modules/briefs",
+      "refs": "FR-04、AC-04、AC-09",
+      "scope": "实现字段校验、保存不可变revision、历史/差异查看、显式确认、面积派生和有效项目状态转换；AI解析留T017。",
+      "checks": [
+        "尺寸/朝向/品牌/功能区/预算/日期等校验按需求表一致",
+        "修改生成新revision并撤销当前确认；重复和并发确认/保存遵守revision",
+        "历史快照不可被新编辑覆盖；409保留本地输入"
+      ],
+      "bodyFile": "docs/issues/T009.md",
+      "issueNumber": 9,
+      "issueUrl": "https://github.com/bao-linfeng/exhibition-ai/issues/9",
+      "branch": null,
+      "prNumber": null,
+      "prUrl": null,
+      "status": "todo"
+    },
+    {
+      "id": "T010",
+      "phase": "M1",
+      "title": "实现最小持久化 Task、Outbox 和 Worker",
+      "deps": [
+        "T003",
+        "T004",
+        "T007"
+      ],
+      "dirs": "packages/backend/src/modules/tasks；packages/backend/src/infrastructure/queue；packages/db；apps/worker/src",
+      "refs": "FR-07、§8、AC-05",
+      "scope": "为资产校验建立Task/Outbox事务、可靠投递、幂等处理、恢复扫描与基础任务查询；预留各Task kind独立前置，图片attempt/output由T013扩展。",
+      "checks": [
+        "DB提交后API退出、Redis中断后仍可恢复处理",
+        "重复投递同一校验任务不重复发布资产或副作用",
+        "上传校验不要求已确认Brief；Worker重启可恢复，任务状态数据库为真源"
+      ],
+      "bodyFile": "docs/issues/T010.md",
+      "issueNumber": 10,
+      "issueUrl": "https://github.com/bao-linfeng/exhibition-ai/issues/10",
+      "branch": null,
+      "prNumber": null,
+      "prUrl": null,
+      "status": "todo"
+    },
+    {
+      "id": "T011",
+      "phase": "M1",
+      "title": "实现私有对象存储和签名直传",
+      "deps": [
+        "T002",
+        "T007",
+        "T010"
+      ],
+      "dirs": "packages/backend/src/infrastructure/storage；packages/backend/src/modules/assets；packages/db；apps/api/src/modules/assets；infra",
+      "refs": "FR-05、§10、AC-11、AC-17",
+      "scope": "实现StorageProvider流式接口、临时upload session、PUT/GET签名、幂等complete和下载授权；分离internal/public endpoint，初始化私有Bucket和精确CORS。",
+      "checks": [
+        "真实RustFS PUT/GET/HEAD、签名过期、错误Host、CORS和浏览器直传有证据",
+        "未上传complete失败；重复complete返回同资产/Task",
+        "对象入口可达但无匿名读写权限；DB/日志不持久保存完整签名URL"
+      ],
+      "bodyFile": "docs/issues/T011.md",
+      "issueNumber": 11,
+      "issueUrl": "https://github.com/bao-linfeng/exhibition-ai/issues/11",
+      "branch": null,
+      "prNumber": null,
+      "prUrl": null,
+      "status": "todo"
+    },
+    {
+      "id": "T012",
+      "phase": "M1",
+      "title": "实现素材校验、缩略图和上传管理页",
+      "deps": [
+        "T008",
+        "T010",
+        "T011"
+      ],
+      "dirs": "apps/worker/src/processors/asset-validation.processor.ts；packages/backend/src/modules/assets；apps/web/src/modules/assets；tests/integration",
+      "refs": "FR-05、AC-11、AC-12",
+      "scope": "验证文件头/解码/大小/像素/项目配额；写入不可变正式对象、sha256和512px缩略图；实现批量上传、状态/过滤/分页、失败重传和隐藏。",
+      "checks": [
+        "PNG/JPEG/WebP，25MiB/40MP/批10份/项目2GiB限制同时落在UI和服务端",
+        "修改已签名temp对象不能改变ready资产；校验失败不能用于生成",
+        "隐藏后新选择器不可选，历史与已提交任务引用仍可读；损坏/假MIME/超限有负例"
+      ],
+      "bodyFile": "docs/issues/T012.md",
+      "issueNumber": 12,
+      "issueUrl": "https://github.com/bao-linfeng/exhibition-ai/issues/12",
+      "branch": null,
+      "prNumber": null,
+      "prUrl": null,
+      "status": "todo"
+    },
+    {
+      "id": "T013",
+      "phase": "M2",
+      "title": "扩展图片任务、输出和尝试模型",
+      "deps": [
+        "T009",
+        "T010",
+        "T012"
+      ],
+      "dirs": "packages/backend/src/modules/{tasks,generations}；packages/db；packages/contracts；apps/api/src/modules/generations",
+      "refs": "FR-06、FR-07、§7～§9、AC-03、AC-04",
+      "scope": "实现kind前置、请求幂等与参数hash、Task/attempt/output状态和不可变输入快照；创建任务与Outbox同事务；为费用T014和执行T016建立契约。",
+      "checks": [
+        "相同幂等key复用结果，改参409；同事务保存请求与输出计划",
+        "新任务使用当前确认Brief，已排队任务不随Brief变化",
+        "mode=generate/edit字段及模型参数可校验；无前置接口明确拒绝，不返回假成功"
+      ],
+      "bodyFile": "docs/issues/T013.md",
+      "issueNumber": 13,
+      "issueUrl": "https://github.com/bao-linfeng/exhibition-ai/issues/13",
+      "branch": null,
+      "prNumber": null,
+      "prUrl": null,
+      "status": "todo"
+    },
+    {
+      "id": "T014",
+      "phase": "M2",
+      "title": "实现额度预留、费用账本和配置服务",
+      "deps": [
+        "T013"
+      ],
+      "dirs": "packages/backend/src/modules/{settings,tasks,audit}；packages/db；apps/api/src/modules/settings",
+      "refs": "FR-11、FR-12、§8、AC-03、AC-14",
+      "scope": "建立模型启用/能力/价格配置、系统与用户额度、usage账本、原子预留与结算、estimated/actual/unknown；操作随业务写入审计，查询界面后续交付。",
+      "checks": [
+        "并发最后余额仅合法请求成功，可用额度不出现负数",
+        "attempt分摊Task已有预留，不双扣；新增可计费重试才补额度",
+        "跨日按正确period_date结算且只结算一次，未知费用不记为零；原始币种保留"
+      ],
+      "bodyFile": "docs/issues/T014.md",
+      "issueNumber": 14,
+      "issueUrl": "https://github.com/bao-linfeng/exhibition-ai/issues/14",
+      "branch": null,
+      "prNumber": null,
+      "prUrl": null,
+      "status": "todo"
+    },
+    {
+      "id": "T015",
+      "phase": "M2",
+      "title": "实现 AI Provider 契约、Mock 和 Prompt 快照",
+      "deps": [
+        "T003",
+        "T013"
+      ],
+      "dirs": "packages/backend/src/ports；packages/ai；apps/worker/src/bootstrap.ts；tests/fixtures",
+      "refs": "FR-06、§5、§8、AC-18",
+      "scope": "建立TextProvider/ImageProvider与版本化Prompt、能力配置和错误分类；Mock支持成功/延迟/部分失败/拒绝/接受后未知/重复结果；worker注入，backend不反向导入ai。",
+      "checks": [
+        "Mock输出确定且有调用计数、requestId和可验证图片",
+        "未知/停用模型、无edit能力、参数不支持被明确拒绝",
+        "快照保存最终Prompt和配置版本；Web及日志不泄露凭证/内部Prompt"
+      ],
+      "bodyFile": "docs/issues/T015.md",
+      "issueNumber": 15,
+      "issueUrl": "https://github.com/bao-linfeng/exhibition-ai/issues/15",
+      "branch": null,
+      "prNumber": null,
+      "prUrl": null,
+      "status": "todo"
+    },
+    {
+      "id": "T016",
+      "phase": "M2",
+      "title": "实现多图生成、结果落盘和版本发布",
+      "deps": [
+        "T012",
+        "T013",
+        "T014",
+        "T015"
+      ],
+      "dirs": "apps/worker/src/processors/image-generation.processor.ts；packages/backend/src/modules/{generations,image-versions}；packages/db",
+      "refs": "FR-06、FR-08、AC-07、AC-12",
+      "scope": "执行每批1～4图，逐输出校验并保存asset/image_version；原子发布成功结果、单调sequence和父版本；遵守并发/排队上限，保留部分成功。",
+      "checks": [
+        "3图2成功时保留2版本，失败输出可追踪；重复结果不重复发布版本或费用",
+        "图片实际格式/哈希/来源可追踪，下载返回流遵守大小和允许主机限制",
+        "生成默认不自动选图；并发版本序号唯一；用户2/系统4/队列100默认容量生效"
+      ],
+      "bodyFile": "docs/issues/T016.md",
+      "issueNumber": 16,
+      "issueUrl": "https://github.com/bao-linfeng/exhibition-ai/issues/16",
+      "branch": null,
+      "prNumber": null,
+      "prUrl": null,
+      "status": "todo"
+    },
+    {
+      "id": "T017",
+      "phase": "M2",
+      "title": "实现 AI Brief 解析和设计方向生成",
+      "deps": [
+        "T009",
+        "T014",
+        "T015"
+      ],
+      "dirs": "packages/ai；packages/backend/src/modules/{briefs,generations}；apps/worker/src/processors；apps/web/src/modules/{briefs,generations}",
+      "refs": "FR-04、FR-06",
+      "scope": "用异步Task返回Brief候选/缺失项/待核对项和3个结构化方向；实现候选预览采纳、方向选择，记录文本用量和审计。",
+      "checks": [
+        "解析候选不覆盖已保存Brief，采纳后新revision仍需确认",
+        "方向包含布局/材料配色/限制/人工待确认项，不宣称施工认证",
+        "sales可解析Brief但不能生成方向/图片；结构化输出失败有明确状态"
+      ],
+      "bodyFile": "docs/issues/T017.md",
+      "issueNumber": 17,
+      "issueUrl": "https://github.com/bao-linfeng/exhibition-ai/issues/17",
+      "branch": null,
+      "prNumber": null,
+      "prUrl": null,
+      "status": "todo"
+    },
+    {
+      "id": "T018",
+      "phase": "M2",
+      "title": "实现取消、失败重试和未知任务对账",
+      "deps": [
+        "T016"
+      ],
+      "dirs": "packages/backend/src/modules/tasks；apps/api/src/modules/tasks；apps/worker/src/schedulers；tests/integration",
+      "refs": "FR-07、§8、AC-05～AC-08、AC-14、NFR-08",
+      "scope": "实现排队/运行取消、CAS固定终态、超时/进程死亡对账、过期租约、Provider请求标识恢复；重试生成新Task并只映射失败输出，处理迟到结果和孤儿对象。",
+      "checks": [
+        "queued/running/完成取消竞争结果符合基线，cancelled不回跳成功",
+        "接受后未知进入reconciling且不盲重发，故障注入校验Provider调用次数",
+        "重试只处理失败输出，已有图片/账本不重复；恢复结论与无法自动对账路径可见"
+      ],
+      "bodyFile": "docs/issues/T018.md",
+      "issueNumber": 18,
+      "issueUrl": "https://github.com/bao-linfeng/exhibition-ai/issues/18",
+      "branch": null,
+      "prNumber": null,
+      "prUrl": null,
+      "status": "todo"
+    },
+    {
+      "id": "T019",
+      "phase": "M2",
+      "title": "接入首个真实图片与文本 Provider 并验证能力",
+      "deps": [
+        "T014",
+        "T015",
+        "T016",
+        "T018"
+      ],
+      "dirs": "packages/ai/providers；docs/DEPENDENCY_BASELINE.md；tests/integration",
+      "refs": "FR-06、AC-18、NFR-09",
+      "scope": "按实际账号核实模型ID、生成/edit/参数/取消/幂等/结果查询及计价；实现首个文本和图片适配器；真实调用仅在配置账号与明确测试额度后执行。",
+      "checks": [
+        "记录实际日期/配置/请求摘要/用量与至少一次真实生成和一次基于父图修改",
+        "不支持edit不能伪装为编辑；未知执行遵守实际Provider能力",
+        "缺少账号或额度标记blocked，Mock证据不得关闭本Issue；密钥与敏感素材不入库"
+      ],
+      "bodyFile": "docs/issues/T019.md",
+      "issueNumber": 19,
+      "issueUrl": "https://github.com/bao-linfeng/exhibition-ai/issues/19",
+      "branch": null,
+      "prNumber": null,
+      "prUrl": null,
+      "status": "todo"
+    },
+    {
+      "id": "T020",
+      "phase": "M3",
+      "title": "实现自然语言修改与版本比较选图",
+      "deps": [
+        "T008",
+        "T016",
+        "T017",
+        "T018"
+      ],
+      "dirs": "apps/web/src/modules/{generations,image-versions}；packages/backend/src/modules/image-versions；apps/api/src/modules/image-versions",
+      "refs": "FR-06、FR-08、AC-09、AC-12",
+      "scope": "实现生成/修改表单、网格、原图、两图比较、父子树和历史分叉；选中方案单指针+revision；旧Brief父图修改显示差异并记录显式确认。",
+      "checks": [
+        "V1分叉并切回旧方案不会丢后续分支",
+        "并发选图一次成功另一次409，全项目最多一个选中方案",
+        "修改必传父版本和指令，旧Brief确认不能自动勾选；只展示模型支持参数"
+      ],
+      "bodyFile": "docs/issues/T020.md",
+      "issueNumber": 20,
+      "issueUrl": "https://github.com/bao-linfeng/exhibition-ai/issues/20",
+      "branch": null,
+      "prNumber": null,
+      "prUrl": null,
+      "status": "todo"
+    },
+    {
+      "id": "T021",
+      "phase": "M3",
+      "title": "实现持久化 SSE、重连和授权撤销",
+      "deps": [
+        "T006",
+        "T007",
+        "T010",
+        "T016"
+      ],
+      "dirs": "apps/api/src/realtime；packages/backend；packages/db；packages/contracts；apps/web/src/shared/realtime；infra/nginx",
+      "refs": "§9.3、AC-10、AC-17、NFR-03",
+      "scope": "实现项目内事件序列、状态提交同事务事件、重放/过期reset/REST快照；建立一项目一连接、资源revision去重和Cookie授权；后续Agent复用同通道。",
+      "checks": [
+        "乱序/重复/断线不倒退状态；7天前cursor reset并按latestEventSequence恢复",
+        "每15秒心跳、30秒复查授权、每用户最多5连接；撤权后停止推送",
+        "真实反代关闭缓冲与压缩；已提交事件更新P95<2秒及断线5秒内终态恢复可测"
+      ],
+      "bodyFile": "docs/issues/T021.md",
+      "issueNumber": 21,
+      "issueUrl": "https://github.com/bao-linfeng/exhibition-ai/issues/21",
+      "branch": null,
+      "prNumber": null,
+      "prUrl": null,
+      "status": "todo"
+    },
+    {
+      "id": "T022",
+      "phase": "M3",
+      "title": "实现任务中心和工作台运行状态",
+      "deps": [
+        "T008",
+        "T018",
+        "T020",
+        "T021"
+      ],
+      "dirs": "apps/web/src/modules/{tasks,design,generations,dashboard}；packages/backend/src/modules/tasks；apps/api/src/modules/tasks",
+      "refs": "FR-03、FR-07、§4",
+      "scope": "展示跨可见项目任务、阶段/张数/耗时/错误/费用状态和取消重试；全局任务页5秒轮询、后台降频；工作台用SSE更新。",
+      "checks": [
+        "刷新可恢复活跃任务、部分成功、unknown与终态，不把断线当任务失败",
+        "取消请求与取消完成不同；不显示虚构百分比或重复生成",
+        "仪表盘仅聚合可见项目，额度不足/未确认Brief/模型不可用有可执行提示"
+      ],
+      "bodyFile": "docs/issues/T022.md",
+      "issueNumber": 22,
+      "issueUrl": "https://github.com/bao-linfeng/exhibition-ai/issues/22",
+      "branch": null,
+      "prNumber": null,
+      "prUrl": null,
+      "status": "todo"
+    },
+    {
+      "id": "T023",
+      "phase": "M3",
+      "title": "完成响应式三栏设计工作台",
+      "deps": [
+        "T009",
+        "T012",
+        "T020",
+        "T021",
+        "T022"
+      ],
+      "dirs": "apps/web/src/modules/design；apps/web/src/app/layouts；apps/web/src/shared/styles；tests/e2e",
+      "refs": "§4.2、NFR-04、NFR-05、NFR-07",
+      "scope": "组合左Brief/素材、中图片、右会话区域；按四档宽度切换面板/抽屉/标签；完善键盘、焦点、通知、图片懒加载和上下文清理，Agent能力由T024接入。",
+      "checks": [
+        "1440/1024/768阈值及手机布局可用，切换项目清理草稿/选择/订阅",
+        "键盘完成已有建项目/上传/生成/选图流程，无仅颜色表达状态",
+        "构建体积与慢网首屏有记录，原图按需加载；未完成Agent不伪装为可用"
+      ],
+      "bodyFile": "docs/issues/T023.md",
+      "issueNumber": 23,
+      "issueUrl": "https://github.com/bao-linfeng/exhibition-ai/issues/23",
+      "branch": null,
+      "prNumber": null,
+      "prUrl": null,
+      "status": "todo"
+    },
+    {
+      "id": "T024",
+      "phase": "M4",
+      "title": "实现共享会话、消息协议与 Agent 编排",
+      "deps": [
+        "T015",
+        "T017",
+        "T021",
+        "T023"
+      ],
+      "dirs": "packages/ai/agents；packages/ai/tools；packages/backend/src/modules/conversations；apps/worker/src/processors/agent-run.processor.ts；apps/web/src/modules/conversations",
+      "refs": "FR-09、§9.3",
+      "scope": "实现项目默认共享会话、结构化parts、Mastra受控只读工具与操作提案、上下文裁剪、持久化流式offset、执行摘要；变更执行必须等待T025。",
+      "checks": [
+        "同clientMessageId复用run，单会话最多1活跃run；取消run不隐式取消图片任务",
+        "工具最多8次/有效120秒/结构化修复最多1次；每次经Service授权",
+        "断线重放不重复文本，崩溃尾部interrupted；Markdown/URL安全，不输出隐藏思维链"
+      ],
+      "bodyFile": "docs/issues/T024.md",
+      "issueNumber": 24,
+      "issueUrl": "https://github.com/bao-linfeng/exhibition-ai/issues/24",
+      "branch": null,
+      "prNumber": null,
+      "prUrl": null,
+      "status": "todo"
+    },
+    {
+      "id": "T025",
+      "phase": "M4",
+      "title": "实现 Agent 人工确认及原子执行",
+      "deps": [
+        "T014",
+        "T018",
+        "T024"
+      ],
+      "dirs": "packages/backend/src/modules/conversations；packages/db；packages/ai/tools；apps/api/src/modules/conversations；apps/web/src/modules/conversations",
+      "refs": "FR-09、AC-13",
+      "scope": "持久化apply_brief_patch/create_generation确认，绑定发起人/action/hash/Brief/模型/父版本/费用上限，15分钟到期；批准、拒绝与过期结果可追踪。",
+      "checks": [
+        "过期/改参/撤权/非发起人批准不能产生变更或付费Task",
+        "有效重复批准返回原revision或Task，仅创建一次且额度不双预留",
+        "Brief批准仅保存未确认revision；生成批准才建Task；直接生成按钮不重复弹确认"
+      ],
+      "bodyFile": "docs/issues/T025.md",
+      "issueNumber": 25,
+      "issueUrl": "https://github.com/bao-linfeng/exhibition-ai/issues/25",
+      "branch": null,
+      "prNumber": null,
+      "prUrl": null,
+      "status": "todo"
+    },
+    {
+      "id": "T026",
+      "phase": "M4",
+      "title": "实现项目评审、批准、退回和归档",
+      "deps": [
+        "T007",
+        "T009",
+        "T018",
+        "T020",
+        "T025"
+      ],
+      "dirs": "packages/backend/src/modules/projects；packages/db；apps/api/src/modules/projects；apps/web/src/modules/projects",
+      "refs": "FR-02、AC-15",
+      "scope": "实现designing/reviewing/approved与显式重新打开、退回原因、批准快照；归档前查活跃任务/确认，恢复到原状态并审计。",
+      "checks": [
+        "无选中版本或有活跃生成时不得提交评审，批准按sales/admin权限",
+        "reviewing/approved锁定Brief/选图/新生成，先合法转换再变更",
+        "归档冲突409列阻塞项，归档只读；恢复不绕权限、不删除历史批准"
+      ],
+      "bodyFile": "docs/issues/T026.md",
+      "issueNumber": 26,
+      "issueUrl": "https://github.com/bao-linfeng/exhibition-ai/issues/26",
+      "branch": null,
+      "prNumber": null,
+      "prUrl": null,
+      "status": "todo"
+    },
+    {
+      "id": "T027",
+      "phase": "M5",
+      "title": "实现原图下载、ZIP 导出和导出记录",
+      "deps": [
+        "T011",
+        "T016",
+        "T018",
+        "T026"
+      ],
+      "dirs": "packages/backend/src/modules/exports；apps/worker/src/processors/export.processor.ts；apps/api/src/modules/exports；apps/web/src/modules/exports",
+      "refs": "FR-10、AC-01、AC-02、AC-17",
+      "scope": "授权下载单图；选择1～20版本创建不超过500MiB的ZIP Task及manifest；提供导出记录/状态/过期重建，安全处理文件名。",
+      "checks": [
+        "ZIP包含原图与正确来源manifest，不含内部Prompt/凭证/联系人",
+        "viewer可导出可见项目；越权不给签名，过期链接可授权重新生成",
+        "导出异步流式处理、失败可恢复，7天清ZIP不删除版本原图"
+      ],
+      "bodyFile": "docs/issues/T027.md",
+      "issueNumber": 27,
+      "issueUrl": "https://github.com/bao-linfeng/exhibition-ai/issues/27",
+      "branch": null,
+      "prNumber": null,
+      "prUrl": null,
+      "status": "todo"
+    },
+    {
+      "id": "T028",
+      "phase": "M5",
+      "title": "实现管理员用户、模型、额度和审计界面",
+      "deps": [
+        "T006",
+        "T014",
+        "T025",
+        "T026"
+      ],
+      "dirs": "apps/web/src/modules/settings；apps/api/src/modules/{users,settings,audit}；packages/backend/src/modules/{users,settings,audit}",
+      "refs": "FR-01、FR-11、FR-12、AC-18",
+      "scope": "实现查看/停用用户/改角色、模型健康/启停/并发/额度和审计过滤分页；回查此前业务审计覆盖并补缺，不在线编辑凭证或任意endpoint。",
+      "checks": [
+        "最后启用admin不可停用/降权；用户停用撤销Session，权限变更重新验证",
+        "设置受服务端Schema/范围控制并留审计；前端与接口不返回密钥",
+        "登录异常/成员/Brief/生成取消重试/选图/审批/导出/设置审计齐全且仅追加"
+      ],
+      "bodyFile": "docs/issues/T028.md",
+      "issueNumber": 28,
+      "issueUrl": "https://github.com/bao-linfeng/exhibition-ai/issues/28",
+      "branch": null,
+      "prNumber": null,
+      "prUrl": null,
+      "status": "todo"
+    },
+    {
+      "id": "T029",
+      "phase": "M5",
+      "title": "实现生产镜像、HTTPS 部署和运维观测",
+      "deps": [
+        "T002",
+        "T005",
+        "T021",
+        "T027",
+        "T028"
+      ],
+      "dirs": "infra/compose.prod.yaml；infra/docker；infra/nginx；infra/scripts；docs/RUNBOOK.md",
+      "refs": "§11、AC-17、NFR-06",
+      "scope": "多阶段不可变镜像、非root API/Worker、资源上限和优雅退出；1Panel域名/TLS对接；明确迁移和发布顺序；建立日志/指标及阈值告警。",
+      "checks": [
+        "外部浏览器HTTPS验证SPA深链、Session/CSRF、SSE和S3直传，API 404仍为JSON",
+        "公网仅Web和对象入口；PG/Redis/console/API原始端口不公开；真实生产拒绝Mock",
+        "Outbox>60秒/reconciling>15分钟/磁盘>80%/备份>26小时能检测，测试不真实发送通知"
+      ],
+      "bodyFile": "docs/issues/T029.md",
+      "issueNumber": 29,
+      "issueUrl": "https://github.com/bao-linfeng/exhibition-ai/issues/29",
+      "branch": null,
+      "prNumber": null,
+      "prUrl": null,
+      "status": "todo"
+    },
+    {
+      "id": "T030",
+      "phase": "M5",
+      "title": "实现备份恢复、保留策略和安全清理",
+      "deps": [
+        "T018",
+        "T027",
+        "T029"
+      ],
+      "dirs": "infra/scripts；apps/worker/src/schedulers/storage-cleanup.ts；packages/backend；docs/RUNBOOK.md；tests/integration",
+      "refs": "§10、§11.4～§11.5、AC-16",
+      "scope": "一致性备份暂停新写/清理并排空Worker，备份DB+对象和hash清单到独立位置；恢复队列并对账；实现过期会话/临时对象/SSE/ZIP清理及管理员引用保护。",
+      "checks": [
+        "空环境恢复后登录/版本树/抽样hash/下载成功，记录RPO≤24小时/RTO≤4小时实测",
+        "保留7日备份/4周备份；业务日志30日、审计费用≥180日等策略落实或记录公司批准调整",
+        "普通down不删卷；引用中/活跃任务资产不物理删除，备份失败可观测"
+      ],
+      "bodyFile": "docs/issues/T030.md",
+      "issueNumber": 30,
+      "issueUrl": "https://github.com/bao-linfeng/exhibition-ai/issues/30",
+      "branch": null,
+      "prNumber": null,
+      "prUrl": null,
+      "status": "todo"
+    },
+    {
+      "id": "T031",
+      "phase": "M5",
+      "title": "完成端到端、性能与真实质量验收",
+      "deps": [
+        "T005",
+        "T019",
+        "T023",
+        "T025",
+        "T026",
+        "T027",
+        "T028",
+        "T029",
+        "T030"
+      ],
+      "dirs": "tests/e2e；tests/integration；tests/fixtures；docs/ACCEPTANCE_REPORT.md",
+      "refs": "AC-01～AC-18、NFR-01～NFR-09",
+      "scope": "完成18场景、20在线/1万项目/10万资产压测、键盘/可访问性和慢网/体积评估；10组授权Brief各3首图+1修改的人工质量评估；交付运行手册与已知限制。",
+      "checks": [
+        "报告分别列Mock、真实PG/Redis/RustFS、真实Provider和人工证据；未测不得勾完成",
+        "API P95<500ms、任务创建P95<1s等逐项测量；未达标先修复或记录经确认基线变更",
+        "至少8/10组平均≥3/5且可深化；不以精选单图代替整体样本，完整Docker环境可复现"
+      ],
+      "bodyFile": "docs/issues/T031.md",
+      "issueNumber": 31,
+      "issueUrl": "https://github.com/bao-linfeng/exhibition-ai/issues/31",
+      "branch": null,
+      "prNumber": null,
+      "prUrl": null,
+      "status": "todo"
+    },
+    {
+      "id": "T032",
+      "phase": "P1",
+      "title": "实现知识库文档入库和解析",
+      "deps": [
+        "T031"
+      ],
+      "dirs": "packages/backend/src/modules/knowledge；packages/db；packages/contracts；apps/worker/src/processors；apps/web/src/modules/knowledge",
+      "refs": "§1.2、§14",
+      "scope": "先登记支持文档格式/大小/页数和解析引擎，再建立documents/chunks/解析Task/来源页码；文档原体复用asset存储，扩展白名单而非绕过MVP图片校验。",
+      "checks": [
+        "合法文件可入库、解析、重试并追溯页码，恶意/损坏/超限文件被拒绝",
+        "文档与案例按项目授权，删除/隐藏不破坏已引用证据",
+        "解析依赖在Docker内可重现，具体支持格式与限制入需求并验收"
+      ],
+      "bodyFile": "docs/issues/T032.md",
+      "issueNumber": 32,
+      "issueUrl": "https://github.com/bao-linfeng/exhibition-ai/issues/32",
+      "branch": null,
+      "prNumber": null,
+      "prUrl": null,
+      "status": "todo"
+    },
+    {
+      "id": "T033",
+      "phase": "P1",
+      "title": "实现语义检索、引用与索引重建",
+      "deps": [
+        "T032"
+      ],
+      "dirs": "packages/backend/src/modules/knowledge；packages/ai；packages/db；apps/web/src/modules/knowledge；infra",
+      "refs": "§14",
+      "scope": "容器数据库引入pgvector兼容镜像/迁移；配置Embedding维度/版本、分块向量和重建Task；实现权限过滤检索与Agent引用。",
+      "checks": [
+        "不同模型/维度不混索引，迁移和重建可恢复且历史引用仍能读取",
+        "先权限过滤再返回，不足继续补取；跨项目撤权后不泄漏命中片段",
+        "答案引用能打开授权原文/页码，无命中不编造来源；检索质量有固定样本"
+      ],
+      "bodyFile": "docs/issues/T033.md",
+      "issueNumber": 33,
+      "issueUrl": "https://github.com/bao-linfeng/exhibition-ai/issues/33",
+      "branch": null,
+      "prNumber": null,
+      "prUrl": null,
+      "status": "todo"
+    },
+    {
+      "id": "T034",
+      "phase": "P1",
+      "title": "实现 PDF 提案导出",
+      "deps": [
+        "T031"
+      ],
+      "dirs": "packages/backend/src/modules/exports；apps/worker/src/processors；apps/web/src/modules/exports；infra/docker",
+      "refs": "§14、FR-10扩展",
+      "scope": "为export Task增加PDF格式和模板版本，复用授权/快照/状态；明确封面/Brief摘要/选定版本/来源说明的内容合同。",
+      "checks": [
+        "中文字体、分页、长文本、大图和内存限制在容器渲染验证",
+        "与ZIP同权限/取消/重试/过期规则，不在HTTP请求中阻塞渲染",
+        "输出不含秘密/内部Prompt，固定样例人工查看每页无截断"
+      ],
+      "bodyFile": "docs/issues/T034.md",
+      "issueNumber": 34,
+      "issueUrl": "https://github.com/bao-linfeng/exhibition-ai/issues/34",
+      "branch": null,
+      "prNumber": null,
+      "prUrl": null,
+      "status": "todo"
+    },
+    {
+      "id": "T035",
+      "phase": "P1",
+      "title": "实现多个真实 Provider 和配置选择",
+      "deps": [
+        "T031"
+      ],
+      "dirs": "packages/ai/providers；packages/backend/src/modules/settings；apps/web/src/modules/{settings,generations}",
+      "refs": "§1.2、FR-06扩展",
+      "scope": "接入至少第二个真实图片Provider；统一能力展示/错误映射/计价/运行对账；任务绑定实际配置版本，选择行为可追溯。",
+      "checks": [
+        "每个适配器分别验证生成及其声明的编辑能力，不能把不支持项静默忽略",
+        "不同币种/费用/取消/幂等差异在契约中明确",
+        "不暗中切换模型或Provider重发未知付费请求；旧任务可按原快照追踪"
+      ],
+      "bodyFile": "docs/issues/T035.md",
+      "issueNumber": 35,
+      "issueUrl": "https://github.com/bao-linfeng/exhibition-ai/issues/35",
+      "branch": null,
+      "prNumber": null,
+      "prUrl": null,
+      "status": "todo"
+    },
+    {
+      "id": "T036",
+      "phase": "P1",
+      "title": "实现收藏、标签和历史案例筛选",
+      "deps": [
+        "T031"
+      ],
+      "dirs": "packages/backend/src/modules/{projects,assets,image-versions}；packages/db；apps/web/src/modules/{projects,assets,image-versions}",
+      "refs": "§1.2 P1",
+      "scope": "定义个人收藏、项目共享标签、标签命名/去重/上限；实现收藏切换、标签管理和组合过滤，复用可见范围授权。",
+      "checks": [
+        "个人收藏互不覆盖，共享标签修改权限清楚；并发重复操作幂等",
+        "列表/计数/搜索均不泄露不可见项目，归档只读规则一致",
+        "标签改名/删除及分页筛选可验收，不修改不可变版本来源快照"
+      ],
+      "bodyFile": "docs/issues/T036.md",
+      "issueNumber": 36,
+      "issueUrl": "https://github.com/bao-linfeng/exhibition-ai/issues/36",
+      "branch": null,
+      "prNumber": null,
+      "prUrl": null,
+      "status": "todo"
+    },
+    {
+      "id": "T037",
+      "phase": "P1",
+      "title": "实现 Prompt 模板管理与版本发布",
+      "deps": [
+        "T031"
+      ],
+      "dirs": "packages/backend/src/modules/settings；packages/db；packages/ai/prompts；apps/web/src/modules/settings",
+      "refs": "§1.2 P1、FR-12扩展",
+      "scope": "以ADR扩展MVP源码模板为管理员草稿/校验/发布/回滚；每次发布不可变版本，测试预览记录用量，在线编辑不允许任意工具或代码执行。",
+      "checks": [
+        "已提交任务继续使用原Prompt快照，回滚仅影响新任务",
+        "非管理员不可修改，模板变量校验和变更审计齐全",
+        "预览实际付费须显示额度并明确执行，凭证和任意endpoint不可通过模板注入"
+      ],
+      "bodyFile": "docs/issues/T037.md",
+      "issueNumber": 37,
+      "issueUrl": "https://github.com/bao-linfeng/exhibition-ai/issues/37",
+      "branch": null,
+      "prNumber": null,
+      "prUrl": null,
+      "status": "todo"
+    },
+    {
+      "id": "T038",
+      "phase": "P2",
+      "title": "实现 ComfyUI Worker 适配器",
+      "deps": [
+        "T031"
+      ],
+      "dirs": "packages/ai/providers；apps/worker；infra；docs/adr；docs/RUNBOOK.md",
+      "refs": "§14 P2",
+      "scope": "登记GPU/显存与模型权重条件，建立单独Compose profile及ImageProvider适配；固定工作流版本和允许参数，处理排队/取消/超时/结果对账。",
+      "checks": [
+        "GPU环境与工作流可复现；缺设备/权重明确blocked，不冒充通过",
+        "授权范围内结果进入统一asset/version/Task/费用状态",
+        "ComfyUI端口不公开为任意执行入口，不接受客户端任意工作流节点/路径"
+      ],
+      "bodyFile": "docs/issues/T038.md",
+      "issueNumber": 38,
+      "issueUrl": "https://github.com/bao-linfeng/exhibition-ai/issues/38",
+      "branch": null,
+      "prNumber": null,
+      "prUrl": null,
+      "status": "todo"
+    },
+    {
+      "id": "T039",
+      "phase": "P2",
+      "title": "实现 Mask 局部编辑和编辑器基础",
+      "deps": [
+        "T031"
+      ],
+      "dirs": "apps/web/src/modules/design/editor；packages/contracts；packages/backend/src/modules/generations；packages/ai；packages/db",
+      "refs": "§14 P2",
+      "scope": "先确定支持Mask的已验证Provider；实现画布坐标/缩放/撤销重做/Mask资产、父图尺寸映射和版本化编辑参数；仅确有对象编辑需要才引入Konva/Fabric。",
+      "checks": [
+        "缩放/旋转等支持操作下Mask与父图坐标一致，格式/大小服务端验证",
+        "编辑生成新的子版本且父图不变，刷新后参数可追溯",
+        "Provider无Mask能力明确禁用；真实样本验证局部指令及保留区域的实际限制"
+      ],
+      "bodyFile": "docs/issues/T039.md",
+      "issueNumber": 39,
+      "issueUrl": "https://github.com/bao-linfeng/exhibition-ai/issues/39",
+      "branch": null,
+      "prNumber": null,
+      "prUrl": null,
+      "status": "todo"
+    },
+    {
+      "id": "T040",
+      "phase": "P2",
+      "title": "实现草图与深度等条件控制生成",
+      "deps": [
+        "T038",
+        "T039"
+      ],
+      "dirs": "apps/web/src/modules/design/editor；packages/ai/providers；packages/backend/src/modules/generations；packages/contracts",
+      "refs": "§14 P2",
+      "scope": "明确草图/深度控制的输入格式、预处理器和工作流版本；实现受限强度参数、资产选择及能力提示，延续统一任务状态。",
+      "checks": [
+        "输入尺寸/坐标/格式匹配且越权资产被拒绝",
+        "控制参数和预处理版本进入任务快照，可复现相同配置",
+        "实际支持能力分别用样本验证，不承诺严格多视角一致或精确施工尺寸"
+      ],
+      "bodyFile": "docs/issues/T040.md",
+      "issueNumber": 40,
+      "issueUrl": "https://github.com/bao-linfeng/exhibition-ai/issues/40",
+      "branch": null,
+      "prNumber": null,
+      "prUrl": null,
+      "status": "todo"
+    },
+    {
+      "id": "T041",
+      "phase": "P2-评估",
+      "title": "评估 BOM、报价和施工交付的独立需求",
+      "deps": [
+        "T031"
+      ],
+      "dirs": "docs/adr；docs/requirements",
+      "refs": "§1.2、§14 范围边界",
+      "scope": "仅产出独立需求评估：材料/工程量来源、价格维护、税费、人工审批、施工专业责任、输入输出和验收；未经确认不将效果图自动视为可施工数据。",
+      "checks": [
+        "明确数据来源、单位、版本、精度和人工审核责任",
+        "列实施子Issue、依赖、成本及验证方法，缺信息明确待定",
+        "评审结论区分继续/暂缓；本Issue完成仅指评估交付，不代表BOM/报价功能实现"
+      ],
+      "bodyFile": "docs/issues/T041.md",
+      "issueNumber": 41,
+      "issueUrl": "https://github.com/bao-linfeng/exhibition-ai/issues/41",
+      "branch": null,
+      "prNumber": null,
+      "prUrl": null,
+      "status": "todo"
+    }
+  ]
+}

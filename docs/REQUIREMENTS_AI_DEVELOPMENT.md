@@ -1,6 +1,8 @@
 # 展台 AI 设计平台：产品需求与工程实施规范
 
-版本：1.0 · 编写日期：2026-09-14 · 面向：产品、设计、开发、测试及后续 AI 编程 Agent
+版本：1.1 · 更新日期：2026-09-14 · 面向：产品、设计、开发、测试及后续 AI 编程 Agent
+
+实施任务见根目录 [tasks.md](../tasks.md)，逐项 GitHub Issue 正文见 [发布包](./issues/README.md)，目标仓库为 [bao-linfeng/exhibition-ai](https://github.com/bao-linfeng/exhibition-ai)。本轮新增约束：开发环境所有长期服务均在 Docker Compose 中运行；功能按 Issue 建分支、提交 PR，合并且验收通过后勾选任务。真实 Issue 编号及发布状态以任务清单和 manifest.json 为准；应用、Compose 与功能 PR 仍需逐项实施，不能把发布任务视为功能已交付。
 
 本文将 [原始技术选型文档](./TECH_STACK_AI_UI.md) 转化为可实施、可验收的开发基线。原文保留作为背景；后续开发遇到两份文档冲突时，以本文的范围、命名、接口和业务规则为准。改变本文基线需要记录原因及影响，不得由 AI 在实现过程中自行扩大范围。
 
@@ -756,7 +758,9 @@ StorageProvider 至少提供 `putStream/getStream/head/delete/presignPut/presign
 
 ### 11.1 进程与网络
 
-生产 Compose 至少含 `web/api/worker/postgres/redis/rustfs` 六个服务；一次性 `migrate` 与 `storage-init` 作为部署 job，不由每个 API/Worker 启动时争抢执行。1Panel 管域名、TLS、Compose 与运维；应用配置和发布流程仍由仓库描述。
+开发与生产 Compose 均至少含 `web/api/worker/postgres/redis/rustfs` 六个长期服务；一次性 `migrate` 与 `storage-init` 作为初始化/部署 job，不由每个 API/Worker 启动时争抢执行。开发另有 `devtools` 服务承担依赖安装、生成、seed、账号初始化与测试。1Panel 管生产域名、TLS、Compose 与运维；应用配置和发布流程仍由仓库描述。
+
+开发 Web 使用容器内 Vite，API/Worker 和共享包在容器内 watch；源码挂载和容器依赖卷分离，Windows 宿主机的 node_modules 不挂入 Linux 容器。宿主机不要求 Node/pnpm 或本地数据库。开发热更新镜像与生产多阶段镜像分开；依赖服务健康后再执行初始化。真实开发端口、Vite HMR、浏览器对象入口与测试隔离策略由 T002 验证并写入 DEVELOPMENT.md。
 
 ```text
 浏览器 → HTTPS ai.example.com → Nginx/Web
@@ -793,17 +797,16 @@ Node 镜像选锁定 patch 的 bookworm-slim，Web 多阶段构建后使用锁�
 
 ### 11.3 初始化和开发命令
 
-下列是 **M0 必须实现的根 package scripts 契约**，当前仓库尚无这些脚本，不能描述为现在直接可执行。实现时用 Node 脚本兼容 PowerShell/Linux，不依赖 Bash 专用语法或根目录 `cp/rm` 假设。
+下列是 **M0 必须实现的容器内根 package scripts 契约**，当前仓库尚无这些脚本和 Compose，不能描述为现在直接可执行。宿主机入口使用 Docker Compose，不要求安装 Node/pnpm。项目脚本使用 Node，开发指南同时验证 PowerShell/Linux 的 Docker 命令。
 
 | 命令 | 必须完成的动作 |
 |---|---|
-| `pnpm infra:up` / `pnpm infra:down` | 启停开发 PG/Redis/RustFS；down 不删除数据卷 |
 | `pnpm storage:init` | 幂等创建私有 Bucket 和开发 CORS；不打印凭证 |
 | `pnpm db:generate` | 生成待审 SQL，禁止直接推生产 Schema |
 | `pnpm db:migrate` | 对当前目标 DB 执行已审核迁移 |
 | `pnpm db:seed` | 仅 dev/test 可运行的幂等样例数据 |
 | `pnpm user:bootstrap` | 受控创建首个管理员；交互输入或安全注入密码，不含默认生产密码 |
-| `pnpm dev` | 依赖包 watch + API/Worker/Web；错误时给出缺失前置服务 |
+| `pnpm dev`（各应用包） | 在对应 web/api/worker 容器内启动该应用 watch；共享包 watch 明确分工，避免多个容器竞争写同一构建目录；不在宿主机同时运行三应用 |
 | `pnpm lint` / `pnpm typecheck` | ESLint + vue-tsc/tsc，全 workspace |
 | `pnpm check:boundaries` | 跨 app/私有路径/服务端进入 Web/循环依赖检查 |
 | `pnpm api:generate` | 无需真实模型联网，导出 OpenAPI 并生成 Client 类型 |
@@ -812,7 +815,9 @@ Node 镜像选锁定 patch 的 bookworm-slim，Web 多阶段构建后使用锁�
 | `pnpm build` | 先共享包再应用，产出三个可独立部署产物 |
 | `pnpm check` | lint + typecheck + boundaries + api:check + 单元测试 |
 
-干净检出后的标准顺序：安装锁定 Node/pnpm → 复制 `.env.example` 为本地配置并填入开发凭证 → `pnpm install --frozen-lockfile` → `pnpm infra:up` → `pnpm storage:init` → `pnpm db:migrate` → `pnpm db:seed` → `pnpm user:bootstrap` → `pnpm dev`。M0 的 DEVELOPMENT.md 必须记录实际端口和已验证命令。
+干净检出后的标准顺序：准备 Git、Docker Engine/Desktop 和 Compose v2 → 复制 `.env.example` 为本地配置并填入开发凭证 → 构建开发镜像 → devtools 容器执行 frozen-lockfile 安装 → 启动 PG/Redis/RustFS 并等待健康 → 依次运行 storage-init、migrate → devtools 运行 dev/test seed、受控 user:bootstrap → 启动 web/api/worker。首次工程引导由 T001 生成锁文件，之后固定使用 frozen 安装。
+
+命令统一使用 `docker compose --env-file .env -f infra/compose.dev.yaml ...`；检查示例为 `docker compose --env-file .env -f infra/compose.dev.yaml run --rm devtools pnpm check`。完整待实现命令合同见 tasks.md；M0 的 DEVELOPMENT.md 必须记录实际端口、工具服务配置、已验证命令与故障处理。开发停止使用不带 `-v` 的 down，保留数据卷；测试使用隔离数据库/Bucket/队列与 Compose 项目名。生产使用独立 compose.prod.yaml 和不可变镜像。
 
 ### 11.4 发布与恢复
 
@@ -911,7 +916,7 @@ P2 图像编辑器放 `modules/design` 下的专门 editor 子模块，只有需
 ## 15. 给后续 AI 开发的执行约定
 
 1. 开始前读取本文、当前里程碑、已有源码和依赖锁文件；确认哪些已实现，不能仅根据目标目录假定代码存在。
-2. 一次实现一个可端到端验收的任务包，先给出 FR/AC 编号、允许修改目录、依赖与验证方法；需求已明确的低风险实现不反复询问。
+2. 从 tasks.md 选择前置已合并的 GitHub Issue，一次实现一个可验收任务包；从更新后的默认分支建立 feat/issue-<number>-<slug>（工程用 chore/，修复用 fix/），先明确 FR/AC 编号、允许修改目录、依赖与验证方法。所有服务在 Docker 中开发与验证。PR 正文使用 Closes #<number>；合并且验收通过后回填真实 Issue/PR 链接并勾选任务，不批量建立空分支或空 PR。需求已明确的低风险实现不反复询问。
 3. 数据改动先设计约束和迁移；接口先改 contracts；然后业务服务、入口/Worker、生成 Client、Web 和验收，确保垂直闭环。
 4. 使用第 6 节唯一目录归属。除非有已记录的具体理由，不新增顶层目录、万能 common 包、第二套数据库客户端或跨 app 源码引用。
 5. 框架/SDK 的真实签名以锁定版本的官方文档和已安装类型为准；不凭记忆发明模型 ID、插件名、配置键或未存在的脚本。
