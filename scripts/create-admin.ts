@@ -36,8 +36,13 @@ async function createAdminUser() {
     console.log(`  Email: ${email}`);
     console.log(`  Password: ${password}`);
     console.log('  Role: admin');
-  } catch (error: any) {
-    if (error?.code === '23505') {
+  } catch (error: unknown) {
+    if (
+      typeof error === 'object' &&
+      error !== null &&
+      'code' in error &&
+      error.code === '23505'
+    ) {
       console.log('⚠ Admin user already exists');
     } else {
       console.error('✗ Failed to create admin user:', error);

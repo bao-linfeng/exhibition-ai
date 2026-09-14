@@ -1,16 +1,35 @@
-import type { CreateCustomerRequest, Customer as CustomerContract, CustomerStatus, UpdateCustomerRequest } from '@exhibition/contracts';
+import type {
+  CreateCustomerRequest,
+  Customer as CustomerContract,
+  CustomerStatus,
+  UpdateCustomerRequest,
+} from '@exhibition/contracts';
 import type { Customer as DbCustomer } from '@exhibition/db';
 import { CustomerRepository } from './customers.repository.js';
 
 export class CustomerService {
   constructor(private repo: CustomerRepository) {}
 
-  async listCustomers(query: { status?: CustomerStatus; search?: string; cursor?: string; limit?: number }): Promise<{ data: CustomerContract[]; page: { nextCursor: string | null; hasMore: boolean } }> {
+  async listCustomers(query: {
+    status?: CustomerStatus;
+    search?: string;
+    cursor?: string;
+    limit?: number;
+  }): Promise<{
+    data: CustomerContract[];
+    page: { nextCursor: string | null; hasMore: boolean };
+  }> {
     const result = await this.repo.findAll(query);
-    return { data: result.data.map((customer) => this.toCustomer(customer)), page: result.page };
+    return {
+      data: result.data.map((customer) => this.toCustomer(customer)),
+      page: result.page,
+    };
   }
 
-  async createCustomer(data: CreateCustomerRequest, createdBy: string): Promise<CustomerContract> {
+  async createCustomer(
+    data: CreateCustomerRequest,
+    createdBy: string,
+  ): Promise<CustomerContract> {
     return this.toCustomer(await this.repo.create({ ...data, createdBy }));
   }
 
@@ -19,9 +38,25 @@ export class CustomerService {
     return customer ? this.toCustomer(customer) : null;
   }
 
-  async updateCustomer(id: string, data: UpdateCustomerRequest, expectedRevision: number): Promise<CustomerContract | null | 'conflict'> {
-    const { expectedRevision: _expectedRevision, ...update } = data;
-    const customer = await this.repo.update(id, update, expectedRevision);
+  async updateCustomer(
+    id: string,
+    data: UpdateCustomerRequest,
+    expectedRevision: number,
+  ): Promise<CustomerContract | null | 'conflict'> {
+    const customer = await this.repo.update(
+      id,
+      {
+        name: data.name,
+        contactName: data.contactName,
+        contactPhone: data.contactPhone,
+        contactEmail: data.contactEmail,
+        industry: data.industry,
+        address: data.address,
+        notes: data.notes,
+        status: data.status,
+      },
+      expectedRevision,
+    );
     if (customer) return this.toCustomer(customer);
     return (await this.repo.findById(id)) ? 'conflict' : null;
   }

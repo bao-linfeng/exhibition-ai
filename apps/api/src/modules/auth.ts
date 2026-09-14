@@ -1,5 +1,8 @@
 import type { FastifyInstance } from 'fastify';
-import type { LoginRequest, ChangePasswordRequest } from '@exhibition/contracts';
+import type {
+  LoginRequest,
+  ChangePasswordRequest,
+} from '@exhibition/contracts';
 import {
   LoginRequestSchema,
   LoginResponseSchema,
@@ -9,14 +12,6 @@ import {
 } from '@exhibition/contracts';
 
 export async function authRoutes(app: FastifyInstance) {
-  const services = app.services;
-
-  if (!services) {
-    throw new Error('Services not initialized');
-  }
-
-  const { authService } = services;
-
   // POST /api/v1/auth/login
   app.post<{ Body: LoginRequest }>(
     '/api/v1/auth/login',
@@ -28,11 +23,20 @@ export async function authRoutes(app: FastifyInstance) {
         body: LoginRequestSchema,
         response: {
           200: LoginResponseSchema,
-          401: { type: 'object', properties: { error: { type: 'string' }, message: { type: 'string' } } },
+          401: {
+            type: 'object',
+            properties: {
+              error: { type: 'string' },
+              message: { type: 'string' },
+            },
+          },
         },
       },
     },
     async (request, reply) => {
+      if (!app.services)
+        throw app.httpErrors.internalServerError('Services not initialized');
+      const { authService } = app.services;
       const { email, password } = request.body;
 
       const result = await authService.login(email, password);
@@ -67,7 +71,13 @@ export async function authRoutes(app: FastifyInstance) {
         tags: ['auth'],
         response: {
           200: MeResponseSchema,
-          401: { type: 'object', properties: { error: { type: 'string' }, message: { type: 'string' } } },
+          401: {
+            type: 'object',
+            properties: {
+              error: { type: 'string' },
+              message: { type: 'string' },
+            },
+          },
         },
       },
     },
@@ -81,7 +91,7 @@ export async function authRoutes(app: FastifyInstance) {
         });
       }
 
-      const user = await authService.validateSession(sessionId);
+      const user = await app.services!.authService.validateSession(sessionId);
 
       if (!user) {
         reply.clearCookie('sessionId', { path: '/' });
@@ -136,7 +146,7 @@ export async function authRoutes(app: FastifyInstance) {
       const sessionId = request.cookies.sessionId;
 
       if (sessionId) {
-        await authService.logout(sessionId);
+        await app.services!.authService.logout(sessionId);
         reply.clearCookie('sessionId', { path: '/' });
       }
 
@@ -155,8 +165,20 @@ export async function authRoutes(app: FastifyInstance) {
         body: ChangePasswordRequestSchema,
         response: {
           204: { type: 'null', description: 'No content' },
-          401: { type: 'object', properties: { error: { type: 'string' }, message: { type: 'string' } } },
-          400: { type: 'object', properties: { error: { type: 'string' }, message: { type: 'string' } } },
+          401: {
+            type: 'object',
+            properties: {
+              error: { type: 'string' },
+              message: { type: 'string' },
+            },
+          },
+          400: {
+            type: 'object',
+            properties: {
+              error: { type: 'string' },
+              message: { type: 'string' },
+            },
+          },
         },
       },
     },
@@ -170,7 +192,7 @@ export async function authRoutes(app: FastifyInstance) {
         });
       }
 
-      const user = await authService.validateSession(sessionId);
+      const user = await app.services!.authService.validateSession(sessionId);
 
       if (!user) {
         return reply.code(401).send({
@@ -181,7 +203,7 @@ export async function authRoutes(app: FastifyInstance) {
 
       const { currentPassword, newPassword } = request.body;
 
-      const success = await authService.changePassword(
+      const success = await app.services!.authService.changePassword(
         user.id,
         currentPassword,
         newPassword,
@@ -198,4 +220,3 @@ export async function authRoutes(app: FastifyInstance) {
     },
   );
 }
-

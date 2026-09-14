@@ -11,15 +11,22 @@ import { createClient, type RedisClientType } from 'redis';
 import { Redis } from 'ioredis';
 import { createDatabase } from '@exhibition/db';
 import { AuthService, AuthRepository } from './modules/auth/index.js';
-import { CustomerService, CustomerRepository } from './modules/customers/index.js';
+import {
+  CustomerService,
+  CustomerRepository,
+} from './modules/customers/index.js';
 import { ProjectService, ProjectRepository } from './modules/projects/index.js';
 import { UserService, UserRepository } from './modules/users/index.js';
 
 export {
-  AuthService, AuthRepository,
-  CustomerService, CustomerRepository,
-  ProjectService, ProjectRepository,
-  UserService, UserRepository,
+  AuthService,
+  AuthRepository,
+  CustomerService,
+  CustomerRepository,
+  ProjectService,
+  ProjectRepository,
+  UserService,
+  UserRepository,
 };
 
 export {
@@ -77,7 +84,9 @@ export function createServices(): Services {
   // 初始化认证服务
   const authRepository = new AuthRepository(drizzleDb);
   const authService = new AuthService(authRepository);
-  const customerService = new CustomerService(new CustomerRepository(drizzleDb));
+  const customerService = new CustomerService(
+    new CustomerRepository(drizzleDb),
+  );
   const projectService = new ProjectService(new ProjectRepository(drizzleDb));
   const userService = new UserService(new UserRepository(drizzleDb));
 
@@ -144,7 +153,16 @@ export function createServices(): Services {
     await pool.end();
   }
   return {
-    pool, authService, customerService, projectService, userService,
-    redis, s3, bucket, connectRedis, readiness, close,
+    pool,
+    authService,
+    customerService,
+    projectService,
+    userService,
+    redis,
+    s3,
+    bucket,
+    connectRedis,
+    readiness,
+    close,
   };
 }

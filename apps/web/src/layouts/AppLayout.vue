@@ -1,9 +1,17 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
+import { useRoute } from 'vue-router';
 import { useAuth } from '../composables/useAuth.js';
-import { LayoutDashboard, Building2, FolderKanban, Menu, LogOut, Settings, ChevronLeft, ChevronRight, User } from '@lucide/vue';
-import { Avatar, AvatarFallback, AvatarImage } from '../components/ui/avatar/index.js';
+import {
+  LayoutDashboard,
+  Building2,
+  FolderKanban,
+  Menu,
+  LogOut,
+  ChevronLeft,
+  ChevronRight,
+} from '@lucide/vue';
+import { Avatar, AvatarFallback } from '../components/ui/avatar/index.js';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -12,11 +20,16 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '../components/ui/dropdown-menu/index.js';
-import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from '../components/ui/sheet/index.js';
+import {
+  Sheet,
+  SheetContent,
+  SheetTrigger,
+  SheetHeader,
+  SheetTitle,
+} from '../components/ui/sheet/index.js';
 import { Button } from '../components/ui/button/index.js';
 
 const route = useRoute();
-const router = useRouter();
 const { user, logout } = useAuth();
 
 const isCollapsed = ref(false);
@@ -48,15 +61,28 @@ async function handleLogout() {
       :class="isCollapsed ? 'w-[64px]' : 'w-[240px]'"
     >
       <div class="flex h-14 items-center justify-between border-b px-3">
-        <div class="flex items-center gap-2 overflow-hidden" :class="isCollapsed ? 'w-0' : 'w-auto'">
-          <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-primary text-primary-foreground">
+        <div
+          class="flex items-center gap-2 overflow-hidden"
+          :class="isCollapsed ? 'w-0' : 'w-auto'"
+        >
+          <div
+            class="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-primary text-primary-foreground"
+          >
             <LayoutDashboard class="h-4 w-4" />
           </div>
-          <span class="truncate font-semibold text-sidebar-foreground transition-opacity" :class="isCollapsed ? 'opacity-0' : 'opacity-100'">
+          <span
+            class="truncate font-semibold text-sidebar-foreground transition-opacity"
+            :class="isCollapsed ? 'opacity-0' : 'opacity-100'"
+          >
             展台 AI
           </span>
         </div>
-        <Button variant="ghost" size="icon" class="h-8 w-8 shrink-0" @click="isCollapsed = !isCollapsed">
+        <Button
+          variant="ghost"
+          size="icon"
+          class="h-8 w-8 shrink-0"
+          @click="isCollapsed = !isCollapsed"
+        >
           <ChevronRight v-if="isCollapsed" class="h-4 w-4" />
           <ChevronLeft v-else class="h-4 w-4" />
         </Button>
@@ -72,7 +98,7 @@ async function handleLogout() {
             route.path.startsWith(item.href)
               ? 'bg-sidebar-accent text-sidebar-accent-foreground'
               : 'text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground',
-            isCollapsed ? 'justify-center px-0' : ''
+            isCollapsed ? 'justify-center px-0' : '',
           ]"
           :title="isCollapsed ? item.name : ''"
         >
@@ -94,9 +120,14 @@ async function handleLogout() {
                   {{ user?.displayName?.charAt(0)?.toUpperCase() || 'U' }}
                 </AvatarFallback>
               </Avatar>
-              <div v-if="!isCollapsed" class="flex flex-1 items-center justify-between overflow-hidden">
+              <div
+                v-if="!isCollapsed"
+                class="flex flex-1 items-center justify-between overflow-hidden"
+              >
                 <div class="flex flex-col items-start truncate">
-                  <span class="text-sm font-medium truncate w-full">{{ user?.displayName || '用户' }}</span>
+                  <span class="text-sm font-medium truncate w-full">{{
+                    user?.displayName || '用户'
+                  }}</span>
                 </div>
               </div>
             </Button>
@@ -104,7 +135,7 @@ async function handleLogout() {
           <DropdownMenuContent align="start" class="w-56">
             <DropdownMenuLabel>我的账户</DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem @click="handleLogout" class="text-destructive">
+            <DropdownMenuItem class="text-destructive" @click="handleLogout">
               <LogOut class="mr-2 h-4 w-4" />
               退出登录
             </DropdownMenuItem>
@@ -115,7 +146,9 @@ async function handleLogout() {
 
     <!-- Mobile Header -->
     <div class="flex flex-1 flex-col overflow-hidden">
-      <header class="flex h-14 items-center gap-4 border-b bg-background px-4 md:px-6">
+      <header
+        class="flex h-14 items-center gap-4 border-b bg-background px-4 md:px-6"
+      >
         <Sheet v-model:open="isMobileMenuOpen">
           <SheetTrigger as-child>
             <Button variant="ghost" size="icon" class="md:hidden shrink-0">
@@ -124,8 +157,12 @@ async function handleLogout() {
             </Button>
           </SheetTrigger>
           <SheetContent side="left" class="w-[240px] p-0 flex flex-col">
-            <SheetHeader class="h-14 border-b px-4 flex items-center justify-start flex-row gap-2">
-              <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-primary text-primary-foreground">
+            <SheetHeader
+              class="h-14 border-b px-4 flex items-center justify-start flex-row gap-2"
+            >
+              <div
+                class="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-primary text-primary-foreground"
+              >
                 <LayoutDashboard class="h-4 w-4" />
               </div>
               <SheetTitle class="m-0! text-left">展台 AI</SheetTitle>
@@ -135,9 +172,13 @@ async function handleLogout() {
                 v-for="item in navigation"
                 :key="item.name"
                 :to="item.href"
-                @click="isMobileMenuOpen = false"
                 class="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors"
-                :class="route.path.startsWith(item.href) ? 'bg-sidebar-accent text-sidebar-accent-foreground' : 'text-sidebar-foreground hover:bg-sidebar-accent/50'"
+                :class="
+                  route.path.startsWith(item.href)
+                    ? 'bg-sidebar-accent text-sidebar-accent-foreground'
+                    : 'text-sidebar-foreground hover:bg-sidebar-accent/50'
+                "
+                @click="isMobileMenuOpen = false"
               >
                 <component :is="item.icon" class="h-4 w-4" />
                 {{ item.name }}
@@ -146,14 +187,24 @@ async function handleLogout() {
             <div class="border-t p-4">
               <div class="flex items-center gap-3 mb-4">
                 <Avatar class="h-8 w-8">
-                  <AvatarFallback class="bg-primary/10 text-primary">{{ user?.displayName?.charAt(0)?.toUpperCase() || 'U' }}</AvatarFallback>
+                  <AvatarFallback class="bg-primary/10 text-primary">
+                    {{ user?.displayName?.charAt(0)?.toUpperCase() || 'U' }}
+                  </AvatarFallback>
                 </Avatar>
                 <div class="flex flex-col">
-                  <span class="text-sm font-medium">{{ user?.displayName || '用户' }}</span>
-                  <span class="text-xs text-muted-foreground">{{ user?.email || '' }}</span>
+                  <span class="text-sm font-medium">{{
+                    user?.displayName || '用户'
+                  }}</span>
+                  <span class="text-xs text-muted-foreground">{{
+                    user?.email || ''
+                  }}</span>
                 </div>
               </div>
-              <Button variant="outline" class="w-full justify-start text-destructive" @click="handleLogout">
+              <Button
+                variant="outline"
+                class="w-full justify-start text-destructive"
+                @click="handleLogout"
+              >
                 <LogOut class="mr-2 h-4 w-4" />
                 退出登录
               </Button>
@@ -162,7 +213,9 @@ async function handleLogout() {
         </Sheet>
 
         <div class="flex flex-1 items-center justify-between">
-          <div class="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+          <div
+            class="flex items-center gap-2 text-sm font-medium text-muted-foreground"
+          >
             {{ currentRouteName }}
           </div>
         </div>

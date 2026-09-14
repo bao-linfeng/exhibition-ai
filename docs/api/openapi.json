@@ -179,6 +179,20 @@
                 }
               }
             }
+          },
+          "401": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": { "type": "string" },
+                    "message": { "type": "string" }
+                  }
+                }
+              }
+            }
           }
         }
       }
@@ -240,6 +254,20 @@
                         "createdAt": { "format": "date-time", "type": "string" }
                       }
                     }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": { "type": "string" },
+                    "message": { "type": "string" }
                   }
                 }
               }
@@ -314,7 +342,37 @@
             }
           }
         },
-        "responses": { "204": { "description": "No content" } }
+        "responses": {
+          "204": { "description": "No content" },
+          "400": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": { "type": "string" },
+                    "message": { "type": "string" }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": { "type": "string" },
+                    "message": { "type": "string" }
+                  }
+                }
+              }
+            }
+          }
+        }
       }
     },
     "/api/v1/users": {

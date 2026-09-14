@@ -18,14 +18,17 @@ import {
   ProjectTransitionResponseSchema,
   UuidSchema,
 } from '@exhibition/contracts';
-import type { CreateProjectRequest, ProjectTransitionRequest, UpdateProjectRequest } from '@exhibition/contracts';
+import type {
+  CreateProjectRequest,
+  ProjectTransitionRequest,
+  UpdateProjectRequest,
+} from '@exhibition/contracts';
 
 export async function projectRoutes(app: FastifyInstance) {
-  if (!app.services) throw new Error('Services not initialized');
-  const services = app.services;
-
   async function currentUser(sessionId: string | undefined) {
-    return sessionId ? services.authService.validateSession(sessionId) : null;
+    return sessionId
+      ? app.services!.authService.validateSession(sessionId)
+      : null;
   }
   // GET /api/v1/projects
   app.get(
@@ -42,8 +45,24 @@ export async function projectRoutes(app: FastifyInstance) {
       },
     },
     async (request) => {
-      if (!(await currentUser(request.cookies.sessionId))) throw app.httpErrors.unauthorized('Not authenticated');
-      return services.projectService.listProjects(request.query as { status?: 'draft' | 'briefing' | 'designing' | 'reviewing' | 'approved' | 'archived'; customerId?: string; ownerId?: string; search?: string; cursor?: string; limit?: number });
+      if (!(await currentUser(request.cookies.sessionId)))
+        throw app.httpErrors.unauthorized('Not authenticated');
+      return app.services!.projectService.listProjects(
+        request.query as {
+          status?:
+            | 'draft'
+            | 'briefing'
+            | 'designing'
+            | 'reviewing'
+            | 'approved'
+            | 'archived';
+          customerId?: string;
+          ownerId?: string;
+          search?: string;
+          cursor?: string;
+          limit?: number;
+        },
+      );
     },
   );
 
@@ -64,7 +83,10 @@ export async function projectRoutes(app: FastifyInstance) {
     async (request, reply) => {
       const user = await currentUser(request.cookies.sessionId);
       if (!user) throw app.httpErrors.unauthorized('Not authenticated');
-      const project = await services.projectService.createProject(request.body as CreateProjectRequest, user.id);
+      const project = await app.services!.projectService.createProject(
+        request.body as CreateProjectRequest,
+        user.id,
+      );
       return reply.code(201).send({ data: project });
     },
   );
@@ -84,8 +106,11 @@ export async function projectRoutes(app: FastifyInstance) {
       },
     },
     async (request) => {
-      if (!(await currentUser(request.cookies.sessionId))) throw app.httpErrors.unauthorized('Not authenticated');
-      const project = await services.projectService.getProject((request.params as { id: string }).id);
+      if (!(await currentUser(request.cookies.sessionId)))
+        throw app.httpErrors.unauthorized('Not authenticated');
+      const project = await app.services!.projectService.getProject(
+        (request.params as { id: string }).id,
+      );
       if (!project) throw app.httpErrors.notFound('Project not found');
       return { data: project };
     },
@@ -107,10 +132,16 @@ export async function projectRoutes(app: FastifyInstance) {
       },
     },
     async (request) => {
-      if (!(await currentUser(request.cookies.sessionId))) throw app.httpErrors.unauthorized('Not authenticated');
+      if (!(await currentUser(request.cookies.sessionId)))
+        throw app.httpErrors.unauthorized('Not authenticated');
       const body = request.body as UpdateProjectRequest;
-      const result = await services.projectService.updateProject((request.params as { id: string }).id, body, body.expectedRevision);
-      if (result === 'conflict') throw app.httpErrors.conflict('Project revision conflict');
+      const result = await app.services!.projectService.updateProject(
+        (request.params as { id: string }).id,
+        body,
+        body.expectedRevision,
+      );
+      if (result === 'conflict')
+        throw app.httpErrors.conflict('Project revision conflict');
       if (!result) throw app.httpErrors.notFound('Project not found');
       return { data: result };
     },
@@ -131,10 +162,12 @@ export async function projectRoutes(app: FastifyInstance) {
       },
     },
     async (request) => {
-      if (!(await currentUser(request.cookies.sessionId))) throw app.httpErrors.unauthorized('Not authenticated');
+      if (!(await currentUser(request.cookies.sessionId)))
+        throw app.httpErrors.unauthorized('Not authenticated');
       const { id } = request.params as { id: string };
-      if (!(await services.projectService.getProject(id))) throw app.httpErrors.notFound('Project not found');
-      return { data: await services.projectService.listMembers(id) };
+      if (!(await app.services!.projectService.getProject(id)))
+        throw app.httpErrors.notFound('Project not found');
+      return { data: await app.services!.projectService.listMembers(id) };
     },
   );
 
@@ -158,9 +191,15 @@ export async function projectRoutes(app: FastifyInstance) {
       if (!user) throw app.httpErrors.unauthorized('Not authenticated');
       const { id } = request.params as { id: string };
       const body = request.body as { userId: string };
-      if (!(await services.projectService.getProject(id))) throw app.httpErrors.notFound('Project not found');
-      const member = await services.projectService.addMember(id, body.userId, user.id);
-      if (!member) throw app.httpErrors.conflict('Project member already exists');
+      if (!(await app.services!.projectService.getProject(id)))
+        throw app.httpErrors.notFound('Project not found');
+      const member = await app.services!.projectService.addMember(
+        id,
+        body.userId,
+        user.id,
+      );
+      if (!member)
+        throw app.httpErrors.conflict('Project member already exists');
       return reply.code(201).send({ data: member });
     },
   );
@@ -181,13 +220,15 @@ export async function projectRoutes(app: FastifyInstance) {
       },
     },
     async (request, reply) => {
-      if (!(await currentUser(request.cookies.sessionId))) throw app.httpErrors.unauthorized('Not authenticated');
+      if (!(await currentUser(request.cookies.sessionId)))
+        throw app.httpErrors.unauthorized('Not authenticated');
       const { id, userId } = request.params as { id: string; userId: string };
       const body = request.body as { expectedRevision: number };
-      const project = await services.projectService.getProject(id);
+      const project = await app.services!.projectService.getProject(id);
       if (!project) throw app.httpErrors.notFound('Project not found');
-      if (project.revision !== body.expectedRevision) throw app.httpErrors.conflict('Project revision conflict');
-      await services.projectService.removeMember(id, userId);
+      if (project.revision !== body.expectedRevision)
+        throw app.httpErrors.conflict('Project revision conflict');
+      await app.services!.projectService.removeMember(id, userId);
       return reply.code(204).send();
     },
   );
@@ -208,10 +249,16 @@ export async function projectRoutes(app: FastifyInstance) {
       },
     },
     async (request) => {
-      if (!(await currentUser(request.cookies.sessionId))) throw app.httpErrors.unauthorized('Not authenticated');
+      if (!(await currentUser(request.cookies.sessionId)))
+        throw app.httpErrors.unauthorized('Not authenticated');
       const body = request.body as { userId: string; expectedRevision: number };
-      const result = await services.projectService.transferOwner((request.params as { id: string }).id, body.userId, body.expectedRevision);
-      if (result === 'conflict') throw app.httpErrors.conflict('Project revision conflict');
+      const result = await app.services!.projectService.transferOwner(
+        (request.params as { id: string }).id,
+        body.userId,
+        body.expectedRevision,
+      );
+      if (result === 'conflict')
+        throw app.httpErrors.conflict('Project revision conflict');
       if (!result) throw app.httpErrors.notFound('Project not found');
       return { data: result };
     },
@@ -233,13 +280,21 @@ export async function projectRoutes(app: FastifyInstance) {
       },
     },
     async (request) => {
-      if (!(await currentUser(request.cookies.sessionId))) throw app.httpErrors.unauthorized('Not authenticated');
+      if (!(await currentUser(request.cookies.sessionId)))
+        throw app.httpErrors.unauthorized('Not authenticated');
       const body = request.body as ProjectTransitionRequest;
       if (body.action !== 'archive' && body.action !== 'restore') {
-        throw app.httpErrors.notImplemented('Project transition not implemented');
+        throw app.httpErrors.notImplemented(
+          'Project transition not implemented',
+        );
       }
-      const result = await services.projectService.transitionArchive((request.params as { id: string }).id, body.action, body.expectedRevision);
-      if (result === 'conflict') throw app.httpErrors.conflict('Project revision conflict');
+      const result = await app.services!.projectService.transitionArchive(
+        (request.params as { id: string }).id,
+        body.action,
+        body.expectedRevision,
+      );
+      if (result === 'conflict')
+        throw app.httpErrors.conflict('Project revision conflict');
       if (!result) throw app.httpErrors.notFound('Project not found');
       return { data: result };
     },

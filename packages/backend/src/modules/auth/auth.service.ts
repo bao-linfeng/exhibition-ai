@@ -2,6 +2,7 @@ import { randomBytes, scrypt, timingSafeEqual } from 'node:crypto';
 import { promisify } from 'node:util';
 import { AuthRepository } from './auth.repository.js';
 import type { UserSummary } from '@exhibition/contracts';
+import type { User } from '@exhibition/db';
 
 const scryptAsync = promisify(scrypt);
 
@@ -10,7 +11,10 @@ export class AuthService {
 
   constructor(private authRepo: AuthRepository) {}
 
-  async login(email: string, password: string): Promise<{ sessionId: string; user: UserSummary } | null> {
+  async login(
+    email: string,
+    password: string,
+  ): Promise<{ sessionId: string; user: UserSummary } | null> {
     const user = await this.authRepo.findUserByEmail(email);
 
     if (!user || !user.passwordHash) {
@@ -71,22 +75,26 @@ export class AuthService {
     return this.toUserSummary(user);
   }
 
-  async changePassword(userId: string, currentPassword: string, newPassword: string): Promise<boolean> {
+  async changePassword(
+    userId: string,
+    currentPassword: string,
+    _newPassword: string,
+  ): Promise<boolean> {
     const user = await this.authRepo.findUserById(userId);
 
     if (!user || !user.passwordHash) {
       return false;
     }
 
-    const isValid = await this.verifyPassword(currentPassword, user.passwordHash);
+    const isValid = await this.verifyPassword(
+      currentPassword,
+      user.passwordHash,
+    );
     if (!isValid) {
       return false;
     }
 
-    const newHash = await this.hashPassword(newPassword);
-
     // 这里需要 UserRepository 来更新密码，暂时简化
-    // await this.userRepo.updatePassword(userId, newHash);
 
     return true;
   }
@@ -97,7 +105,10 @@ export class AuthService {
     return `${salt}:${derivedKey.toString('hex')}`;
   }
 
-  private async verifyPassword(password: string, hash: string): Promise<boolean> {
+  private async verifyPassword(
+    password: string,
+    hash: string,
+  ): Promise<boolean> {
     const parts = hash.split(':');
     if (parts.length !== 2 || !parts[0] || !parts[1]) {
       return false;
@@ -110,7 +121,7 @@ export class AuthService {
     return timingSafeEqual(keyBuffer, derivedKey);
   }
 
-  private toUserSummary(user: any): UserSummary {
+  private toUserSummary(user: User): UserSummary {
     return {
       id: user.id,
       email: user.email,

@@ -2,7 +2,13 @@
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useCustomersQuery } from '../../api/queries/customers.js';
-import { Plus, Search, Building2, ChevronLeft, ChevronRight } from '@lucide/vue';
+import {
+  Plus,
+  Search,
+  Building2,
+  ChevronLeft,
+  ChevronRight,
+} from '@lucide/vue';
 import { watchDebounced } from '@vueuse/core';
 import PageHeader from '../../components/PageHeader.vue';
 import StatusBadge from '../../components/StatusBadge.vue';
@@ -28,10 +34,15 @@ watchDebounced(
   (val) => {
     search.value = val;
   },
-  { debounce: 300 }
+  { debounce: 300 },
 );
 
-const { data: customers, isLoading, isError, error } = useCustomersQuery({
+const {
+  data: customers,
+  isLoading,
+  isError,
+  error,
+} = useCustomersQuery({
   search: search.value,
   status: statusFilter.value,
 });
@@ -62,7 +73,9 @@ function editCustomer(id: string) {
 
     <div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center">
       <div class="relative w-full max-w-sm">
-        <Search class="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+        <Search
+          class="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground"
+        />
         <Input
           v-model="searchInput"
           type="text"
@@ -74,7 +87,9 @@ function editCustomer(id: string) {
         <Button
           variant="outline"
           size="sm"
-          :class="statusFilter === undefined ? 'bg-primary/10 border-primary/30' : ''"
+          :class="
+            statusFilter === undefined ? 'bg-primary/10 border-primary/30' : ''
+          "
           @click="statusFilter = undefined"
         >
           全部
@@ -82,7 +97,9 @@ function editCustomer(id: string) {
         <Button
           variant="outline"
           size="sm"
-          :class="statusFilter === 'active' ? 'bg-primary/10 border-primary/30' : ''"
+          :class="
+            statusFilter === 'active' ? 'bg-primary/10 border-primary/30' : ''
+          "
           @click="statusFilter = 'active'"
         >
           活跃
@@ -90,7 +107,9 @@ function editCustomer(id: string) {
         <Button
           variant="outline"
           size="sm"
-          :class="statusFilter === 'inactive' ? 'bg-primary/10 border-primary/30' : ''"
+          :class="
+            statusFilter === 'inactive' ? 'bg-primary/10 border-primary/30' : ''
+          "
           @click="statusFilter = 'inactive'"
         >
           非活跃
@@ -98,7 +117,9 @@ function editCustomer(id: string) {
       </div>
     </div>
 
-    <div class="rounded-md border bg-card text-card-foreground shadow-sm overflow-hidden">
+    <div
+      class="rounded-md border bg-card text-card-foreground shadow-sm overflow-hidden"
+    >
       <div class="overflow-x-auto">
         <Table>
           <TableHeader>
@@ -113,18 +134,26 @@ function editCustomer(id: string) {
           </TableHeader>
           <TableBody>
             <LoadingRows v-if="isLoading" :columns="6" :rows="3" />
-            
+
             <template v-else-if="isError">
               <TableRow>
-                <TableCell colspan="6" class="h-24 text-center text-destructive">
+                <TableCell
+                  colspan="6"
+                  class="h-24 text-center text-destructive"
+                >
                   获取客户列表失败: {{ error?.message || '未知错误' }}
                 </TableCell>
               </TableRow>
             </template>
-            
-            <template v-else-if="!customers?.data || customers.data.length === 0">
+
+            <template
+              v-else-if="!customers?.data || customers.data.length === 0"
+            >
               <TableRow>
-                <TableCell colspan="6" class="h-32 text-center text-muted-foreground">
+                <TableCell
+                  colspan="6"
+                  class="h-32 text-center text-muted-foreground"
+                >
                   <div class="flex flex-col items-center justify-center">
                     <Building2 class="h-8 w-8 mb-2 opacity-50" />
                     <p>暂无客户数据</p>
@@ -132,9 +161,14 @@ function editCustomer(id: string) {
                 </TableCell>
               </TableRow>
             </template>
-            
+
             <template v-else>
-              <TableRow v-for="customer in customers.data" :key="customer.id" class="cursor-pointer hover:bg-muted/50" @click="viewCustomer(customer.id)">
+              <TableRow
+                v-for="customer in customers.data"
+                :key="customer.id"
+                class="cursor-pointer hover:bg-muted/50"
+                @click="viewCustomer(customer.id)"
+              >
                 <TableCell class="font-medium">{{ customer.name }}</TableCell>
                 <TableCell>{{ customer.contactName || '-' }}</TableCell>
                 <TableCell>{{ customer.contactPhone || '-' }}</TableCell>
@@ -143,15 +177,27 @@ function editCustomer(id: string) {
                   <StatusBadge :status="customer.status" />
                 </TableCell>
                 <TableCell class="text-right" @click.stop>
-                  <Button variant="ghost" size="sm" @click="viewCustomer(customer.id)">查看</Button>
-                  <Button variant="ghost" size="sm" @click="editCustomer(customer.id)">编辑</Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    @click="viewCustomer(customer.id)"
+                  >
+                    查看
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    @click="editCustomer(customer.id)"
+                  >
+                    编辑
+                  </Button>
                 </TableCell>
               </TableRow>
             </template>
           </TableBody>
         </Table>
       </div>
-      
+
       <!-- Basic Pagination Placeholder -->
       <div class="flex items-center justify-between px-4 py-3 border-t">
         <div class="text-sm text-muted-foreground">
