@@ -4,6 +4,7 @@ import sensible from '@fastify/sensible';
 import cookie from '@fastify/cookie';
 import { HealthSchema, ReadySchema } from '@exhibition/contracts';
 import type { createServices } from '@exhibition/backend';
+import { errorHandlerPlugin } from './plugins/error-handler.js';
 import { authRoutes } from './modules/auth.js';
 import { userRoutes } from './modules/users.js';
 import { customerRoutes } from './modules/customers.js';
@@ -31,6 +32,7 @@ export async function buildApp(services?: ReturnType<typeof createServices>) {
   }
 
   // Register plugins
+  await app.register(errorHandlerPlugin);
   await app.register(sensible);
   await app.register(cookie, {
     secret:
@@ -111,11 +113,6 @@ export async function buildApp(services?: ReturnType<typeof createServices>) {
   await app.register(modelRoutes);
   await app.register(eventRoutes);
   await app.register(dashboardRoutes);
-
-  // Error handler
-  app.setErrorHandler((_error, _request, reply) => {
-    void reply.code(500).send({ error: 'Internal server error' });
-  });
 
   if (services)
     app.addHook('onClose', async () => {
