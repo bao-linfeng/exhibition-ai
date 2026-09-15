@@ -43,10 +43,10 @@
       "bodyFile": "docs/issues/T002.md",
       "issueNumber": 2,
       "issueUrl": "https://github.com/bao-linfeng/exhibition-ai/issues/2",
-      "branch": null,
-      "prNumber": null,
-      "prUrl": null,
-      "status": "todo"
+      "branch": "chore/issue-2-docker-compose-env",
+      "prNumber": 44,
+      "prUrl": "https://github.com/bao-linfeng/exhibition-ai/pull/44",
+      "status": "done"
     },
     {
       "id": "T003",

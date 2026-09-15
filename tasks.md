@@ -90,9 +90,9 @@ docker compose --env-file .env -f infra/compose.dev.yaml down
   - [x] 容器内 frozen-lockfile 安装及三应用独立构建成功
   - [x] Web 不依赖 Node 服务端包；不创建空业务模块或第二套目录
 
-- [ ] **T002 实现 Docker Compose 全服务开发环境** — [Issue 正文](docs/issues/T002.md)
+- [x] **T002 实现 Docker Compose 全服务开发环境** — [Issue 正文](docs/issues/T002.md)
 
-  阶段：M0；前置：[T001 #1](https://github.com/bao-linfeng/exhibition-ai/issues/1)；状态：todo；GitHub Issue：[#2](https://github.com/bao-linfeng/exhibition-ai/issues/2)；PR：—。
+  阶段：M0；前置：[T001 #1](https://github.com/bao-linfeng/exhibition-ai/issues/1)；状态：done；GitHub Issue：[#2](https://github.com/bao-linfeng/exhibition-ai/issues/2)；PR：[#44](https://github.com/bao-linfeng/exhibition-ai/pull/44)（已关闭，实现含于 main 提交 8cc9162、89fba80）。
 
   需求：§6、§11；本轮 Docker 要求。目录：infra/compose.dev.yaml；infra/docker/*；infra/nginx/*；scripts/*；docs/DEVELOPMENT.md；.env.example。
 
