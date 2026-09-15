@@ -414,6 +414,23 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/api/v1/projects/{projectId}/brief/confirm': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** @description Confirm current brief revision. */
+    post: operations['confirmBrief'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/api/v1/projects/{projectId}/assets': {
     parameters: {
       query?: never;
@@ -2470,6 +2487,91 @@ export interface operations {
       cookie?: never;
     };
     requestBody?: never;
+    responses: {
+      /** @description Default Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': {
+            data: {
+              /** Format: uuid */
+              id: string;
+              /** Format: uuid */
+              projectId: string;
+              number: number;
+              content: {
+                booth: {
+                  widthM: number;
+                  depthM: number;
+                  heightLimitM: number;
+                  openSides: ('front' | 'right' | 'back' | 'left')[];
+                  hallRestrictions?: string;
+                };
+                brand: {
+                  name: string;
+                  primaryColor?: string;
+                  secondaryColor?: string;
+                  /** Format: uuid */
+                  logoAssetId?: string;
+                  visualKeywords?: string[];
+                };
+                functionalAreas: {
+                  type:
+                    | 'reception'
+                    | 'meeting'
+                    | 'display'
+                    | 'storage'
+                    | 'led'
+                    | 'demo';
+                  required: boolean;
+                  quantity?: number;
+                  description?: string;
+                }[];
+                style: {
+                  keywords: string[];
+                  materials?: string[];
+                  forbiddenElements?: string[];
+                };
+                budget?: {
+                  amountMinor: number;
+                  /** @enum {string} */
+                  currency: 'CNY';
+                };
+                deadline?: string;
+                specialRequirements?: string;
+              };
+              /** Format: uuid */
+              createdBy: string;
+              /** Format: date-time */
+              createdAt: string;
+              confirmedBy: string | null;
+              confirmedAt: string | null;
+            };
+          };
+        };
+      };
+    };
+  };
+  confirmBrief: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        projectId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': {
+          /** Format: uuid */
+          briefRevisionId: string;
+          expectedRevision: number;
+        };
+      };
+    };
     responses: {
       /** @description Default Response */
       200: {
