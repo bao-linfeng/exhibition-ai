@@ -55,6 +55,7 @@ jobs:
             printf 'PGDATABASE=%s\n' "$PGDATABASE"
             printf 'PGUSER=%s\n' "$PGUSER"
             printf 'PGPASSWORD=%s\n' "$PGPASSWORD"
+            printf 'DATABASE_URL=postgresql://%s:%s@%s/%s\n' "$PGUSER" "$PGPASSWORD" "$PGHOST" "$PGDATABASE"
             printf 'REDIS_HOST=%s\n' "$REDIS_HOST"
             printf 'REDIS_PORT=%s\n' "$REDIS_PORT"
             printf 'REDIS_PASSWORD=%s\n' "$REDIS_PASSWORD"
