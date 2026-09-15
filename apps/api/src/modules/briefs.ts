@@ -8,11 +8,14 @@ import {
   ListBriefRevisionsResponseSchema,
   GetBriefRevisionResponseSchema,
   ConfirmBriefRequestSchema,
+  ParseBriefRequestSchema,
+  ParseBriefResponseSchema,
   ConfirmBriefResponseSchema,
   UuidSchema,
 } from '@exhibition/contracts';
 import type {
   ConfirmBriefRequest,
+  ParseBriefRequest,
   UpdateBriefRequest,
 } from '@exhibition/contracts';
 
@@ -265,6 +268,43 @@ export async function briefRoutes(app: FastifyInstance) {
         .catch(() => undefined);
 
       return { data: result };
+    },
+  );
+
+  app.post(
+    '/api/v1/projects/:projectId/brief/parse',
+    {
+      schema: {
+        operationId: 'parseBrief',
+        description: 'Parse brief from free text using AI.',
+        tags: ['briefs'],
+        params: Type.Object({ projectId: UuidSchema }),
+        body: ParseBriefRequestSchema,
+        response: { 202: ParseBriefResponseSchema },
+      },
+    },
+    async (request, reply) => {
+      const user = await currentUser(request.cookies.sessionId);
+      if (!user) throw app.httpErrors.unauthorized('Not authenticated');
+
+      const { projectId } = request.params as { projectId: string };
+      const project = await app.services!.projectService.getProject(
+        projectId,
+        user,
+      );
+      if (!project || project === 'forbidden') {
+        throw app.httpErrors.notFound('Project not found');
+      }
+      const body = request.body as ParseBriefRequest;
+      const result = await app.services!.briefParseService.createParseTask(
+        projectId,
+        body.text,
+        body.baseBriefRevisionId ?? null,
+        user.id,
+        user.role,
+      );
+      if (result === 'forbidden') throw app.httpErrors.forbidden();
+      return reply.status(202).send({ data: result });
     },
   );
 }

@@ -3853,6 +3853,66 @@
         }
       }
     },
+    "/api/v1/projects/{projectId}/brief/parse": {
+      "post": {
+        "operationId": "parseBrief",
+        "tags": ["briefs"],
+        "description": "Parse brief from free text using AI.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "type": "object",
+                "required": ["text"],
+                "properties": {
+                  "text": {
+                    "minLength": 1,
+                    "maxLength": 50000,
+                    "type": "string"
+                  },
+                  "baseBriefRevisionId": { "format": "uuid", "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "schema": { "format": "uuid", "type": "string" },
+            "in": "path",
+            "name": "projectId",
+            "required": true
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "type": "object",
+                  "required": ["data"],
+                  "properties": {
+                    "data": {
+                      "additionalProperties": false,
+                      "type": "object",
+                      "required": ["taskId", "status"],
+                      "properties": {
+                        "taskId": { "format": "uuid", "type": "string" },
+                        "status": { "type": "string", "enum": ["pending"] }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/projects/{projectId}/assets": {
       "get": {
         "operationId": "listAssets",
@@ -5021,7 +5081,66 @@
         "responses": { "204": { "description": "Default Response" } }
       }
     },
-    "/api/v1/projects/{projectId}/directions": {
+    "/api/v1/projects/{projectId}/design-directions": {
+      "post": {
+        "operationId": "createDesignDirections",
+        "tags": ["directions"],
+        "description": "Trigger design direction generation task.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "type": "object",
+                "required": ["briefRevisionId"],
+                "properties": {
+                  "briefRevisionId": { "format": "uuid", "type": "string" },
+                  "inputAssetIds": {
+                    "maxItems": 10,
+                    "type": "array",
+                    "items": { "format": "uuid", "type": "string" }
+                  },
+                  "count": { "minimum": 1, "maximum": 5, "type": "integer" }
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "schema": { "format": "uuid", "type": "string" },
+            "in": "path",
+            "name": "projectId",
+            "required": true
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "type": "object",
+                  "required": ["data"],
+                  "properties": {
+                    "data": {
+                      "additionalProperties": false,
+                      "type": "object",
+                      "required": ["taskId", "status"],
+                      "properties": {
+                        "taskId": { "format": "uuid", "type": "string" },
+                        "status": { "type": "string", "enum": ["pending"] }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
       "get": {
         "operationId": "listDesignDirections",
         "tags": ["directions"],
@@ -5142,7 +5261,7 @@
         }
       }
     },
-    "/api/v1/projects/{projectId}/directions/{directionId}": {
+    "/api/v1/projects/{projectId}/design-directions/{directionId}": {
       "get": {
         "operationId": "getDesignDirection",
         "tags": ["directions"],

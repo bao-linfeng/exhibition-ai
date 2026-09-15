@@ -431,6 +431,23 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/api/v1/projects/{projectId}/brief/parse': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** @description Parse brief from free text using AI. */
+    post: operations['parseBrief'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/api/v1/projects/{projectId}/assets': {
     parameters: {
       query?: never;
@@ -603,7 +620,7 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  '/api/v1/projects/{projectId}/directions': {
+  '/api/v1/projects/{projectId}/design-directions': {
     parameters: {
       query?: never;
       header?: never;
@@ -613,14 +630,15 @@ export interface paths {
     /** @description List design directions. */
     get: operations['listDesignDirections'];
     put?: never;
-    post?: never;
+    /** @description Trigger design direction generation task. */
+    post: operations['createDesignDirections'];
     delete?: never;
     options?: never;
     head?: never;
     patch?: never;
     trace?: never;
   };
-  '/api/v1/projects/{projectId}/directions/{directionId}': {
+  '/api/v1/projects/{projectId}/design-directions/{directionId}': {
     parameters: {
       query?: never;
       header?: never;
@@ -2709,6 +2727,43 @@ export interface operations {
       };
     };
   };
+  parseBrief: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        projectId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': {
+          text: string;
+          /** Format: uuid */
+          baseBriefRevisionId?: string;
+        };
+      };
+    };
+    responses: {
+      /** @description Default Response */
+      202: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': {
+            data: {
+              /** Format: uuid */
+              taskId: string;
+              /** @enum {string} */
+              status: 'pending';
+            };
+          };
+        };
+      };
+    };
+  };
   listAssets: {
     parameters: {
       query?: {
@@ -3324,6 +3379,44 @@ export interface operations {
             page: {
               nextCursor: string | null;
               hasMore: boolean;
+            };
+          };
+        };
+      };
+    };
+  };
+  createDesignDirections: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        projectId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': {
+          /** Format: uuid */
+          briefRevisionId: string;
+          inputAssetIds?: string[];
+          count?: number;
+        };
+      };
+    };
+    responses: {
+      /** @description Default Response */
+      202: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': {
+            data: {
+              /** Format: uuid */
+              taskId: string;
+              /** @enum {string} */
+              status: 'pending';
             };
           };
         };

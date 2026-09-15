@@ -276,7 +276,7 @@ docker compose --env-file .env -f infra/compose.dev.yaml down
 
 - [ ] **T017 实现 AI Brief 解析和设计方向生成** — [Issue 正文](docs/issues/T017.md)
 
-  阶段：M2；前置：[T009 #9](https://github.com/bao-linfeng/exhibition-ai/issues/9)、[T014 #14](https://github.com/bao-linfeng/exhibition-ai/issues/14)、[T015 #15](https://github.com/bao-linfeng/exhibition-ai/issues/15)；状态：todo；GitHub Issue：[#17](https://github.com/bao-linfeng/exhibition-ai/issues/17)；PR：—。
+  阶段：M2；前置：[T009 #9](https://github.com/bao-linfeng/exhibition-ai/issues/9)、[T014 #14](https://github.com/bao-linfeng/exhibition-ai/issues/14)、[T015 #15](https://github.com/bao-linfeng/exhibition-ai/issues/15)；状态：in_review；GitHub Issue：[#17](https://github.com/bao-linfeng/exhibition-ai/issues/17)；PR：[#61](https://github.com/bao-linfeng/exhibition-ai/pull/61)。
 
   需求：FR-04、FR-06。目录：packages/ai；packages/backend/src/modules/{briefs,generations}；apps/worker/src/processors；apps/web/src/modules/{briefs,generations}。
 

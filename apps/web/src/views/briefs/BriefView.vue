@@ -4,6 +4,7 @@ import { useRoute, useRouter } from 'vue-router';
 import {
   useBriefQuery,
   useConfirmBriefMutation,
+  useParseBriefMutation,
 } from '../../api/queries/briefs.js';
 import { useProjectQuery } from '../../api/queries/projects.js';
 import { useUserStore } from '../../stores/user.js';
@@ -31,6 +32,7 @@ import {
   AlertCircle,
   History,
   Check,
+  Wand2,
 } from '@lucide/vue';
 
 const route = useRoute();
@@ -45,8 +47,11 @@ const { data: brief, isLoading: isLoadingBrief } = useBriefQuery(
   projectId.value,
 );
 const confirmMutation = useConfirmBriefMutation();
+const parseMutation = useParseBriefMutation();
 
 const showConfirmDialog = ref(false);
+const showParseDialog = ref(false);
+const parseText = ref('');
 
 const canEdit = computed(() => {
   const role = userStore.user?.role;
@@ -113,6 +118,24 @@ async function confirmBrief() {
     }
   }
 }
+
+async function startParse() {
+  if (!parseText.value.trim()) return;
+  try {
+    await parseMutation.mutateAsync({
+      projectId: projectId.value,
+      body: {
+        text: parseText.value,
+        baseBriefRevisionId: brief.value?.id,
+      },
+    });
+    showParseDialog.value = false;
+    parseText.value = '';
+    alert('AI 解析任务已提交，请稍后在任务中心查看结果');
+  } catch {
+    alert('解析请求失败，请重试');
+  }
+}
 </script>
 
 <template>
@@ -143,6 +166,15 @@ async function confirmBrief() {
 
     <PageHeader title="设计 Brief">
       <template #actions>
+        <Button
+          v-if="canEdit"
+          variant="outline"
+          class="border-purple-200 text-purple-700 hover:bg-purple-50 hover:text-purple-800"
+          @click="showParseDialog = true"
+        >
+          <Wand2 class="mr-2 h-4 w-4" />
+          AI 解析
+        </Button>
         <Button variant="outline" @click="viewHistory">
           <History class="mr-2 h-4 w-4" />
           历史版本
@@ -536,6 +568,40 @@ async function confirmBrief() {
             @click="confirmBrief"
           >
             {{ confirmMutation.isPending.value ? '确认中...' : '确认无误' }}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+
+    <Dialog :open="showParseDialog" @update:open="showParseDialog = $event">
+      <DialogContent class="sm:max-w-[600px]">
+        <DialogHeader>
+          <DialogTitle>AI 解析 Brief</DialogTitle>
+          <DialogDescription>
+            输入客户的自然语言描述，AI 将提取结构化的 Brief 候选内容
+          </DialogDescription>
+        </DialogHeader>
+        <div class="py-4">
+          <textarea
+            v-model="parseText"
+            class="w-full h-48 p-3 border rounded-md resize-none focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+            placeholder="请输入客户描述，例如：我们是一家做汽车零部件的企业，参加上海车展，展台面积约36平米，预算80万，希望设计现代科技感的展台..."
+            maxlength="50000"
+          ></textarea>
+          <p class="text-xs text-muted-foreground mt-2">
+            解析结果不会直接覆盖当前 Brief，请在任务完成后查看并采纳
+          </p>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" @click="showParseDialog = false"
+            >取消</Button
+          >
+          <Button
+            :disabled="parseMutation.isPending.value || !parseText.trim()"
+            @click="startParse"
+          >
+            <Wand2 v-if="!parseMutation.isPending.value" class="mr-2 h-4 w-4" />
+            {{ parseMutation.isPending.value ? '解析中...' : '开始解析' }}
           </Button>
         </DialogFooter>
       </DialogContent>

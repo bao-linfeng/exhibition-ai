@@ -10,3 +10,4 @@ export * from './assets.js';
 export * from './generations.js';
 export * from './settings.js';
 export * from './image_versions.js';
+export * from './design_directions.js';

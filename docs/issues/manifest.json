@@ -143,7 +143,7 @@
       "branch": null,
       "prNumber": null,
       "prUrl": null,
-      "status": "todo"
+      "status": "done"
     },
     {
       "id": "T007",
@@ -410,10 +410,10 @@
       "bodyFile": "docs/issues/T017.md",
       "issueNumber": 17,
       "issueUrl": "https://github.com/bao-linfeng/exhibition-ai/issues/17",
-      "branch": null,
-      "prNumber": null,
-      "prUrl": null,
-      "status": "todo"
+      "branch": "feat/issue-17-ai-brief-parse-design-direction",
+      "prNumber": 61,
+      "prUrl": "https://github.com/bao-linfeng/exhibition-ai/pull/61",
+      "status": "in_review"
     },
     {
       "id": "T018",

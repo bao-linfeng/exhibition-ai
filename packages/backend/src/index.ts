@@ -19,6 +19,14 @@ import {
 } from './modules/customers/index.js';
 import { ProjectService, ProjectRepository } from './modules/projects/index.js';
 import { BriefService, BriefRepository } from './modules/briefs/index.js';
+import {
+  BriefParseService,
+  BriefParseRepository,
+} from './modules/brief-parse/index.js';
+import {
+  DirectionService,
+  DirectionRepository,
+} from './modules/directions/index.js';
 import { UserService, UserRepository } from './modules/users/index.js';
 import { DashboardService } from './modules/dashboard/index.js';
 import { AuditService } from './modules/audit/index.js';
@@ -44,6 +52,10 @@ import {
   QUEUE_ASSET_VALIDATION,
   createImageGenerationQueue,
   QUEUE_IMAGE_GENERATION,
+  createBriefParseQueue,
+  QUEUE_BRIEF_PARSE,
+  createDesignDirectionQueue,
+  QUEUE_DESIGN_DIRECTION,
 } from './infrastructure/queue.js';
 
 export {
@@ -55,6 +67,10 @@ export {
   ProjectRepository,
   BriefService,
   BriefRepository,
+  BriefParseService,
+  BriefParseRepository,
+  DirectionService,
+  DirectionRepository,
   UserService,
   UserRepository,
   DashboardService,
@@ -97,6 +113,10 @@ export {
   QUEUE_ASSET_VALIDATION,
   createImageGenerationQueue,
   QUEUE_IMAGE_GENERATION,
+  createBriefParseQueue,
+  QUEUE_BRIEF_PARSE,
+  createDesignDirectionQueue,
+  QUEUE_DESIGN_DIRECTION,
 } from './infrastructure/queue.js';
 
 export {
@@ -137,6 +157,8 @@ export interface Services {
   customerService: CustomerService;
   projectService: ProjectService;
   briefService: BriefService;
+  briefParseService: BriefParseService;
+  directionService: DirectionService;
   userService: UserService;
   dashboardService: DashboardService;
   auditService: AuditService;
@@ -179,7 +201,6 @@ export function createServices(): Services {
     QUEUE_ASSET_VALIDATION,
     assetValidationQueue as import('bullmq').Queue,
   );
-  const taskService = new TaskService(new TaskRepository(drizzleDb), queues);
   const imageGenerationQueue = createImageGenerationQueue({
     connection: queueConnection,
   });
@@ -187,9 +208,32 @@ export function createServices(): Services {
     QUEUE_IMAGE_GENERATION,
     imageGenerationQueue as import('bullmq').Queue,
   );
+  const briefParseQueue = createBriefParseQueue({
+    connection: queueConnection,
+  });
+  queues.set(QUEUE_BRIEF_PARSE, briefParseQueue as import('bullmq').Queue);
+  const designDirectionQueue = createDesignDirectionQueue({
+    connection: queueConnection,
+  });
+  queues.set(
+    QUEUE_DESIGN_DIRECTION,
+    designDirectionQueue as import('bullmq').Queue,
+  );
+  const taskRepo = new TaskRepository(drizzleDb);
+  const taskService = new TaskService(taskRepo, queues);
+  const briefParseService = new BriefParseService(
+    new BriefParseRepository(drizzleDb),
+    taskRepo,
+    queues,
+  );
+  const directionService = new DirectionService(
+    new DirectionRepository(drizzleDb),
+    taskRepo,
+    queues,
+  );
   const generationService = new GenerationService(
     new GenerationRepository(drizzleDb),
-    new TaskRepository(drizzleDb),
+    taskRepo,
     queues,
   );
   const imageVersionService = new ImageVersionService(
@@ -275,6 +319,8 @@ export function createServices(): Services {
     s3.destroy();
     await assetValidationQueue.close();
     await imageGenerationQueue.close();
+    await briefParseQueue.close();
+    await designDirectionQueue.close();
     queueConnection.disconnect();
     await closeDatabase();
   }
@@ -284,6 +330,8 @@ export function createServices(): Services {
     customerService,
     projectService,
     briefService,
+    briefParseService,
+    directionService,
     userService,
     dashboardService,
     auditService,

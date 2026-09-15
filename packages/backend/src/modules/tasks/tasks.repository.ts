@@ -61,6 +61,10 @@ export class TaskRepository {
     return row ?? null;
   }
 
+  async updateInputSnapshot(id: string, inputSnapshot: unknown) {
+    await this.db.update(tasks).set({ inputSnapshot }).where(eq(tasks.id, id));
+  }
+
   async list(opts: {
     projectId?: string;
     kind?: TaskKind;

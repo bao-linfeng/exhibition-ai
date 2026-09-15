@@ -136,3 +136,25 @@ export function useConfirmBriefMutation() {
     },
   });
 }
+
+export function useParseBriefMutation() {
+  return useMutation({
+    mutationFn: async ({
+      projectId,
+      body,
+    }: {
+      projectId: string;
+      body: { text: string; baseBriefRevisionId?: string };
+    }) => {
+      const { data, error } = await apiClient.POST(
+        '/api/v1/projects/{projectId}/brief/parse',
+        {
+          params: { path: { projectId } },
+          body,
+        },
+      );
+      if (error) throw new Error('Failed to parse brief');
+      return data.data;
+    },
+  });
+}
