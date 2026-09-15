@@ -22,6 +22,11 @@ import { BriefService, BriefRepository } from './modules/briefs/index.js';
 import { UserService, UserRepository } from './modules/users/index.js';
 import { DashboardService } from './modules/dashboard/index.js';
 import { AuditService } from './modules/audit/index.js';
+import { TaskService, TaskRepository } from './modules/tasks/index.js';
+import {
+  createAssetValidationQueue,
+  QUEUE_ASSET_VALIDATION,
+} from './infrastructure/queue.js';
 
 export {
   AuthService,
@@ -36,9 +41,20 @@ export {
   UserRepository,
   DashboardService,
   AuditService,
+  TaskService,
+  TaskRepository,
 };
 
-export { env, logger, childLogger } from './infrastructure/index.js';
+export {
+  env,
+  logger,
+  childLogger,
+  initDatabase,
+} from './infrastructure/index.js';
+export {
+  createAssetValidationQueue,
+  QUEUE_ASSET_VALIDATION,
+} from './infrastructure/queue.js';
 
 export {
   HeadBucketCommand,
@@ -81,6 +97,7 @@ export interface Services {
   userService: UserService;
   dashboardService: DashboardService;
   auditService: AuditService;
+  taskService: TaskService;
   connectRedis(): Promise<void>;
   readiness(): Promise<{ postgres: boolean; redis: boolean; storage: boolean }>;
   close(): Promise<void>;
@@ -101,6 +118,14 @@ export function createServices(): Services {
   const auditService = new AuditService(drizzleDb);
 
   const connection = redisConnection();
+  const queueConnection = createQueueConnection();
+  const assetValidationQueue = createAssetValidationQueue({
+    connection: queueConnection,
+  });
+  const queues = new Map([
+    [QUEUE_ASSET_VALIDATION, assetValidationQueue as import('bullmq').Queue],
+  ]);
+  const taskService = new TaskService(new TaskRepository(drizzleDb), queues);
   const verificationRedis = new Redis(connection);
   verificationRedis.on('error', () => undefined);
   const authService = new AuthService(
@@ -168,6 +193,8 @@ export function createServices(): Services {
     if (redis.isOpen) redis.destroy();
     verificationRedis.disconnect();
     s3.destroy();
+    await assetValidationQueue.close();
+    queueConnection.disconnect();
     await closeDatabase();
   }
   return {
@@ -179,6 +206,7 @@ export function createServices(): Services {
     userService,
     dashboardService,
     auditService,
+    taskService,
     redis,
     s3,
     bucket,
