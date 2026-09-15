@@ -262,10 +262,10 @@
       "bodyFile": "docs/issues/T011.md",
       "issueNumber": 11,
       "issueUrl": "https://github.com/bao-linfeng/exhibition-ai/issues/11",
-      "branch": null,
-      "prNumber": null,
-      "prUrl": null,
-      "status": "todo"
+      "branch": "feat/issue-11-private-storage-signed-upload",
+      "prNumber": 54,
+      "prUrl": "https://github.com/bao-linfeng/exhibition-ai/pull/54",
+      "status": "in_review"
     },
     {
       "id": "T012",

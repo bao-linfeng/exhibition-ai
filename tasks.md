@@ -202,7 +202,7 @@ docker compose --env-file .env -f infra/compose.dev.yaml down
 
 - [ ] **T011 实现私有对象存储和签名直传** — [Issue 正文](docs/issues/T011.md)
 
-  阶段：M1；前置：[T002 #2](https://github.com/bao-linfeng/exhibition-ai/issues/2)、[T007 #7](https://github.com/bao-linfeng/exhibition-ai/issues/7)、[T010 #10](https://github.com/bao-linfeng/exhibition-ai/issues/10)；状态：todo；GitHub Issue：[#11](https://github.com/bao-linfeng/exhibition-ai/issues/11)；PR：—。
+  阶段：M1；前置：[T002 #2](https://github.com/bao-linfeng/exhibition-ai/issues/2)、[T007 #7](https://github.com/bao-linfeng/exhibition-ai/issues/7)、[T010 #10](https://github.com/bao-linfeng/exhibition-ai/issues/10)；状态：in_review；GitHub Issue：[#11](https://github.com/bao-linfeng/exhibition-ai/issues/11)；PR：[#54](https://github.com/bao-linfeng/exhibition-ai/pull/54)。
 
   需求：FR-05、§10、AC-11、AC-17。目录：packages/backend/src/infrastructure/storage；packages/backend/src/modules/assets；packages/db；apps/api/src/modules/assets；infra。
 
