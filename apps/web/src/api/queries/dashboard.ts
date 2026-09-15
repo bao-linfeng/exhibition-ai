@@ -4,13 +4,14 @@ import { apiClient } from '../client.js';
 import { useMeQuery } from './auth.js';
 
 export const dashboardKeys = {
-  summary: (userId?: string) => ['dashboard', userId ?? 'anon', 'summary'] as const,
+  summary: (userId?: string) =>
+    ['dashboard', userId ?? 'anon', 'summary'] as const,
 };
 
 export function useDashboardSummaryQuery() {
   const { data: meData } = useMeQuery();
   const userId = computed(() => meData.value?.id);
-  
+
   return useQuery({
     queryKey: computed(() => dashboardKeys.summary(userId.value)),
     queryFn: async () => {

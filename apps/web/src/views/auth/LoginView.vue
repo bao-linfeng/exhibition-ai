@@ -22,10 +22,12 @@ async function handleSubmit() {
 
   try {
     await login(email.value, password.value);
-    const redirect = router.currentRoute.value.query.redirect as string | undefined;
-    const safeRedirect = redirect && redirect.startsWith('/') && !redirect.startsWith('//')
-      ? redirect
-      : '/dashboard';
+    const redirect = router.currentRoute.value.query.redirect as
+      string | undefined;
+    const safeRedirect =
+      redirect && redirect.startsWith('/') && !redirect.startsWith('//')
+        ? redirect
+        : '/dashboard';
     router.push(safeRedirect);
   } catch {
     errorMessage.value =

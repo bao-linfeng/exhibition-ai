@@ -98,12 +98,18 @@ router.beforeEach(async (to, from, next) => {
       const { apiClient } = await import('../api/client.js');
       const { error } = await apiClient.GET('/api/v1/auth/me');
       if (error) {
-        const safeFullPath = to.fullPath.startsWith('/') && !to.fullPath.startsWith('//') ? to.fullPath : '/dashboard';
+        const safeFullPath =
+          to.fullPath.startsWith('/') && !to.fullPath.startsWith('//')
+            ? to.fullPath
+            : '/dashboard';
         next({ path: '/login', query: { redirect: safeFullPath } });
         return;
       }
     } catch {
-      const safeFullPath = to.fullPath.startsWith('/') && !to.fullPath.startsWith('//') ? to.fullPath : '/dashboard';
+      const safeFullPath =
+        to.fullPath.startsWith('/') && !to.fullPath.startsWith('//')
+          ? to.fullPath
+          : '/dashboard';
       next({ path: '/login', query: { redirect: safeFullPath } });
       return;
     }
