@@ -252,7 +252,7 @@ docker compose --env-file .env -f infra/compose.dev.yaml down
 
 - [ ] **T015 实现 AI Provider 契约、Mock 和 Prompt 快照** — [Issue 正文](docs/issues/T015.md)
 
-  阶段：M2；前置：[T003 #3](https://github.com/bao-linfeng/exhibition-ai/issues/3)、[T013 #13](https://github.com/bao-linfeng/exhibition-ai/issues/13)；状态：todo；GitHub Issue：[#15](https://github.com/bao-linfeng/exhibition-ai/issues/15)；PR：—。
+  阶段：M2；前置：[T003 #3](https://github.com/bao-linfeng/exhibition-ai/issues/3)、[T013 #13](https://github.com/bao-linfeng/exhibition-ai/issues/13)；状态：in_review；GitHub Issue：[#15](https://github.com/bao-linfeng/exhibition-ai/issues/15)；PR：[#58](https://github.com/bao-linfeng/exhibition-ai/pull/58)。
 
   需求：FR-06、§5、§8、AC-18。目录：packages/backend/src/ports；packages/ai；apps/worker/src/bootstrap.ts；tests/fixtures。
 
@@ -264,7 +264,7 @@ docker compose --env-file .env -f infra/compose.dev.yaml down
 
 - [ ] **T016 实现多图生成、结果落盘和版本发布** — [Issue 正文](docs/issues/T016.md)
 
-  阶段：M2；前置：[T012 #12](https://github.com/bao-linfeng/exhibition-ai/issues/12)、[T013 #13](https://github.com/bao-linfeng/exhibition-ai/issues/13)、[T014 #14](https://github.com/bao-linfeng/exhibition-ai/issues/14)、[T015 #15](https://github.com/bao-linfeng/exhibition-ai/issues/15)；状态：todo；GitHub Issue：[#16](https://github.com/bao-linfeng/exhibition-ai/issues/16)；PR：—。
+  阶段：M2；前置：[T012 #12](https://github.com/bao-linfeng/exhibition-ai/issues/12)、[T013 #13](https://github.com/bao-linfeng/exhibition-ai/issues/13)、[T014 #14](https://github.com/bao-linfeng/exhibition-ai/issues/14)、[T015 #15](https://github.com/bao-linfeng/exhibition-ai/issues/15)；状态：in_review；GitHub Issue：[#16](https://github.com/bao-linfeng/exhibition-ai/issues/16)；PR：[#60](https://github.com/bao-linfeng/exhibition-ai/pull/60)。
 
   需求：FR-06、FR-08、AC-07、AC-12。目录：apps/worker/src/processors/image-generation.processor.ts；packages/backend/src/modules/{generations,image-versions}；packages/db。
 

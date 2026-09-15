@@ -9,3 +9,4 @@ export * from './tasks.js';
 export * from './assets.js';
 export * from './generations.js';
 export * from './settings.js';
+export * from './image_versions.js';

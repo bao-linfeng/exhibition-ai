@@ -64,6 +64,13 @@
       "when": 1757980800003,
       "tag": "0008_add_settings_and_quota",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1757980800004,
+      "tag": "0009_add_image_versions",
+      "breakpoints": true
     }
   ]
 }
