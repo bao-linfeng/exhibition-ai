@@ -4584,6 +4584,149 @@
             }
           }
         }
+      },
+      "get": {
+        "operationId": "listGenerations",
+        "tags": ["generations"],
+        "description": "List image generation tasks for a project.",
+        "parameters": [
+          {
+            "schema": { "type": "string" },
+            "in": "query",
+            "name": "cursor",
+            "required": false
+          },
+          {
+            "schema": { "minimum": 1, "maximum": 100, "type": "integer" },
+            "in": "query",
+            "name": "limit",
+            "required": false
+          },
+          {
+            "schema": {
+              "anyOf": [
+                { "type": "string", "enum": ["pending"] },
+                { "type": "string", "enum": ["queued"] },
+                { "type": "string", "enum": ["running"] },
+                { "type": "string", "enum": ["succeeded"] },
+                { "type": "string", "enum": ["partially_succeeded"] },
+                { "type": "string", "enum": ["failed"] },
+                { "type": "string", "enum": ["cancelled"] }
+              ]
+            },
+            "in": "query",
+            "name": "status",
+            "required": false
+          },
+          {
+            "schema": { "format": "uuid", "type": "string" },
+            "in": "path",
+            "name": "projectId",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "type": "object",
+                  "required": ["data", "page"],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "additionalProperties": false,
+                        "type": "object",
+                        "required": [
+                          "id",
+                          "projectId",
+                          "mode",
+                          "status",
+                          "progress",
+                          "totalOutputs",
+                          "succeededOutputs",
+                          "failedOutputs",
+                          "createdBy",
+                          "createdAt",
+                          "startedAt",
+                          "finishedAt"
+                        ],
+                        "properties": {
+                          "id": { "format": "uuid", "type": "string" },
+                          "projectId": { "format": "uuid", "type": "string" },
+                          "mode": {
+                            "anyOf": [
+                              { "type": "string", "enum": ["generate"] },
+                              { "type": "string", "enum": ["edit"] }
+                            ]
+                          },
+                          "status": {
+                            "anyOf": [
+                              { "type": "string", "enum": ["pending"] },
+                              { "type": "string", "enum": ["queued"] },
+                              { "type": "string", "enum": ["running"] },
+                              { "type": "string", "enum": ["succeeded"] },
+                              {
+                                "type": "string",
+                                "enum": ["partially_succeeded"]
+                              },
+                              { "type": "string", "enum": ["failed"] },
+                              { "type": "string", "enum": ["cancelled"] }
+                            ]
+                          },
+                          "stage": { "type": "string" },
+                          "progress": {
+                            "anyOf": [
+                              { "minimum": 0, "maximum": 1, "type": "number" },
+                              { "type": "null" }
+                            ]
+                          },
+                          "totalOutputs": { "minimum": 1, "type": "integer" },
+                          "succeededOutputs": {
+                            "minimum": 0,
+                            "type": "integer"
+                          },
+                          "failedOutputs": { "minimum": 0, "type": "integer" },
+                          "createdBy": { "format": "uuid", "type": "string" },
+                          "createdAt": {
+                            "format": "date-time",
+                            "type": "string"
+                          },
+                          "startedAt": {
+                            "anyOf": [
+                              { "format": "date-time", "type": "string" },
+                              { "type": "null" }
+                            ]
+                          },
+                          "finishedAt": {
+                            "anyOf": [
+                              { "format": "date-time", "type": "string" },
+                              { "type": "null" }
+                            ]
+                          }
+                        }
+                      }
+                    },
+                    "page": {
+                      "additionalProperties": false,
+                      "type": "object",
+                      "required": ["nextCursor", "hasMore"],
+                      "properties": {
+                        "nextCursor": {
+                          "anyOf": [{ "type": "string" }, { "type": "null" }]
+                        },
+                        "hasMore": { "type": "boolean" }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
       }
     },
     "/api/v1/projects/{projectId}/versions": {
