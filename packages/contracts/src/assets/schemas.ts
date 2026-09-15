@@ -149,7 +149,8 @@ export const GetAssetResponseSchema = Type.Object(
   { additionalProperties: false },
 );
 
-// DELETE /assets/:id - 隐藏资产（204 No Content）
+// DELETE /projects/:id/assets/:id - 隐藏资产（204 No Content）
+export const HideAssetResponseSchema = Type.Null();
 
 // POST /assets/:id/download-url
 export const CreateDownloadUrlRequestSchema = Type.Object(

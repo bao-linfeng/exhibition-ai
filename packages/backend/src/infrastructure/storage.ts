@@ -5,6 +5,7 @@ import {
   S3Client,
 } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+import { Readable } from 'node:stream';
 
 export interface StorageProvider {
   signUploadUrl(opts: {
@@ -25,6 +26,20 @@ export interface StorageProvider {
     bucket: string;
     key: string;
   }): Promise<{ exists: boolean; contentLength?: number; etag?: string }>;
+
+  getObject(opts: { bucket: string; key: string }): Promise<{
+    body: Readable;
+    contentLength?: number;
+    contentType?: string;
+  }>;
+
+  putObject(opts: {
+    bucket: string;
+    key: string;
+    body: Buffer | Readable;
+    contentType: string;
+    contentLength?: number;
+  }): Promise<void>;
 }
 
 export class S3StorageProvider implements StorageProvider {
@@ -107,6 +122,43 @@ export class S3StorageProvider implements StorageProvider {
       }
       throw err;
     }
+  }
+
+  async getObject(opts: { bucket: string; key: string }): Promise<{
+    body: Readable;
+    contentLength?: number;
+    contentType?: string;
+  }> {
+    const result = await this.internalClient.send(
+      new GetObjectCommand({ Bucket: opts.bucket, Key: opts.key }),
+    );
+    if (!result.Body || !(result.Body instanceof Readable)) {
+      throw new Error('Storage object body is not a readable stream');
+    }
+
+    return {
+      body: result.Body,
+      contentLength: result.ContentLength,
+      contentType: result.ContentType,
+    };
+  }
+
+  async putObject(opts: {
+    bucket: string;
+    key: string;
+    body: Buffer | Readable;
+    contentType: string;
+    contentLength?: number;
+  }): Promise<void> {
+    await this.internalClient.send(
+      new PutObjectCommand({
+        Bucket: opts.bucket,
+        Key: opts.key,
+        Body: opts.body,
+        ContentType: opts.contentType,
+        ContentLength: opts.contentLength,
+      }),
+    );
   }
 }
 

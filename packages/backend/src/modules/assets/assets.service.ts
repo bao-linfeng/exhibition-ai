@@ -229,6 +229,21 @@ export class AssetService {
     return { data: result.data.map(toAssetDto), page: result.page };
   }
 
+  async hideAsset(
+    assetId: string,
+    projectId: string,
+    requestedBy: string,
+    isMemberFn: (projectId: string) => Promise<boolean>,
+  ): Promise<'ok' | 'not_found' | 'forbidden' | 'already_hidden'> {
+    const asset = await this.repo.findById(assetId);
+    if (!asset || asset.projectId !== projectId) return 'not_found';
+    if (!(await isMemberFn(asset.projectId))) return 'forbidden';
+    if (asset.hiddenAt) return 'already_hidden';
+    const updated = await this.repo.hideAsset(assetId);
+    if (!updated) return 'already_hidden';
+    return 'ok';
+  }
+
   async createDownloadUrl(
     assetId: string,
     projectId: string,
@@ -239,10 +254,21 @@ export class AssetService {
     if (!asset || asset.projectId !== projectId) return 'not_found';
     if (!(await isMemberFn(asset.projectId))) return 'forbidden';
 
+    let targetObjectKey = asset.objectKey;
+    let targetBucket = asset.bucket;
+
+    if (variant === 'thumbnail') {
+      const thumb = await this.repo.findThumbnailBySourceId(assetId);
+      if (thumb) {
+        targetObjectKey = thumb.objectKey;
+        targetBucket = thumb.bucket;
+      }
+    }
+
     const expiresAt = new Date(Date.now() + DOWNLOAD_URL_TTL_SECONDS * 1000);
     const { url } = await this.storage.signDownloadUrl({
-      bucket: asset.bucket,
-      key: asset.objectKey,
+      bucket: targetBucket,
+      key: targetObjectKey,
       expiresInSeconds: DOWNLOAD_URL_TTL_SECONDS,
     });
 
