@@ -1,0 +1,81 @@
+import type {
+  CreateCustomerRequest,
+  Customer as CustomerContract,
+  CustomerStatus,
+  UpdateCustomerRequest,
+} from '@exhibition/contracts';
+import type { Customer as DbCustomer } from '@exhibition/db';
+import { CustomerRepository } from './customers.repository.js';
+
+export class CustomerService {
+  constructor(private repo: CustomerRepository) {}
+
+  async listCustomers(query: {
+    status?: CustomerStatus;
+    search?: string;
+    cursor?: string;
+    limit?: number;
+  }): Promise<{
+    data: CustomerContract[];
+    page: { nextCursor: string | null; hasMore: boolean };
+  }> {
+    const result = await this.repo.findAll(query);
+    return {
+      data: result.data.map((customer) => this.toCustomer(customer)),
+      page: result.page,
+    };
+  }
+
+  async createCustomer(
+    data: CreateCustomerRequest,
+    createdBy: string,
+  ): Promise<CustomerContract> {
+    return this.toCustomer(await this.repo.create({ ...data, createdBy }));
+  }
+
+  async getCustomer(id: string): Promise<CustomerContract | null> {
+    const customer = await this.repo.findById(id);
+    return customer ? this.toCustomer(customer) : null;
+  }
+
+  async updateCustomer(
+    id: string,
+    data: UpdateCustomerRequest,
+    expectedRevision: number,
+  ): Promise<CustomerContract | null | 'conflict'> {
+    const customer = await this.repo.update(
+      id,
+      {
+        name: data.name,
+        contactName: data.contactName,
+        contactPhone: data.contactPhone,
+        contactEmail: data.contactEmail,
+        industry: data.industry,
+        address: data.address,
+        notes: data.notes,
+        status: data.status,
+      },
+      expectedRevision,
+    );
+    if (customer) return this.toCustomer(customer);
+    return (await this.repo.findById(id)) ? 'conflict' : null;
+  }
+
+  private toCustomer(customer: DbCustomer): CustomerContract {
+    return {
+      id: customer.id,
+      name: customer.name,
+      ...(customer.contactName ? { contactName: customer.contactName } : {}),
+      ...(customer.contactPhone ? { contactPhone: customer.contactPhone } : {}),
+      ...(customer.contactEmail ? { contactEmail: customer.contactEmail } : {}),
+      ...(customer.industry ? { industry: customer.industry } : {}),
+      ...(customer.address ? { address: customer.address } : {}),
+      ...(customer.notes ? { notes: customer.notes } : {}),
+      status: customer.status,
+      createdBy: customer.createdBy,
+      createdAt: customer.createdAt.toISOString(),
+      updatedAt: customer.updatedAt.toISOString(),
+      revision: customer.revision,
+    };
+  }
+}
