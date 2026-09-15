@@ -252,7 +252,7 @@ docker compose --env-file .env -f infra/compose.dev.yaml down
 
 - [ ] **T015 实现 AI Provider 契约、Mock 和 Prompt 快照** — [Issue 正文](docs/issues/T015.md)
 
-  阶段：M2；前置：[T003 #3](https://github.com/bao-linfeng/exhibition-ai/issues/3)、[T013 #13](https://github.com/bao-linfeng/exhibition-ai/issues/13)；状态：todo；GitHub Issue：[#15](https://github.com/bao-linfeng/exhibition-ai/issues/15)；PR：—。
+  阶段：M2；前置：[T003 #3](https://github.com/bao-linfeng/exhibition-ai/issues/3)、[T013 #13](https://github.com/bao-linfeng/exhibition-ai/issues/13)；状态：in_review；GitHub Issue：[#15](https://github.com/bao-linfeng/exhibition-ai/issues/15)；PR：[#58](https://github.com/bao-linfeng/exhibition-ai/pull/58)。
 
   需求：FR-06、§5、§8、AC-18。目录：packages/backend/src/ports；packages/ai；apps/worker/src/bootstrap.ts；tests/fixtures。
 

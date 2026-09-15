@@ -359,10 +359,10 @@
       "bodyFile": "docs/issues/T015.md",
       "issueNumber": 15,
       "issueUrl": "https://github.com/bao-linfeng/exhibition-ai/issues/15",
-      "branch": null,
-      "prNumber": null,
-      "prUrl": null,
-      "status": "todo"
+      "branch": "feat/issue-15-ai-provider-contract-mock-prompt",
+      "prNumber": 58,
+      "prUrl": "https://github.com/bao-linfeng/exhibition-ai/pull/58",
+      "status": "in_review"
     },
     {
       "id": "T016",
