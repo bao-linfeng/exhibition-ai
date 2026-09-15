@@ -17,6 +17,7 @@ import {
   ImageVersionRepository,
   BriefRepository,
   DirectionRepository,
+  ModelConfigRepository,
   createImageGenerationQueue,
   QUEUE_IMAGE_GENERATION,
   createBriefParseQueue,
@@ -42,6 +43,12 @@ import { runTimeoutReconciler } from './schedulers/timeout-reconciler.js';
 
 const heartbeat = env.WORKER_HEALTH_FILE;
 export const providers = bootstrapProviders();
+const {
+  imageProviderRegistry,
+  textProviderRegistry,
+  promptRegistry,
+  defaultTextProviderId,
+} = providers;
 
 // DB + services
 const { db } = initDatabase();
@@ -65,6 +72,7 @@ const generationRepo = new GenerationRepository(db);
 const imageVersionRepo = new ImageVersionRepository(db);
 const briefRepo = new BriefRepository(db);
 const directionRepo = new DirectionRepository(db);
+const modelConfigRepo = new ModelConfigRepository(db);
 const bucket = env.S3_BUCKET;
 
 // Redis connections
@@ -155,8 +163,9 @@ const imageGenerationWorker = new Worker(
       imageVersionRepo,
       storage: s3,
       bucket,
-      imageProviderRegistry: providers.imageProviderRegistry,
-      promptRegistry: providers.promptRegistry,
+      imageProviderRegistry,
+      promptRegistry,
+      modelConfigRepo,
     });
   },
   { connection: createQueueConnection(), concurrency: 4 },
@@ -178,8 +187,9 @@ const briefParseWorker = new Worker(
     );
     await processBriefParse(data, {
       taskRepo,
-      textProviderRegistry: providers.textProviderRegistry,
-      promptRegistry: providers.promptRegistry,
+      textProviderRegistry,
+      textProviderId: defaultTextProviderId,
+      promptRegistry,
     });
   },
   { connection: createQueueConnection(), concurrency: 2 },
@@ -203,8 +213,9 @@ const designDirectionWorker = new Worker(
       taskRepo,
       briefRepo,
       directionRepo,
-      textProviderRegistry: providers.textProviderRegistry,
-      promptRegistry: providers.promptRegistry,
+      textProviderRegistry,
+      textProviderId: defaultTextProviderId,
+      promptRegistry,
     });
   },
   { connection: createQueueConnection(), concurrency: 2 },

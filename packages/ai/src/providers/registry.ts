@@ -11,28 +11,28 @@ export class ImageProviderRegistry {
 
   register(config: ProviderModelConfig, provider: ImageProvider): this {
     if (!config.isActive) return this;
-    this.configs.set(config.modelId, config);
-    this.providers.set(config.modelId, provider);
+    this.configs.set(config.providerId, config);
+    this.providers.set(config.providerId, provider);
     return this;
   }
 
-  resolve(modelId: string): {
+  resolve(providerId: string): {
     provider: ImageProvider;
     config: ProviderModelConfig;
   } {
-    const config = this.configs.get(modelId);
-    const provider = this.providers.get(modelId);
+    const config = this.configs.get(providerId);
+    const provider = this.providers.get(providerId);
     if (!config || !provider) {
       throw new ProviderError(
         'model_not_found',
-        `Image model not found or not registered: ${modelId}`,
+        `Image provider not found or not registered: ${providerId}`,
         false,
       );
     }
     if (!config.isActive) {
       throw new ProviderError(
         'model_disabled',
-        `Image model is disabled: ${modelId}`,
+        `Image provider is disabled: ${providerId}`,
         false,
       );
     }

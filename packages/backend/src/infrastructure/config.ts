@@ -22,6 +22,10 @@ export interface Environment {
   SMTP_USER?: string;
   SMTP_PASS?: string;
   SMTP_FROM?: string;
+  // AI Provider 配置
+  OPENAI_API_KEY?: string;
+  AI_PROVIDER_MODE?: 'mock' | 'real';
+  AI_DEFAULT_TEXT_MODEL?: string;
 }
 
 function optional(name: string): string | undefined {
@@ -131,6 +135,12 @@ function parseEnv(): Environment {
     SMTP_USER: optional('SMTP_USER'),
     SMTP_PASS: optional('SMTP_PASS'),
     SMTP_FROM: optional('SMTP_FROM'),
+    OPENAI_API_KEY: optional('OPENAI_API_KEY'),
+    AI_PROVIDER_MODE: (() => {
+      const v = optional('AI_PROVIDER_MODE');
+      return v === 'real' ? 'real' : 'mock';
+    })(),
+    AI_DEFAULT_TEXT_MODEL: optional('AI_DEFAULT_TEXT_MODEL') ?? 'mock-text',
   };
 }
 
