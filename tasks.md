@@ -78,17 +78,17 @@ docker compose --env-file .env -f infra/compose.dev.yaml down
 
 ### M0
 
-- [ ] **T001 锁定技术栈并建立 Monorepo 工程** — [Issue 正文](docs/issues/T001.md)
+- [x] **T001 锁定技术栈并建立 Monorepo 工程** — [Issue 正文](docs/issues/T001.md)
 
-  阶段：M0；前置：无；状态：todo；GitHub Issue：[#1](https://github.com/bao-linfeng/exhibition-ai/issues/1)；PR：—。
+  阶段：M0；前置：无；状态：done；GitHub Issue：[#1](https://github.com/bao-linfeng/exhibition-ai/issues/1)；PR：[#43](https://github.com/bao-linfeng/exhibition-ai/pull/43)（已关闭，实现含于 main 提交 8cc9162、89fba80）。
 
   需求：§5、§6。目录：apps/*；packages/*；根配置；docs/DEPENDENCY_BASELINE.md。
 
   范围：核实并锁定 Node/pnpm/框架兼容版本；建立三应用和五个共享包的最小有效入口；配置 TS ESM、显式 exports、唯一锁文件和格式检查。
 
-  - [ ] 记录官方来源、peer dependencies 和安装/构建结果，不使用 floating latest
-  - [ ] 容器内 frozen-lockfile 安装及三应用独立构建成功
-  - [ ] Web 不依赖 Node 服务端包；不创建空业务模块或第二套目录
+  - [x] 记录官方来源、peer dependencies 和安装/构建结果，不使用 floating latest
+  - [x] 容器内 frozen-lockfile 安装及三应用独立构建成功
+  - [x] Web 不依赖 Node 服务端包；不创建空业务模块或第二套目录
 
 - [ ] **T002 实现 Docker Compose 全服务开发环境** — [Issue 正文](docs/issues/T002.md)
 

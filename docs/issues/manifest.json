@@ -20,10 +20,10 @@
       "bodyFile": "docs/issues/T001.md",
       "issueNumber": 1,
       "issueUrl": "https://github.com/bao-linfeng/exhibition-ai/issues/1",
-      "branch": null,
-      "prNumber": null,
-      "prUrl": null,
-      "status": "todo"
+      "branch": "chore/issue-1-monorepo-setup",
+      "prNumber": 43,
+      "prUrl": "https://github.com/bao-linfeng/exhibition-ai/pull/43",
+      "status": "done"
     },
     {
       "id": "T002",
