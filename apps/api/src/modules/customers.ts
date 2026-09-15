@@ -21,7 +21,7 @@ export async function customerRoutes(app: FastifyInstance) {
       ? app.services!.authService.validateSession(sessionId)
       : null;
   }
-  // GET /api/v1/customers
+
   app.get(
     '/api/v1/customers',
     {
@@ -36,20 +36,24 @@ export async function customerRoutes(app: FastifyInstance) {
       },
     },
     async (request, _reply) => {
-      if (!(await currentUser(request.cookies.sessionId)))
-        throw app.httpErrors.unauthorized('Not authenticated');
-      return app.services!.customerService.listCustomers(
+      const user = await currentUser(request.cookies.sessionId);
+      if (!user) throw app.httpErrors.unauthorized('Not authenticated');
+
+      const result = await app.services!.customerService.listCustomers(
         request.query as {
           status?: 'active' | 'inactive';
           search?: string;
           cursor?: string;
           limit?: number;
         },
+        user,
       );
+
+      if (result === 'forbidden') throw app.httpErrors.forbidden();
+      return result;
     },
   );
 
-  // POST /api/v1/customers
   app.post(
     '/api/v1/customers',
     {
@@ -66,15 +70,18 @@ export async function customerRoutes(app: FastifyInstance) {
     async (request, reply) => {
       const user = await currentUser(request.cookies.sessionId);
       if (!user) throw app.httpErrors.unauthorized('Not authenticated');
+
       const customer = await app.services!.customerService.createCustomer(
         request.body as CreateCustomerRequest,
         user.id,
+        user,
       );
+
+      if (customer === 'forbidden') throw app.httpErrors.forbidden();
       return reply.code(201).send({ data: customer });
     },
   );
 
-  // GET /api/v1/customers/:id
   app.get(
     '/api/v1/customers/:id',
     {
@@ -89,17 +96,21 @@ export async function customerRoutes(app: FastifyInstance) {
       },
     },
     async (request) => {
-      if (!(await currentUser(request.cookies.sessionId)))
-        throw app.httpErrors.unauthorized('Not authenticated');
+      const user = await currentUser(request.cookies.sessionId);
+      if (!user) throw app.httpErrors.unauthorized('Not authenticated');
+
       const customer = await app.services!.customerService.getCustomer(
         (request.params as { id: string }).id,
+        user,
       );
+
+      if (customer === 'forbidden') throw app.httpErrors.forbidden();
       if (!customer) throw app.httpErrors.notFound('Customer not found');
+
       return { data: customer };
     },
   );
 
-  // PATCH /api/v1/customers/:id
   app.patch(
     '/api/v1/customers/:id',
     {
@@ -115,17 +126,23 @@ export async function customerRoutes(app: FastifyInstance) {
       },
     },
     async (request) => {
-      if (!(await currentUser(request.cookies.sessionId)))
-        throw app.httpErrors.unauthorized('Not authenticated');
+      const user = await currentUser(request.cookies.sessionId);
+      if (!user) throw app.httpErrors.unauthorized('Not authenticated');
+
       const body = request.body as UpdateCustomerRequest;
       const result = await app.services!.customerService.updateCustomer(
         (request.params as { id: string }).id,
         body,
         body.expectedRevision,
+        user,
       );
-      if (result === 'conflict')
+
+      if (result === 'forbidden') throw app.httpErrors.forbidden();
+      if (result === 'conflict') {
         throw app.httpErrors.conflict('Customer revision conflict');
+      }
       if (!result) throw app.httpErrors.notFound('Customer not found');
+
       return { data: result };
     },
   );

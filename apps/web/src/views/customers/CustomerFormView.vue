@@ -6,6 +6,7 @@ import {
   useCreateCustomerMutation,
   useUpdateCustomerMutation,
 } from '../../api/queries/customers.js';
+import { useUserStore } from '../../stores/user.js';
 import PageHeader from '../../components/PageHeader.vue';
 import { Button } from '../../components/ui/button/index.js';
 import { Input } from '../../components/ui/input/index.js';
@@ -13,6 +14,7 @@ import { Label } from '../../components/ui/label/index.js';
 
 const route = useRoute();
 const router = useRouter();
+const userStore = useUserStore();
 
 const isEdit = computed(() => route.path.includes('/edit'));
 const customerId = computed(() => route.params.id as string);
@@ -164,7 +166,7 @@ function cancel() {
               placeholder="例如：医疗、科技、制造..."
             />
           </div>
-          <div class="space-y-2">
+          <div v-if="userStore.canDeactivateCustomer" class="space-y-2">
             <Label v-if="isEdit" for="status">状态</Label>
             <div v-if="isEdit" class="flex gap-4 items-center h-10">
               <label class="flex items-center gap-2">

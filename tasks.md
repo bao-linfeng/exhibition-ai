@@ -116,7 +116,7 @@ docker compose --env-file .env -f infra/compose.dev.yaml down
 
 - [x] **T004 建立数据库迁移、配置和日志基础** — [Issue 正文](docs/issues/T004.md)
 
-  阶段：M0；前置：[T001 #1](https://github.com/bao-linfeng/exhibition-ai/issues/1)、[T002 #2](https://github.com/bao-linfeng/exhibition-ai/issues/2)；状态：done；GitHub Issue：[#4](https://github.com/bao-linfeng/exhibition-ai/issues/4)；PR：[#47](https://github.com/bao-linfeng/exhibition-ai/pull/47)。
+  阶段：M0；前置：[T001 #1](https://github.com/bao-linfeng/exhibition-ai/issues/1)、[T002 #2](https://github.com/bao-linfeng/exhibition-ai/issues/2)；状态：done；GitHub Issue：[#4](https://github.com/bao-linfeng/exhibition-ai/issues/4)；PR：[#47](https://github.com/bao-linfeng/exhibition-ai/pull/47)（初始实现）、[#48](https://github.com/bao-linfeng/exhibition-ai/pull/48)（补充修复：pino日志、seed防护、health模块化）。
 
   需求：§7、§11.2、§11.5。目录：packages/db；packages/backend/src/infrastructure；apps/api/src/health；apps/worker/src。
 

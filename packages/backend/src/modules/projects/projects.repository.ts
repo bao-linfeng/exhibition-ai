@@ -20,6 +20,7 @@ export interface ProjectListOptions {
   status?: Project['status'];
   customerId?: string;
   ownerId?: string;
+  memberId?: string;
   search?: string;
   cursor?: string;
   limit?: number;
@@ -58,6 +59,7 @@ export class ProjectRepository {
     page: { nextCursor: string | null; hasMore: boolean };
   }> {
     const limit = Math.min(Math.max(options.limit ?? 20, 1), 100);
+
     const rows = await this.db
       .select(projectColumns)
       .from(projects)
@@ -70,6 +72,9 @@ export class ProjectRepository {
             ? eq(projects.customerId, options.customerId)
             : undefined,
           options.ownerId ? eq(projects.ownerId, options.ownerId) : undefined,
+          options.memberId
+            ? sql`exists (select 1 from ${projectMembers} where ${projectMembers.projectId} = ${projects.id} and ${projectMembers.userId} = ${options.memberId})`
+            : undefined,
           options.search
             ? ilike(projects.name, `%${options.search}%`)
             : undefined,
@@ -78,11 +83,13 @@ export class ProjectRepository {
             : undefined,
         ),
       )
-      .orderBy(desc(projects.createdAt))
+      .orderBy(desc(projects.createdAt), desc(projects.id))
       .limit(limit + 1);
+
     const hasMore = rows.length > limit;
     const data = hasMore ? rows.slice(0, limit) : rows;
     const last = data.at(-1);
+
     return {
       data,
       page: {
@@ -100,6 +107,7 @@ export class ProjectRepository {
       .innerJoin(users, eq(projects.ownerId, users.id))
       .where(eq(projects.id, id))
       .limit(1);
+
     return project;
   }
 
@@ -108,9 +116,12 @@ export class ProjectRepository {
       .insert(projects)
       .values(data)
       .returning({ id: projects.id });
+
     if (!project) throw new Error('Project creation did not return a row');
+
     const result = await this.findById(project.id);
     if (!result) throw new Error('Created project could not be loaded');
+
     return result;
   }
 
@@ -130,6 +141,7 @@ export class ProjectRepository {
       })
       .where(and(eq(projects.id, id), eq(projects.revision, expectedRevision)))
       .returning({ id: projects.id });
+
     return project ? ((await this.findById(project.id)) ?? null) : null;
   }
 
@@ -149,6 +161,21 @@ export class ProjectRepository {
       .orderBy(users.displayName);
   }
 
+  async isMember(projectId: string, userId: string): Promise<boolean> {
+    const [member] = await this.db
+      .select({ userId: projectMembers.userId })
+      .from(projectMembers)
+      .where(
+        and(
+          eq(projectMembers.projectId, projectId),
+          eq(projectMembers.userId, userId),
+        ),
+      )
+      .limit(1);
+
+    return member !== undefined;
+  }
+
   async addMember(
     projectId: string,
     userId: string,
@@ -159,6 +186,7 @@ export class ProjectRepository {
       .values({ projectId, userId, addedBy })
       .onConflictDoNothing()
       .returning({ userId: projectMembers.userId });
+
     return rows.length > 0;
   }
 

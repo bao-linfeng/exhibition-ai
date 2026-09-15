@@ -7,7 +7,9 @@ import {
   useRemoveProjectMemberMutation,
   useAddProjectMemberMutation,
   useUserOptionsQuery,
+  useTransferOwnerMutation,
 } from '../../api/queries/projects.js';
+import { useUserStore } from '../../stores/user.js';
 import PageHeader from '../../components/PageHeader.vue';
 import StatusBadge from '../../components/StatusBadge.vue';
 import {
@@ -40,6 +42,7 @@ import {
 
 const route = useRoute();
 const router = useRouter();
+const userStore = useUserStore();
 const projectId = computed(() => route.params.id as string);
 
 const { data: project, isLoading } = useProjectQuery(projectId.value);
@@ -48,10 +51,32 @@ const { data: membersData, isLoading: isLoadingMembers } =
 
 const removeMemberMutation = useRemoveProjectMemberMutation();
 const addMemberMutation = useAddProjectMemberMutation();
+const transferOwnerMutation = useTransferOwnerMutation();
 const { data: usersData } = useUserOptionsQuery();
 
 const showAddMemberDialog = ref(false);
+const showTransferOwnerDialog = ref(false);
 const selectedUserId = ref('');
+const transferUserId = ref('');
+
+const isMember = computed(() =>
+  membersData.value?.some(
+    (m: { userId: string }) => m.userId === userStore.user?.id,
+  ),
+);
+const isOwner = computed(() => project.value?.ownerId === userStore.user?.id);
+
+const canEditProject = computed(() => {
+  if (userStore.user?.role === 'admin') return true;
+  if (userStore.user?.role === 'designer' && isMember.value) return true;
+  if (userStore.user?.role === 'sales' && isOwner.value) return true;
+  return false;
+});
+
+const canTransferOwner = computed(() => userStore.user?.role === 'admin');
+const canManageMembers = computed(
+  () => userStore.user?.role === 'admin' || isOwner.value,
+);
 
 function goBack() {
   router.push('/projects');
@@ -61,6 +86,10 @@ function viewCustomer() {
   if (project.value?.customerId) {
     router.push(`/customers/${project.value.customerId}`);
   }
+}
+
+function editProject() {
+  router.push(`/projects/${projectId.value}/edit`);
 }
 
 async function removeMember(userId: string) {
@@ -81,6 +110,18 @@ async function addMember() {
   });
   showAddMemberDialog.value = false;
   selectedUserId.value = '';
+}
+
+async function transferOwner(userId?: string) {
+  const targetId = userId || transferUserId.value;
+  if (!targetId) return;
+  await transferOwnerMutation.mutateAsync({
+    projectId: projectId.value,
+    userId: targetId,
+    expectedRevision: project.value?.revision || 0,
+  });
+  showTransferOwnerDialog.value = false;
+  transferUserId.value = '';
 }
 
 const availableUsers = computed(() => {
@@ -110,7 +151,15 @@ const availableUsers = computed(() => {
 
     <PageHeader :title="project.name">
       <template #actions>
-        <Button variant="outline" disabled>编辑项目 (暂未开放)</Button>
+        <Button
+          v-if="canTransferOwner"
+          variant="outline"
+          @click="showTransferOwnerDialog = true"
+          >转交负责人</Button
+        >
+        <Button v-if="canEditProject" variant="outline" @click="editProject"
+          >编辑项目</Button
+        >
         <Button disabled>进入设计大厅</Button>
       </template>
     </PageHeader>
@@ -220,7 +269,11 @@ const availableUsers = computed(() => {
               <Users class="h-5 w-5 text-muted-foreground" />
               <h3 class="font-semibold text-lg">项目成员</h3>
             </div>
-            <Button size="sm" @click="showAddMemberDialog = true">
+            <Button
+              v-if="canManageMembers"
+              size="sm"
+              @click="showAddMemberDialog = true"
+            >
               <Plus class="mr-2 h-4 w-4" />
               添加成员
             </Button>
@@ -272,7 +325,20 @@ const availableUsers = computed(() => {
                   </TableCell>
                   <TableCell class="text-right">
                     <Button
-                      v-if="member.userId !== project.ownerId"
+                      v-if="
+                        canTransferOwner && member.userId !== project.ownerId
+                      "
+                      variant="ghost"
+                      size="sm"
+                      class="mr-2"
+                      @click="transferOwner(member.userId)"
+                    >
+                      设为负责人
+                    </Button>
+                    <Button
+                      v-if="
+                        canManageMembers && member.userId !== project.ownerId
+                      "
                       variant="ghost"
                       size="icon"
                       class="text-destructive hover:text-destructive hover:bg-destructive/10"
@@ -324,6 +390,54 @@ const availableUsers = computed(() => {
             @click="addMember"
           >
             {{ addMemberMutation.isPending.value ? '添加中...' : '确认添加' }}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+
+    <!-- Transfer Owner Dialog -->
+    <Dialog
+      :open="showTransferOwnerDialog"
+      @update:open="showTransferOwnerDialog = $event"
+    >
+      <DialogContent class="sm:max-w-[425px]">
+        <DialogHeader>
+          <DialogTitle>转交负责人</DialogTitle>
+          <DialogDescription>
+            选择一个新的负责人，他们将拥有项目的管理权限。
+          </DialogDescription>
+        </DialogHeader>
+        <div class="grid gap-4 py-4">
+          <div class="flex flex-col gap-2">
+            <select
+              v-model="transferUserId"
+              class="flex h-10 w-full items-center justify-between rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm ring-offset-background focus:outline-none focus:ring-1 focus:ring-ring"
+            >
+              <option value="" disabled>选择新负责人</option>
+              <option
+                v-for="m in (membersData || []).filter(
+                  (m: { userId: string }) => m.userId !== project?.ownerId,
+                )"
+                :key="m.userId"
+                :value="m.userId"
+              >
+                {{ m.userName }} ({{ m.userEmail }})
+              </option>
+            </select>
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" @click="showTransferOwnerDialog = false">
+            取消
+          </Button>
+          <Button
+            type="button"
+            :disabled="!transferUserId || transferOwnerMutation.isPending.value"
+            @click="() => transferOwner()"
+          >
+            {{
+              transferOwnerMutation.isPending.value ? '转交中...' : '确认转交'
+            }}
           </Button>
         </DialogFooter>
       </DialogContent>

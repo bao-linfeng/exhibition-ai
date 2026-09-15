@@ -2,10 +2,15 @@ import { randomBytes, scrypt } from 'node:crypto';
 import { promisify } from 'node:util';
 import { createDatabase, users } from './index.js';
 
-const appEnv = process.env.APP_ENV ?? 'development';
+const appEnv = process.env.APP_ENV ?? process.env.NODE_ENV;
+const allowed =
+  (appEnv === 'development' || appEnv === 'test') &&
+  process.env.NODE_ENV !== 'production';
 
-if (appEnv === 'production') {
-  console.error('[seed] Seed is not allowed in production');
+if (!allowed) {
+  console.error(
+    '[seed] Seed is only allowed in development or test environments.',
+  );
   process.exit(1);
 }
 
