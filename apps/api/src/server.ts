@@ -1,4 +1,4 @@
-import { createServices } from '@exhibition/backend';
+import { createServices, env, logger } from '@exhibition/backend';
 import { buildApp } from './app.js';
 
 const app = await buildApp(createServices());
@@ -9,21 +9,21 @@ async function stop() {
   await app.close();
 }
 process.once('SIGINT', () => {
-  void stop();
+  void stop().catch((error) => {
+    logger.fatal({ err: error }, 'Graceful shutdown failed');
+    process.exitCode = 1;
+  });
 });
 process.once('SIGTERM', () => {
-  void stop();
+  void stop().catch((error) => {
+    logger.fatal({ err: error }, 'Graceful shutdown failed');
+    process.exitCode = 1;
+  });
 });
 try {
-  await app.listen({
-    host: process.env.HOST ?? '0.0.0.0',
-    port: Number(process.env.PORT ?? '3000'),
-  });
-  console.log('API listening');
-} catch {
-  console.error(
-    'API failed to start; check local configuration and port availability.',
-  );
+  await app.listen({ host: env.HOST, port: env.PORT });
+} catch (error) {
+  logger.fatal({ err: error }, 'API failed to start');
   await stop();
   process.exitCode = 1;
 }

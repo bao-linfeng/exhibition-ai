@@ -1,8 +1,13 @@
 import { writeFile, unlink } from 'node:fs/promises';
-import { Worker, probeQueue, createQueueConnection } from '@exhibition/backend';
+import {
+  Worker,
+  probeQueue,
+  createQueueConnection,
+  env,
+  logger,
+} from '@exhibition/backend';
 
-const heartbeat =
-  process.env.WORKER_HEALTH_FILE ?? '/tmp/exhibition-worker-health';
+const heartbeat = env.WORKER_HEALTH_FILE;
 const connection = createQueueConnection();
 const worker = new Worker(
   probeQueue,
@@ -14,10 +19,10 @@ const worker = new Worker(
   { connection, concurrency: 1 },
 );
 worker.on('error', () => {
-  console.error('Worker connection error');
+  logger.error('Worker connection error');
 });
 worker.on('failed', () => {
-  console.error('Worker probe failed');
+  logger.error('Worker probe failed');
 });
 let stopping = false;
 let pulsing = false;
@@ -53,4 +58,4 @@ process.once('SIGINT', () => {
 process.once('SIGTERM', () => {
   void stop();
 });
-console.log('Local probe worker ready');
+logger.info('Local probe worker ready');
