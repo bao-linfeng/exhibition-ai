@@ -78,6 +78,11 @@ const routes: RouteRecordRaw[] = [
       },
     ],
   },
+  {
+    path: '/:pathMatch(.*)*',
+    name: 'not-found',
+    component: () => import('../views/NotFoundView.vue'),
+  },
 ];
 
 export const router = createRouter({
@@ -93,11 +98,13 @@ router.beforeEach(async (to, from, next) => {
       const { apiClient } = await import('../api/client.js');
       const { error } = await apiClient.GET('/api/v1/auth/me');
       if (error) {
-        next({ path: '/login', query: { redirect: to.fullPath } });
+        const safeFullPath = to.fullPath.startsWith('/') && !to.fullPath.startsWith('//') ? to.fullPath : '/dashboard';
+        next({ path: '/login', query: { redirect: safeFullPath } });
         return;
       }
     } catch {
-      next({ path: '/login', query: { redirect: to.fullPath } });
+      const safeFullPath = to.fullPath.startsWith('/') && !to.fullPath.startsWith('//') ? to.fullPath : '/dashboard';
+      next({ path: '/login', query: { redirect: safeFullPath } });
       return;
     }
   }
