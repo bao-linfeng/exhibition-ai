@@ -7156,6 +7156,7 @@
                 { "type": "string", "enum": ["brief.confirmed"] },
                 { "type": "string", "enum": ["generation.created"] },
                 { "type": "string", "enum": ["task.cancelled"] },
+                { "type": "string", "enum": ["task.retried"] },
                 { "type": "string", "enum": ["task.reconciled"] },
                 { "type": "string", "enum": ["asset.uploaded"] },
                 { "type": "string", "enum": ["asset.hidden"] },
@@ -7259,6 +7260,7 @@
                                 "enum": ["generation.created"]
                               },
                               { "type": "string", "enum": ["task.cancelled"] },
+                              { "type": "string", "enum": ["task.retried"] },
                               { "type": "string", "enum": ["task.reconciled"] },
                               { "type": "string", "enum": ["asset.uploaded"] },
                               { "type": "string", "enum": ["asset.hidden"] },

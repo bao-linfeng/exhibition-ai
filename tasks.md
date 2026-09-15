@@ -288,7 +288,7 @@ docker compose --env-file .env -f infra/compose.dev.yaml down
 
 - [ ] **T018 实现取消、失败重试和未知任务对账** — [Issue 正文](docs/issues/T018.md)
 
-  阶段：M2；前置：[T016 #16](https://github.com/bao-linfeng/exhibition-ai/issues/16)；状态：todo；GitHub Issue：[#18](https://github.com/bao-linfeng/exhibition-ai/issues/18)；PR：—。
+  阶段：M2；前置：[T016 #16](https://github.com/bao-linfeng/exhibition-ai/issues/16)；状态：in_review；GitHub Issue：[#18](https://github.com/bao-linfeng/exhibition-ai/issues/18)；PR：[#62](https://github.com/bao-linfeng/exhibition-ai/pull/62)。
 
   需求：FR-07、§8、AC-05～AC-08、AC-14、NFR-08。目录：packages/backend/src/modules/tasks；apps/api/src/modules/tasks；apps/worker/src/schedulers；tests/integration。
 

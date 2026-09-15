@@ -55,7 +55,19 @@ export async function processImageGeneration(
   } = deps;
 
   try {
-    const genRequest = await generationRepo.findByTaskId(taskId);
+    const taskRow = await taskRepo.findById(taskId);
+    if (!taskRow) {
+      logger.warn({ taskId }, 'Task not found, skipping');
+      return;
+    }
+    if (taskRow.status === 'cancelled') {
+      logger.info({ taskId }, 'Task already cancelled, skipping execution');
+      return;
+    }
+
+    // For retry tasks, fall back to the original task's generation request
+    const lookupTaskId = taskRow.retryOfTaskId ?? taskId;
+    const genRequest = await generationRepo.findByTaskId(lookupTaskId);
 
     if (!genRequest) {
       await failTask(taskRepo, taskId, 'GENERATION_REQUEST_NOT_FOUND');

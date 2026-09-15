@@ -21,6 +21,7 @@ export const AuditEventTypeSchema = Type.Union([
   Type.Literal('brief.confirmed'),
   Type.Literal('generation.created'),
   Type.Literal('task.cancelled'),
+  Type.Literal('task.retried'),
   Type.Literal('task.reconciled'),
   Type.Literal('asset.uploaded'),
   Type.Literal('asset.hidden'),

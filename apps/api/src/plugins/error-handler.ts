@@ -23,11 +23,13 @@ const errorHandler: FastifyPluginAsync = async (app) => {
         ? 'Internal server error'
         : error.message || 'An error occurred';
 
+    const reason = (error as FastifyError & { reason?: string }).reason;
     void reply.code(statusCode).send({
       error: {
         code,
         message,
         requestId: request.id,
+        ...(reason !== undefined ? { reason } : {}),
       },
     });
   });

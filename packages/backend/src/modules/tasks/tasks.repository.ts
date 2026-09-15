@@ -1,7 +1,12 @@
-import { eq, and, desc, lt, sql } from 'drizzle-orm';
+import { and, desc, eq, inArray, lt, sql } from 'drizzle-orm';
 import type { Database } from '@exhibition/db';
 import { tasks, taskOutbox } from '@exhibition/db';
-import type { TaskKind, TaskStatus } from '@exhibition/contracts';
+import type {
+  TaskFee,
+  TaskKind,
+  TaskOutput,
+  TaskStatus,
+} from '@exhibition/contracts';
 
 export class TaskRepository {
   constructor(private db: Database) {}
@@ -45,6 +50,75 @@ export class TaskRepository {
       if (!outbox) throw new Error('Failed to insert outbox');
 
       return { task, outbox };
+    });
+  }
+
+  async createRetryTask(input: {
+    originalTaskId: string;
+    outputs: TaskOutput[];
+    queueName: string;
+    payload: Record<string, unknown>;
+  }) {
+    return this.db.transaction(async (tx) => {
+      const [originalTask] = await tx
+        .select()
+        .from(tasks)
+        .where(eq(tasks.id, input.originalTaskId));
+
+      if (!originalTask) return null;
+
+      const [retryDisabled] = await tx
+        .update(tasks)
+        .set({ canRetry: false })
+        .where(
+          and(eq(tasks.id, input.originalTaskId), eq(tasks.canRetry, true)),
+        )
+        .returning({ id: tasks.id });
+
+      if (!retryDisabled) return null;
+
+      const [task] = await tx
+        .insert(tasks)
+        .values({
+          projectId: originalTask.projectId,
+          kind: originalTask.kind,
+          subtype: originalTask.subtype,
+          inputSnapshot: originalTask.inputSnapshot,
+          requestedBy: originalTask.requestedBy,
+          retryOfTaskId: originalTask.id,
+          status: 'pending',
+          outputs: input.outputs,
+        })
+        .returning();
+
+      if (!task) throw new Error('Failed to insert retry task');
+
+      const [outbox] = await tx
+        .insert(taskOutbox)
+        .values({
+          taskId: task.id,
+          queueName: input.queueName,
+          payload: {
+            ...input.payload,
+            taskId: task.id,
+            outboxId: '__placeholder__',
+          },
+        })
+        .returning();
+
+      if (!outbox) throw new Error('Failed to insert retry outbox');
+
+      const payload = {
+        ...input.payload,
+        taskId: task.id,
+        outboxId: outbox.id,
+      };
+      await tx
+        .update(taskOutbox)
+        .set({ payload })
+        .where(eq(taskOutbox.id, outbox.id));
+
+      return { task, outbox: { ...outbox, payload } };
     });
   }
 
@@ -158,7 +232,7 @@ export class TaskRepository {
     if (terminal.includes(task.status)) return 'already_terminal';
     if (!task.canCancel) return 'not_cancellable';
 
-    await this.db
+    const [updated] = await this.db
       .update(tasks)
       .set({
         status: 'cancelled',
@@ -166,9 +240,114 @@ export class TaskRepository {
         canCancel: false,
         canRetry: true,
       })
-      .where(and(eq(tasks.id, id), eq(tasks.canCancel, true)));
+      .where(
+        and(
+          eq(tasks.id, id),
+          eq(tasks.canCancel, true),
+          sql`${tasks.status} NOT IN ('succeeded', 'partially_succeeded', 'failed', 'cancelled')`,
+        ),
+      )
+      .returning({ id: tasks.id });
 
-    return 'ok';
+    if (updated) return 'ok';
+
+    const recheck = await this.findById(id);
+    if (!recheck) return 'not_found';
+    if (terminal.includes(recheck.status)) return 'already_terminal';
+    return 'not_cancellable';
+  }
+
+  async findStuckRunning(thresholdMs: number) {
+    return this.db
+      .select({ id: tasks.id, kind: tasks.kind })
+      .from(tasks)
+      .where(
+        and(
+          eq(tasks.status, 'running'),
+          lt(tasks.startedAt, new Date(Date.now() - thresholdMs)),
+        ),
+      );
+  }
+
+  async markReconciling(ids: string[]) {
+    if (ids.length === 0) return [];
+
+    return this.db
+      .update(tasks)
+      .set({ status: 'reconciling' })
+      .where(and(inArray(tasks.id, ids), eq(tasks.status, 'running')))
+      .returning({ id: tasks.id });
+  }
+
+  async reconcileOutput(input: {
+    taskId: string;
+    ordinal: number;
+    outcome: 'succeeded' | 'failed' | 'cancelled';
+    actualFee?: TaskFee;
+    reason: string;
+  }) {
+    return this.db.transaction(async (tx) => {
+      const [task] = await tx
+        .select()
+        .from(tasks)
+        .where(eq(tasks.id, input.taskId));
+
+      if (!task) return 'not_found' as const;
+      if (task.status !== 'reconciling') return 'not_reconciling' as const;
+
+      const outputs = (task.outputs as TaskOutput[] | null) ?? [];
+      const outputIndex = outputs.findIndex(
+        (output) => output.ordinal === input.ordinal,
+      );
+      if (outputIndex === -1) return 'ordinal_not_found' as const;
+
+      const nextOutputs = outputs.map((output) =>
+        output.ordinal === input.ordinal
+          ? { ...output, state: input.outcome }
+          : output,
+      );
+      const terminalStates = new Set(['succeeded', 'failed', 'cancelled']);
+      const allTerminal = nextOutputs.every((output) =>
+        terminalStates.has(output.state),
+      );
+      const succeededCount = nextOutputs.filter(
+        (output) => output.state === 'succeeded',
+      ).length;
+      const failedCount = nextOutputs.filter(
+        (output) => output.state === 'failed',
+      ).length;
+      const cancelledCount = nextOutputs.filter(
+        (output) => output.state === 'cancelled',
+      ).length;
+      const status = allTerminal
+        ? succeededCount === nextOutputs.length
+          ? 'succeeded'
+          : cancelledCount === nextOutputs.length
+            ? 'cancelled'
+            : succeededCount > 0
+              ? 'partially_succeeded'
+              : 'failed'
+        : 'reconciling';
+
+      const [updated] = await tx
+        .update(tasks)
+        .set({
+          outputs: nextOutputs,
+          status,
+          ...(allTerminal
+            ? {
+                finishedAt: new Date(),
+                canRetry: failedCount > 0,
+                canCancel: false,
+              }
+            : {}),
+          ...(input.actualFee !== undefined ? { fee: input.actualFee } : {}),
+        })
+        .where(and(eq(tasks.id, input.taskId), eq(tasks.status, 'reconciling')))
+        .returning();
+
+      return updated ?? ('not_reconciling' as const);
+    });
   }
 
   // Outbox: pick unpublished messages for relay

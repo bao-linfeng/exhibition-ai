@@ -38,6 +38,7 @@ import {
   processDesignDirection,
   type DesignDirectionJobData,
 } from './processors/design-direction.processor.js';
+import { runTimeoutReconciler } from './schedulers/timeout-reconciler.js';
 
 const heartbeat = env.WORKER_HEALTH_FILE;
 export const providers = bootstrapProviders();
@@ -245,6 +246,17 @@ async function scanOutbox() {
   }
 }
 
+let reconciling = false;
+async function scanStuckTasks() {
+  if (reconciling || stopping) return;
+  reconciling = true;
+  try {
+    await runTimeoutReconciler(taskService);
+  } finally {
+    reconciling = false;
+  }
+}
+
 await Promise.all([
   probeWorker.waitUntilReady(),
   assetValidationWorker.waitUntilReady(),
@@ -260,12 +272,19 @@ const heartbeatTimer = setInterval(() => {
 const outboxTimer = setInterval(() => {
   void scanOutbox();
 }, 60_000);
+const reconcilerTimer = setInterval(
+  () => {
+    void scanStuckTasks();
+  },
+  5 * 60 * 1000,
+);
 
 async function stop() {
   if (stopping) return;
   stopping = true;
   clearInterval(heartbeatTimer);
   clearInterval(outboxTimer);
+  clearInterval(reconcilerTimer);
   await unlink(heartbeat).catch(() => {});
   await Promise.all([
     probeWorker.close(),
@@ -292,5 +311,5 @@ process.once('SIGTERM', () => {
 });
 
 logger.info(
-  'Worker ready: probe + asset_validation + brief_parse + design_direction + image_generation + outbox scanner',
+  'Worker ready: probe + asset_validation + brief_parse + design_direction + image_generation + outbox scanner + timeout reconciler',
 );

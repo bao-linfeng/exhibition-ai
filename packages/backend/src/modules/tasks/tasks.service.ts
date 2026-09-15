@@ -1,9 +1,12 @@
 import type {
+  ReconcileTaskRequest,
+  RetryTaskRequest,
   TaskKind,
   TaskStatus,
   Task,
   TaskOutput,
 } from '@exhibition/contracts';
+import { logger } from '../../infrastructure/logger.js';
 import type { TaskRepository } from './tasks.repository.js';
 import type { Queue } from 'bullmq';
 
@@ -161,6 +164,96 @@ export class TaskService {
     if (!isAdmin && !(await isMemberFn(task.projectId))) return 'forbidden';
 
     return this.repo.cancelIfCancellable(id);
+  }
+
+  async retryTask(
+    id: string,
+    requestingUserId: string,
+    isAdmin: boolean,
+    isMemberFn: (projectId: string) => Promise<boolean>,
+    body: RetryTaskRequest,
+  ): Promise<
+    Task | 'not_found' | 'forbidden' | 'not_retryable' | 'unsupported_kind'
+  > {
+    const task = await this.repo.findById(id);
+    if (!task) return 'not_found';
+
+    if (!isAdmin && !(await isMemberFn(task.projectId))) return 'forbidden';
+    if (!task.canRetry) return 'not_retryable';
+
+    const outputs = (task.outputs as TaskOutput[] | null) ?? [];
+    const failedOrdinals =
+      body.failedOrdinals ??
+      outputs
+        .filter((output) => output.state === 'failed')
+        .map((output) => output.ordinal);
+    const retryableOutputs = outputs.filter((output) =>
+      failedOrdinals.includes(output.ordinal),
+    );
+
+    if (
+      failedOrdinals.length === 0 ||
+      retryableOutputs.length !== failedOrdinals.length ||
+      retryableOutputs.some((output) => output.state !== 'failed')
+    ) {
+      return 'not_retryable';
+    }
+
+    if (task.kind !== 'image_generation') return 'unsupported_kind';
+
+    const retryOutputs = retryableOutputs.map((output) => ({
+      ...output,
+      state: 'pending' as const,
+      errorCode: null,
+      errorMessage: null,
+    }));
+    const created = await this.repo.createRetryTask({
+      originalTaskId: task.id,
+      outputs: retryOutputs,
+      queueName: 'exhibition-image-generation',
+      payload: { projectId: task.projectId },
+    });
+
+    if (!created) return 'not_retryable';
+
+    await this.relayOutbox(
+      created.outbox.id,
+      created.task.id,
+      created.outbox.queueName,
+      created.outbox.payload as Record<string, unknown>,
+    );
+
+    return toTaskDto(created.task);
+  }
+
+  async reconcileTaskOutput(
+    id: string,
+    requestingUserId: string,
+    isAdmin: boolean,
+    isMemberFn: (projectId: string) => Promise<boolean>,
+    body: ReconcileTaskRequest,
+  ): Promise<
+    Task | 'not_found' | 'forbidden' | 'not_reconciling' | 'ordinal_not_found'
+  > {
+    if (!isAdmin) return 'forbidden';
+
+    const result = await this.repo.reconcileOutput({ taskId: id, ...body });
+    return typeof result === 'string' ? result : toTaskDto(result);
+  }
+
+  async scanAndMarkStuckTasks(thresholdMs = 15 * 60 * 1000) {
+    const stuckTasks = await this.repo.findStuckRunning(thresholdMs);
+    if (stuckTasks.length === 0) return;
+
+    const marked = await this.repo.markReconciling(
+      stuckTasks.map((task) => task.id),
+    );
+    if (marked.length > 0) {
+      logger.warn(
+        { taskIds: marked.map((task) => task.id), thresholdMs },
+        'Marked stuck tasks for reconciliation',
+      );
+    }
   }
 
   // Outbox relay scan — called periodically by worker scheduler
