@@ -198,5 +198,6 @@ export type FeeStatus = Static<typeof FeeStatusSchema>;
 export type TaskOutput = Static<typeof TaskOutputSchema>;
 export type TaskFee = Static<typeof TaskFeeSchema>;
 export type Task = Static<typeof TaskSchema>;
+export type ListTasksQuery = Static<typeof ListTasksQuerySchema>;
 export type RetryTaskRequest = Static<typeof RetryTaskRequestSchema>;
 export type ReconcileTaskRequest = Static<typeof ReconcileTaskRequestSchema>;

@@ -5,3 +5,4 @@ export * from './projects.js';
 export * from './email_verifications.js';
 export * from './audit_logs.js';
 export * from './briefs.js';
+export * from './tasks.js';

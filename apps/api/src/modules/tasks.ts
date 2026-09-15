@@ -11,8 +11,25 @@ import {
   ReconcileTaskResponseSchema,
   UuidSchema,
 } from '@exhibition/contracts';
+import type { ListTasksQuery } from '@exhibition/contracts';
 
 export async function taskRoutes(app: FastifyInstance) {
+  async function currentUser(sessionId: string | undefined) {
+    return sessionId
+      ? app.services!.authService.validateSession(sessionId)
+      : null;
+  }
+
+  function isMemberFn(user: { id: string; role: string }) {
+    return async (projectId: string) => {
+      const project = await app.services!.projectService.getProject(
+        projectId,
+        user,
+      );
+      return project !== null && project !== 'forbidden';
+    };
+  }
+
   // GET /api/v1/tasks
   app.get(
     '/api/v1/tasks',
@@ -27,8 +44,28 @@ export async function taskRoutes(app: FastifyInstance) {
         },
       },
     },
-    async () => {
-      throw app.httpErrors.notImplemented('List tasks not implemented');
+    async (request) => {
+      const user = await currentUser(request.cookies.sessionId);
+      if (!user) throw app.httpErrors.unauthorized('Not authenticated');
+
+      const query = request.query as ListTasksQuery;
+      const isAdmin = user.role === 'admin';
+
+      const result = await app.services!.taskService.listTasks(
+        {
+          projectId: query.projectId,
+          kind: query.kind,
+          status: query.status,
+          cursor: query.cursor,
+          limit: query.limit,
+        },
+        user.id,
+        isAdmin,
+        isMemberFn(user),
+      );
+
+      if (result === 'forbidden') throw app.httpErrors.forbidden();
+      return result;
     },
   );
 
@@ -46,8 +83,24 @@ export async function taskRoutes(app: FastifyInstance) {
         },
       },
     },
-    async () => {
-      throw app.httpErrors.notImplemented('Get task not implemented');
+    async (request) => {
+      const user = await currentUser(request.cookies.sessionId);
+      if (!user) throw app.httpErrors.unauthorized('Not authenticated');
+
+      const { id } = request.params as { id: string };
+      const isAdmin = user.role === 'admin';
+
+      const result = await app.services!.taskService.getTask(
+        id,
+        user.id,
+        isAdmin,
+        isMemberFn(user),
+      );
+
+      if (result === 'not_found')
+        throw app.httpErrors.notFound('Task not found');
+      if (result === 'forbidden') throw app.httpErrors.forbidden();
+      return { data: result };
     },
   );
 
@@ -65,8 +118,44 @@ export async function taskRoutes(app: FastifyInstance) {
         },
       },
     },
-    async () => {
-      throw app.httpErrors.notImplemented('Cancel task not implemented');
+    async (request) => {
+      const user = await currentUser(request.cookies.sessionId);
+      if (!user) throw app.httpErrors.unauthorized('Not authenticated');
+
+      const { id } = request.params as { id: string };
+      const isAdmin = user.role === 'admin';
+
+      const result = await app.services!.taskService.cancelTask(
+        id,
+        user.id,
+        isAdmin,
+        isMemberFn(user),
+      );
+
+      if (result === 'not_found')
+        throw app.httpErrors.notFound('Task not found');
+      if (result === 'forbidden') throw app.httpErrors.forbidden();
+      if (result === 'already_terminal') {
+        throw app.httpErrors.conflict('Task is already in a terminal state');
+      }
+      if (result === 'not_cancellable') {
+        throw app.httpErrors.unprocessableEntity('Task cannot be cancelled');
+      }
+
+      void app
+        .services!.auditService.log({
+          eventType: 'task.cancelled',
+          actorId: user.id,
+          actorEmail: user.email,
+          resourceType: 'task',
+          resourceId: id,
+          metadata: {},
+        })
+        .catch(() => undefined);
+
+      return {
+        data: { status: 'cancelled' as const, message: 'Task cancelled' },
+      };
     },
   );
 
@@ -86,7 +175,9 @@ export async function taskRoutes(app: FastifyInstance) {
       },
     },
     async () => {
-      throw app.httpErrors.notImplemented('Retry task not implemented');
+      throw app.httpErrors.notImplemented(
+        'Retry task not implemented in T010; extended by T013/T018',
+      );
     },
   );
 
@@ -106,7 +197,9 @@ export async function taskRoutes(app: FastifyInstance) {
       },
     },
     async () => {
-      throw app.httpErrors.notImplemented('Reconcile task not implemented');
+      throw app.httpErrors.notImplemented(
+        'Reconcile task not implemented in T010; extended by T018',
+      );
     },
   );
 }
