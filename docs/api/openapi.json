@@ -3600,6 +3600,259 @@
         }
       }
     },
+    "/api/v1/projects/{projectId}/brief/confirm": {
+      "post": {
+        "operationId": "confirmBrief",
+        "tags": ["briefs"],
+        "description": "Confirm current brief revision.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "type": "object",
+                "required": ["briefRevisionId", "expectedRevision"],
+                "properties": {
+                  "briefRevisionId": { "format": "uuid", "type": "string" },
+                  "expectedRevision": { "minimum": 1, "type": "integer" }
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "schema": { "format": "uuid", "type": "string" },
+            "in": "path",
+            "name": "projectId",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "type": "object",
+                  "required": ["data"],
+                  "properties": {
+                    "data": {
+                      "additionalProperties": false,
+                      "type": "object",
+                      "required": [
+                        "id",
+                        "projectId",
+                        "number",
+                        "content",
+                        "createdBy",
+                        "createdAt",
+                        "confirmedBy",
+                        "confirmedAt"
+                      ],
+                      "properties": {
+                        "id": { "format": "uuid", "type": "string" },
+                        "projectId": { "format": "uuid", "type": "string" },
+                        "number": { "minimum": 1, "type": "integer" },
+                        "content": {
+                          "additionalProperties": false,
+                          "type": "object",
+                          "required": [
+                            "booth",
+                            "brand",
+                            "functionalAreas",
+                            "style"
+                          ],
+                          "properties": {
+                            "booth": {
+                              "additionalProperties": false,
+                              "type": "object",
+                              "required": [
+                                "widthM",
+                                "depthM",
+                                "heightLimitM",
+                                "openSides"
+                              ],
+                              "properties": {
+                                "widthM": {
+                                  "minimum": 0.01,
+                                  "maximum": 100,
+                                  "multipleOf": 0.01,
+                                  "type": "number"
+                                },
+                                "depthM": {
+                                  "minimum": 0.01,
+                                  "maximum": 100,
+                                  "multipleOf": 0.01,
+                                  "type": "number"
+                                },
+                                "heightLimitM": {
+                                  "minimum": 0.01,
+                                  "maximum": 100,
+                                  "multipleOf": 0.01,
+                                  "type": "number"
+                                },
+                                "openSides": {
+                                  "minItems": 1,
+                                  "maxItems": 4,
+                                  "uniqueItems": true,
+                                  "type": "array",
+                                  "items": {
+                                    "anyOf": [
+                                      { "type": "string", "enum": ["front"] },
+                                      { "type": "string", "enum": ["right"] },
+                                      { "type": "string", "enum": ["back"] },
+                                      { "type": "string", "enum": ["left"] }
+                                    ]
+                                  }
+                                },
+                                "hallRestrictions": {
+                                  "maxLength": 4000,
+                                  "type": "string"
+                                }
+                              }
+                            },
+                            "brand": {
+                              "additionalProperties": false,
+                              "type": "object",
+                              "required": ["name"],
+                              "properties": {
+                                "name": {
+                                  "minLength": 1,
+                                  "maxLength": 120,
+                                  "type": "string"
+                                },
+                                "primaryColor": {
+                                  "pattern": "^#[0-9A-Fa-f]{6}$",
+                                  "type": "string"
+                                },
+                                "secondaryColor": {
+                                  "pattern": "^#[0-9A-Fa-f]{6}$",
+                                  "type": "string"
+                                },
+                                "logoAssetId": {
+                                  "format": "uuid",
+                                  "type": "string"
+                                },
+                                "visualKeywords": {
+                                  "maxItems": 10,
+                                  "type": "array",
+                                  "items": { "maxLength": 40, "type": "string" }
+                                }
+                              }
+                            },
+                            "functionalAreas": {
+                              "minItems": 1,
+                              "maxItems": 20,
+                              "type": "array",
+                              "items": {
+                                "additionalProperties": false,
+                                "type": "object",
+                                "required": ["type", "required"],
+                                "properties": {
+                                  "type": {
+                                    "anyOf": [
+                                      {
+                                        "type": "string",
+                                        "enum": ["reception"]
+                                      },
+                                      { "type": "string", "enum": ["meeting"] },
+                                      { "type": "string", "enum": ["display"] },
+                                      { "type": "string", "enum": ["storage"] },
+                                      { "type": "string", "enum": ["led"] },
+                                      { "type": "string", "enum": ["demo"] }
+                                    ]
+                                  },
+                                  "required": { "type": "boolean" },
+                                  "quantity": {
+                                    "minimum": 1,
+                                    "maximum": 100,
+                                    "type": "integer"
+                                  },
+                                  "description": {
+                                    "maxLength": 500,
+                                    "type": "string"
+                                  }
+                                }
+                              }
+                            },
+                            "style": {
+                              "additionalProperties": false,
+                              "type": "object",
+                              "required": ["keywords"],
+                              "properties": {
+                                "keywords": {
+                                  "minItems": 1,
+                                  "maxItems": 20,
+                                  "type": "array",
+                                  "items": { "maxLength": 80, "type": "string" }
+                                },
+                                "materials": {
+                                  "maxItems": 20,
+                                  "type": "array",
+                                  "items": { "maxLength": 80, "type": "string" }
+                                },
+                                "forbiddenElements": {
+                                  "maxItems": 20,
+                                  "type": "array",
+                                  "items": { "maxLength": 80, "type": "string" }
+                                }
+                              }
+                            },
+                            "budget": {
+                              "additionalProperties": false,
+                              "type": "object",
+                              "required": ["amountMinor", "currency"],
+                              "properties": {
+                                "amountMinor": {
+                                  "minimum": 0,
+                                  "type": "integer"
+                                },
+                                "currency": {
+                                  "type": "string",
+                                  "enum": ["CNY"]
+                                }
+                              }
+                            },
+                            "deadline": {
+                              "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+                              "type": "string"
+                            },
+                            "specialRequirements": {
+                              "maxLength": 8000,
+                              "type": "string"
+                            }
+                          }
+                        },
+                        "createdBy": { "format": "uuid", "type": "string" },
+                        "createdAt": {
+                          "format": "date-time",
+                          "type": "string"
+                        },
+                        "confirmedBy": {
+                          "anyOf": [
+                            { "format": "uuid", "type": "string" },
+                            { "type": "null" }
+                          ]
+                        },
+                        "confirmedAt": {
+                          "anyOf": [
+                            { "format": "date-time", "type": "string" },
+                            { "type": "null" }
+                          ]
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/projects/{projectId}/assets": {
       "get": {
         "operationId": "listAssets",

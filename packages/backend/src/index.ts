@@ -18,6 +18,7 @@ import {
   CustomerRepository,
 } from './modules/customers/index.js';
 import { ProjectService, ProjectRepository } from './modules/projects/index.js';
+import { BriefService, BriefRepository } from './modules/briefs/index.js';
 import { UserService, UserRepository } from './modules/users/index.js';
 import { DashboardService } from './modules/dashboard/index.js';
 import { AuditService } from './modules/audit/index.js';
@@ -29,6 +30,8 @@ export {
   CustomerRepository,
   ProjectService,
   ProjectRepository,
+  BriefService,
+  BriefRepository,
   UserService,
   UserRepository,
   DashboardService,
@@ -74,6 +77,7 @@ export interface Services {
   authService: AuthService;
   customerService: CustomerService;
   projectService: ProjectService;
+  briefService: BriefService;
   userService: UserService;
   dashboardService: DashboardService;
   auditService: AuditService;
@@ -91,6 +95,7 @@ export function createServices(): Services {
     new CustomerRepository(drizzleDb),
   );
   const projectService = new ProjectService(new ProjectRepository(drizzleDb));
+  const briefService = new BriefService(new BriefRepository(drizzleDb));
   const userService = new UserService(new UserRepository(drizzleDb));
   const dashboardService = new DashboardService(drizzleDb);
   const auditService = new AuditService(drizzleDb);
@@ -170,6 +175,7 @@ export function createServices(): Services {
     authService,
     customerService,
     projectService,
+    briefService,
     userService,
     dashboardService,
     auditService,

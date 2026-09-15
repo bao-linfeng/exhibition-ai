@@ -160,6 +160,11 @@ const availableUsers = computed(() => {
         <Button v-if="canEditProject" variant="outline" @click="editProject"
           >编辑项目</Button
         >
+        <Button
+          variant="outline"
+          @click="router.push(`/projects/${projectId}/brief`)"
+          >管理 Brief</Button
+        >
         <Button disabled>进入设计大厅</Button>
       </template>
     </PageHeader>
