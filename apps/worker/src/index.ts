@@ -15,8 +15,14 @@ import {
   AssetRepository,
   GenerationRepository,
   ImageVersionRepository,
+  BriefRepository,
+  DirectionRepository,
   createImageGenerationQueue,
   QUEUE_IMAGE_GENERATION,
+  createBriefParseQueue,
+  QUEUE_BRIEF_PARSE,
+  createDesignDirectionQueue,
+  QUEUE_DESIGN_DIRECTION,
 } from '@exhibition/backend';
 import { bootstrapProviders } from './bootstrap.js';
 import { processAssetValidation } from './processors/asset-validation.processor.js';
@@ -24,6 +30,14 @@ import {
   processImageGeneration,
   type ImageGenerationJobData,
 } from './processors/image-generation.processor.js';
+import {
+  processBriefParse,
+  type BriefParseJobData,
+} from './processors/brief-parse.processor.js';
+import {
+  processDesignDirection,
+  type DesignDirectionJobData,
+} from './processors/design-direction.processor.js';
 
 const heartbeat = env.WORKER_HEALTH_FILE;
 export const providers = bootstrapProviders();
@@ -48,6 +62,8 @@ const s3 = new S3StorageProvider(
 const assetRepo = new AssetRepository(db);
 const generationRepo = new GenerationRepository(db);
 const imageVersionRepo = new ImageVersionRepository(db);
+const briefRepo = new BriefRepository(db);
+const directionRepo = new DirectionRepository(db);
 const bucket = env.S3_BUCKET;
 
 // Redis connections
@@ -62,9 +78,15 @@ const assetValidationQueue = createAssetValidationQueue({
 const imageGenerationQueue = createImageGenerationQueue({
   connection: workerConnection,
 });
+const briefParseQueue = createBriefParseQueue({ connection: workerConnection });
+const designDirectionQueue = createDesignDirectionQueue({
+  connection: workerConnection,
+});
 const queues = new Map([
   [QUEUE_ASSET_VALIDATION, assetValidationQueue],
   [QUEUE_IMAGE_GENERATION, imageGenerationQueue],
+  [QUEUE_BRIEF_PARSE, briefParseQueue],
+  [QUEUE_DESIGN_DIRECTION, designDirectionQueue],
 ]);
 const taskService = new TaskService(taskRepo, queues);
 
@@ -145,6 +167,54 @@ imageGenerationWorker.on('failed', (job, err) => {
   logger.error({ jobId: job?.id, err }, 'Image generation job failed');
 });
 
+const briefParseWorker = new Worker(
+  QUEUE_BRIEF_PARSE,
+  async (job) => {
+    const data = job.data as BriefParseJobData;
+    logger.info(
+      { taskId: data.taskId, jobId: job.id },
+      'Processing brief_parse task',
+    );
+    await processBriefParse(data, {
+      taskRepo,
+      textProviderRegistry: providers.textProviderRegistry,
+      promptRegistry: providers.promptRegistry,
+    });
+  },
+  { connection: createQueueConnection(), concurrency: 2 },
+);
+briefParseWorker.on('error', (err) => {
+  logger.error({ err }, 'Brief parse worker error');
+});
+briefParseWorker.on('failed', (job, err) => {
+  logger.error({ jobId: job?.id, err }, 'Brief parse job failed');
+});
+
+const designDirectionWorker = new Worker(
+  QUEUE_DESIGN_DIRECTION,
+  async (job) => {
+    const data = job.data as DesignDirectionJobData;
+    logger.info(
+      { taskId: data.taskId, jobId: job.id },
+      'Processing design_direction task',
+    );
+    await processDesignDirection(data, {
+      taskRepo,
+      briefRepo,
+      directionRepo,
+      textProviderRegistry: providers.textProviderRegistry,
+      promptRegistry: providers.promptRegistry,
+    });
+  },
+  { connection: createQueueConnection(), concurrency: 2 },
+);
+designDirectionWorker.on('error', (err) => {
+  logger.error({ err }, 'Design direction worker error');
+});
+designDirectionWorker.on('failed', (job, err) => {
+  logger.error({ jobId: job?.id, err }, 'Design direction job failed');
+});
+
 // Heartbeat
 let stopping = false;
 let pulsing = false;
@@ -179,6 +249,8 @@ await Promise.all([
   probeWorker.waitUntilReady(),
   assetValidationWorker.waitUntilReady(),
   imageGenerationWorker.waitUntilReady(),
+  briefParseWorker.waitUntilReady(),
+  designDirectionWorker.waitUntilReady(),
 ]);
 await pulse();
 
@@ -199,8 +271,12 @@ async function stop() {
     probeWorker.close(),
     assetValidationWorker.close(),
     imageGenerationWorker.close(),
+    briefParseWorker.close(),
+    designDirectionWorker.close(),
     assetValidationQueue.close(),
     imageGenerationQueue.close(),
+    briefParseQueue.close(),
+    designDirectionQueue.close(),
   ]);
   probeConnection.disconnect();
   workerConnection.disconnect();
@@ -216,5 +292,5 @@ process.once('SIGTERM', () => {
 });
 
 logger.info(
-  'Worker ready: probe + asset_validation + image_generation + outbox scanner',
+  'Worker ready: probe + asset_validation + brief_parse + design_direction + image_generation + outbox scanner',
 );
