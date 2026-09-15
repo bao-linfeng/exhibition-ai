@@ -4,6 +4,7 @@ import type {
   AssetRepository,
   GenerationRepository,
   ImageVersionRepository,
+  ModelConfigRepository,
   StorageProvider,
   TaskRepository,
 } from '@exhibition/backend';
@@ -40,6 +41,7 @@ export async function processImageGeneration(
     bucket: string;
     imageProviderRegistry: ImageProviderRegistry;
     promptRegistry: PromptRegistry;
+    modelConfigRepo: ModelConfigRepository;
   },
 ): Promise<void> {
   const { taskId } = data;
@@ -52,6 +54,7 @@ export async function processImageGeneration(
     bucket,
     imageProviderRegistry,
     promptRegistry,
+    modelConfigRepo,
   } = deps;
 
   try {
@@ -82,11 +85,37 @@ export async function processImageGeneration(
       briefRevisionId: genRequest.briefRevisionId,
     });
 
+    // Look up the model config from DB to get the providerId, then resolve the
+    // in-process registry. The registry is keyed by providerId, not by the DB UUID.
+    const dbModelConfig = await modelConfigRepo.findById(
+      genRequest.modelConfigId,
+    );
+    if (!dbModelConfig) {
+      await failTask(
+        taskRepo,
+        taskId,
+        'model_not_found',
+        `Model config not found: ${genRequest.modelConfigId}`,
+        false,
+      );
+      return;
+    }
+    if (!dbModelConfig.isActive) {
+      await failTask(
+        taskRepo,
+        taskId,
+        'model_disabled',
+        `Model config is disabled: ${genRequest.modelConfigId}`,
+        false,
+      );
+      return;
+    }
+
     let provider: ReturnType<ImageProviderRegistry['resolve']>['provider'];
     let modelConfig: ReturnType<ImageProviderRegistry['resolve']>['config'];
     try {
       ({ provider, config: modelConfig } = imageProviderRegistry.resolve(
-        genRequest.modelConfigId,
+        dbModelConfig.providerId,
       ));
     } catch (err) {
       if (err instanceof ProviderError) {
