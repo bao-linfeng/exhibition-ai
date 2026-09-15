@@ -176,29 +176,29 @@ docker compose --env-file .env -f infra/compose.dev.yaml down
   - [x] Query key隔离用户/项目，退出和切换项目不闪现旧数据
   - [x] 基础页面loading/empty/error/forbidden、键盘焦点与窄屏可用
 
-- [ ] **T009 实现结构化 Brief 版本与确认** — [Issue 正文](docs/issues/T009.md)
+- [x] **T009 实现结构化 Brief 版本与确认** — [Issue 正文](docs/issues/T009.md)
 
-  阶段：M1；前置：[T007 #7](https://github.com/bao-linfeng/exhibition-ai/issues/7)、[T008 #8](https://github.com/bao-linfeng/exhibition-ai/issues/8)；状态：todo；GitHub Issue：[#9](https://github.com/bao-linfeng/exhibition-ai/issues/9)；PR：—。
+  阶段：M1；前置：[T007 #7](https://github.com/bao-linfeng/exhibition-ai/issues/7)、[T008 #8](https://github.com/bao-linfeng/exhibition-ai/issues/8)；状态：done；GitHub Issue：[#9](https://github.com/bao-linfeng/exhibition-ai/issues/9)；PR：[#52](https://github.com/bao-linfeng/exhibition-ai/pull/52)。
 
   需求：FR-04、AC-04、AC-09。目录：packages/backend/src/modules/briefs；packages/db；packages/contracts；apps/api/src/modules/briefs；apps/web/src/modules/briefs。
 
   范围：实现字段校验、保存不可变revision、历史/差异查看、显式确认、面积派生和有效项目状态转换；AI解析留T017。
 
-  - [ ] 尺寸/朝向/品牌/功能区/预算/日期等校验按需求表一致
-  - [ ] 修改生成新revision并撤销当前确认；重复和并发确认/保存遵守revision
-  - [ ] 历史快照不可被新编辑覆盖；409保留本地输入
+  - [x] 尺寸/朝向/品牌/功能区/预算/日期等校验按需求表一致
+  - [x] 修改生成新revision并撤销当前确认；重复和并发确认/保存遵守revision
+  - [x] 历史快照不可被新编辑覆盖；409保留本地输入
 
-- [ ] **T010 实现最小持久化 Task、Outbox 和 Worker** — [Issue 正文](docs/issues/T010.md)
+- [x] **T010 实现最小持久化 Task、Outbox 和 Worker** — [Issue 正文](docs/issues/T010.md)
 
-  阶段：M1；前置：[T003 #3](https://github.com/bao-linfeng/exhibition-ai/issues/3)、[T004 #4](https://github.com/bao-linfeng/exhibition-ai/issues/4)、[T007 #7](https://github.com/bao-linfeng/exhibition-ai/issues/7)；状态：todo；GitHub Issue：[#10](https://github.com/bao-linfeng/exhibition-ai/issues/10)；PR：—。
+  阶段：M1；前置：[T003 #3](https://github.com/bao-linfeng/exhibition-ai/issues/3)、[T004 #4](https://github.com/bao-linfeng/exhibition-ai/issues/4)、[T007 #7](https://github.com/bao-linfeng/exhibition-ai/issues/7)；状态：done；GitHub Issue：[#10](https://github.com/bao-linfeng/exhibition-ai/issues/10)；PR：[#53](https://github.com/bao-linfeng/exhibition-ai/pull/53)。
 
   需求：FR-07、§8、AC-05。目录：packages/backend/src/modules/tasks；packages/backend/src/infrastructure/queue；packages/db；apps/worker/src。
 
   范围：为资产校验建立Task/Outbox事务、可靠投递、幂等处理、恢复扫描与基础任务查询；预留各Task kind独立前置，图片attempt/output由T013扩展。
 
-  - [ ] DB提交后API退出、Redis中断后仍可恢复处理
-  - [ ] 重复投递同一校验任务不重复发布资产或副作用
-  - [ ] 上传校验不要求已确认Brief；Worker重启可恢复，任务状态数据库为真源
+  - [x] DB提交后API退出、Redis中断后仍可恢复处理
+  - [x] 重复投递同一校验任务不重复发布资产或副作用
+  - [x] 上传校验不要求已确认Brief；Worker重启可恢复，任务状态数据库为真源
 
 - [ ] **T011 实现私有对象存储和签名直传** — [Issue 正文](docs/issues/T011.md)
 

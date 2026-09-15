@@ -212,10 +212,10 @@
       "bodyFile": "docs/issues/T009.md",
       "issueNumber": 9,
       "issueUrl": "https://github.com/bao-linfeng/exhibition-ai/issues/9",
-      "branch": null,
-      "prNumber": null,
-      "prUrl": null,
-      "status": "todo"
+      "branch": "feat/issue-9-structured-brief",
+      "prNumber": 52,
+      "prUrl": "https://github.com/bao-linfeng/exhibition-ai/pull/52",
+      "status": "done"
     },
     {
       "id": "T010",
@@ -237,10 +237,10 @@
       "bodyFile": "docs/issues/T010.md",
       "issueNumber": 10,
       "issueUrl": "https://github.com/bao-linfeng/exhibition-ai/issues/10",
-      "branch": null,
-      "prNumber": null,
-      "prUrl": null,
-      "status": "todo"
+      "branch": "feat/issue-10-task-outbox-worker",
+      "prNumber": 53,
+      "prUrl": "https://github.com/bao-linfeng/exhibition-ai/pull/53",
+      "status": "done"
     },
     {
       "id": "T011",
