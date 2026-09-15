@@ -385,10 +385,10 @@
       "bodyFile": "docs/issues/T016.md",
       "issueNumber": 16,
       "issueUrl": "https://github.com/bao-linfeng/exhibition-ai/issues/16",
-      "branch": null,
-      "prNumber": null,
-      "prUrl": null,
-      "status": "todo"
+      "branch": "feat/issue-16-multi-image-generation-persist-publish",
+      "prNumber": 60,
+      "prUrl": "https://github.com/bao-linfeng/exhibition-ai/pull/60",
+      "status": "in_review"
     },
     {
       "id": "T017",
