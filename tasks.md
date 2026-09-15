@@ -164,17 +164,17 @@ docker compose --env-file .env -f infra/compose.dev.yaml down
   - [x] 对象越权404、操作不足403；客户停用不破坏历史项目
   - [x] revision冲突409保留本地输入；列表无跨项目泄漏，游标稳定
 
-- [ ] **T008 实现 Web 应用壳、路由和缓存约定** — [Issue 正文](docs/issues/T008.md)
+- [x] **T008 实现 Web 应用壳、路由和缓存约定** — [Issue 正文](docs/issues/T008.md)
 
-  阶段：M1；前置：[T003 #3](https://github.com/bao-linfeng/exhibition-ai/issues/3)、[T006 #6](https://github.com/bao-linfeng/exhibition-ai/issues/6)、[T007 #7](https://github.com/bao-linfeng/exhibition-ai/issues/7)；状态：todo；GitHub Issue：[#8](https://github.com/bao-linfeng/exhibition-ai/issues/8)；PR：—。
+  阶段：M1；前置：[T003 #3](https://github.com/bao-linfeng/exhibition-ai/issues/3)、[T006 #6](https://github.com/bao-linfeng/exhibition-ai/issues/6)、[T007 #7](https://github.com/bao-linfeng/exhibition-ai/issues/7)；状态：done；GitHub Issue：[#8](https://github.com/bao-linfeng/exhibition-ai/issues/8)；PR：[#51](https://github.com/bao-linfeng/exhibition-ai/pull/51)。
 
-  需求：§4、§6.2、FR-03。目录：apps/web/src/app；apps/web/src/shared；apps/web/src/stores；apps/web/src/modules/dashboard。
+  需求：§4、§6.2、FR-03。目录：apps/web/src/router；apps/web/src/shared；apps/web/src/components；apps/web/src/views/dashboard。
 
   范围：集成 shadcn-vue/Tailwind、显式懒加载路由、页面布局、统一错误与空状态；实现可见项目/任务摘要接口及dashboard；Query 管服务端数据，Pinia限UI与用户摘要。
 
-  - [ ] 登录返回地址仅站内、深链/404正确；未交付功能不显示占位菜单
-  - [ ] Query key隔离用户/项目，退出和切换项目不闪现旧数据
-  - [ ] 基础页面loading/empty/error/forbidden、键盘焦点与窄屏可用
+  - [x] 登录返回地址仅站内、深链/404正确；未交付功能不显示占位菜单
+  - [x] Query key隔离用户/项目，退出和切换项目不闪现旧数据
+  - [x] 基础页面loading/empty/error/forbidden、键盘焦点与窄屏可用
 
 - [ ] **T009 实现结构化 Brief 版本与确认** — [Issue 正文](docs/issues/T009.md)
 

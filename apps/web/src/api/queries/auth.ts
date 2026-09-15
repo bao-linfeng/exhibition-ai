@@ -49,8 +49,7 @@ export function useLogoutMutation() {
       }
     },
     onSuccess: () => {
-      queryClient.setQueryData(authKeys.me(), null);
-      queryClient.invalidateQueries({ queryKey: authKeys.me() });
+      queryClient.clear();
     },
   });
 }

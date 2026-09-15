@@ -22,8 +22,13 @@ async function handleSubmit() {
 
   try {
     await login(email.value, password.value);
-    const redirect = router.currentRoute.value.query.redirect as string;
-    router.push(redirect || '/dashboard');
+    const redirect = router.currentRoute.value.query.redirect as
+      string | undefined;
+    const safeRedirect =
+      redirect && redirect.startsWith('/') && !redirect.startsWith('//')
+        ? redirect
+        : '/dashboard';
+    router.push(safeRedirect);
   } catch {
     errorMessage.value =
       loginError.value?.message || '登录失败，请检查邮箱和密码';
