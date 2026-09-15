@@ -4,6 +4,12 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
+catalogs:
+  default:
+    typescript:
+      specifier: 5.9.3
+      version: 5.9.3
+
 importers:
 
   .:
@@ -145,6 +151,9 @@ importers:
       '@aws-sdk/client-s3':
         specifier: 3.1131.0
         version: 3.1131.0
+      '@exhibition/ai':
+        specifier: workspace:*
+        version: link:../../packages/ai
       '@exhibition/backend':
         specifier: workspace:*
         version: link:../../packages/backend
@@ -155,6 +164,16 @@ importers:
       '@types/node':
         specifier: 24.13.4
         version: 24.13.4
+
+  packages/ai:
+    dependencies:
+      '@exhibition/contracts':
+        specifier: workspace:*
+        version: link:../contracts
+    devDependencies:
+      typescript:
+        specifier: 'catalog:'
+        version: 5.9.3
 
   packages/api-client:
     dependencies:

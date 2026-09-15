@@ -58,6 +58,14 @@ export {
 };
 export { S3StorageProvider } from './infrastructure/storage.js';
 export type { StorageProvider } from './infrastructure/storage.js';
+export type {
+  ImageGenerationResultPort,
+  ImageOutputPort,
+  ImageProviderPort,
+  PromptSnapshotPort,
+  TextGenerationResultPort,
+  TextProviderPort,
+} from './ports/ai.js';
 
 export {
   env,
