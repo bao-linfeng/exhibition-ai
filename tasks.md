@@ -98,9 +98,9 @@ docker compose --env-file .env -f infra/compose.dev.yaml down
 
   范围：Web/Vite、API、Worker、PostgreSQL、Redis、RustFS 全部容器运行；提供 devtools、migrate、storage-init 一次性服务；实现源码热更新、独立依赖卷、内部网络和浏览器可达对象入口。
 
-  - [ ] 干净检出仅需 Git、Docker Engine/Desktop 与 Compose v2即可启动，不要求宿主机 Node/pnpm/数据库
-  - [ ] Windows PowerShell 与 Linux 验证热更新、Vite HMR、API代理、容器DNS和实际端口；宿主机 node_modules 不挂入容器
-  - [ ] down/up 和应用重建后数据仍在；默认停止命令不含 -v；记录初始化顺序、失败诊断及无明文凭证的配置示例
+  - [x] 干净检出仅需 Git、Docker Engine/Desktop 与 Compose v2即可启动，不要求宿主机 Node/pnpm/数据库
+  - [x] Windows PowerShell 与 Linux 验证热更新、Vite HMR、API代理、容器DNS和实际端口；宿主机 node_modules 不挂入容器
+  - [x] down/up 和应用重建后数据仍在；默认停止命令不含 -v；记录初始化顺序、失败诊断及无明文凭证的配置示例
 
 - [x] **T003 建立 API 契约、错误协议和共享代码边界** — [Issue 正文](docs/issues/T003.md)
 
@@ -110,9 +110,9 @@ docker compose --env-file .env -f infra/compose.dev.yaml down
 
   范围：建立 /api/v1、TypeBox 请求/响应校验、错误映射、分页/revision/幂等协议；导出 OpenAPI 并生成客户端类型；落实跨包和 Web 模块依赖检查。
 
-  - [ ] 容器内 api:generate/api:check 通过且生成无需真实模型
-  - [ ] Fastify 示例接口与 Web 类型化调用贯通，错误不泄露堆栈
-  - [ ] 跨 app、跨包私有 src、服务端进入 Web、循环依赖违规样例能被检查拒绝
+  - [x] 容器内 api:generate/api:check 通过且生成无需真实模型
+  - [x] Fastify 示例接口与 Web 类型化调用贯通，错误不泄露堆栈
+  - [x] 跨 app、跨包私有 src、服务端进入 Web、循环依赖违规样例能被检查拒绝
 
 - [ ] **T004 建立数据库迁移、配置和日志基础** — [Issue 正文](docs/issues/T004.md)
 
