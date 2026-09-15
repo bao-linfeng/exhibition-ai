@@ -300,7 +300,7 @@ docker compose --env-file .env -f infra/compose.dev.yaml down
 
 - [ ] **T019 接入首个真实图片与文本 Provider 并验证能力** — [Issue 正文](docs/issues/T019.md)
 
-  阶段：M2；前置：[T014 #14](https://github.com/bao-linfeng/exhibition-ai/issues/14)、[T015 #15](https://github.com/bao-linfeng/exhibition-ai/issues/15)、[T016 #16](https://github.com/bao-linfeng/exhibition-ai/issues/16)、[T018 #18](https://github.com/bao-linfeng/exhibition-ai/issues/18)；状态：todo；GitHub Issue：[#19](https://github.com/bao-linfeng/exhibition-ai/issues/19)；PR：—。
+  阶段：M2；前置：[T014 #14](https://github.com/bao-linfeng/exhibition-ai/issues/14)、[T015 #15](https://github.com/bao-linfeng/exhibition-ai/issues/15)、[T016 #16](https://github.com/bao-linfeng/exhibition-ai/issues/16)、[T018 #18](https://github.com/bao-linfeng/exhibition-ai/issues/18)；状态：in-progress（BLOCKED：缺少 OpenAI API credits）；GitHub Issue：[#19](https://github.com/bao-linfeng/exhibition-ai/issues/19)；PR：[#63](https://github.com/bao-linfeng/exhibition-ai/pull/63)。
 
   需求：FR-06、AC-18、NFR-09。目录：packages/ai/providers；docs/DEPENDENCY_BASELINE.md；tests/integration。
 

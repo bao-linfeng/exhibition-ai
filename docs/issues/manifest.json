@@ -459,10 +459,10 @@
       "bodyFile": "docs/issues/T019.md",
       "issueNumber": 19,
       "issueUrl": "https://github.com/bao-linfeng/exhibition-ai/issues/19",
-      "branch": null,
-      "prNumber": null,
-      "prUrl": null,
-      "status": "todo"
+      "branch": "feat/issue-19-openai-provider",
+      "prNumber": 63,
+      "prUrl": "https://github.com/bao-linfeng/exhibition-ai/pull/63",
+      "status": "in-progress"
     },
     {
       "id": "T020",
