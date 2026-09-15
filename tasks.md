@@ -102,9 +102,9 @@ docker compose --env-file .env -f infra/compose.dev.yaml down
   - [ ] Windows PowerShell 与 Linux 验证热更新、Vite HMR、API代理、容器DNS和实际端口；宿主机 node_modules 不挂入容器
   - [ ] down/up 和应用重建后数据仍在；默认停止命令不含 -v；记录初始化顺序、失败诊断及无明文凭证的配置示例
 
-- [ ] **T003 建立 API 契约、错误协议和共享代码边界** — [Issue 正文](docs/issues/T003.md)
+- [x] **T003 建立 API 契约、错误协议和共享代码边界** — [Issue 正文](docs/issues/T003.md)
 
-  阶段：M0；前置：[T001 #1](https://github.com/bao-linfeng/exhibition-ai/issues/1)、[T002 #2](https://github.com/bao-linfeng/exhibition-ai/issues/2)；状态：todo；GitHub Issue：[#3](https://github.com/bao-linfeng/exhibition-ai/issues/3)；PR：—。
+  阶段：M0；前置：[T001 #1](https://github.com/bao-linfeng/exhibition-ai/issues/1)、[T002 #2](https://github.com/bao-linfeng/exhibition-ai/issues/2)；状态：done；GitHub Issue：[#3](https://github.com/bao-linfeng/exhibition-ai/issues/3)；PR：[#45](https://github.com/bao-linfeng/exhibition-ai/pull/45)。
 
   需求：§6、§9。目录：packages/contracts；packages/api-client；apps/api/src/plugins；scripts；docs/api。
 

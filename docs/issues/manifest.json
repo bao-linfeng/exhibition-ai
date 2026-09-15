@@ -67,10 +67,10 @@
       "bodyFile": "docs/issues/T003.md",
       "issueNumber": 3,
       "issueUrl": "https://github.com/bao-linfeng/exhibition-ai/issues/3",
-      "branch": null,
-      "prNumber": null,
-      "prUrl": null,
-      "status": "todo"
+      "branch": "feat/issue-3-api-contract",
+      "prNumber": 45,
+      "prUrl": "https://github.com/bao-linfeng/exhibition-ai/pull/45",
+      "status": "done"
     },
     {
       "id": "T004",
