@@ -200,17 +200,17 @@ docker compose --env-file .env -f infra/compose.dev.yaml down
   - [x] 重复投递同一校验任务不重复发布资产或副作用
   - [x] 上传校验不要求已确认Brief；Worker重启可恢复，任务状态数据库为真源
 
-- [ ] **T011 实现私有对象存储和签名直传** — [Issue 正文](docs/issues/T011.md)
+- [x] **T011 实现私有对象存储和签名直传** — [Issue 正文](docs/issues/T011.md)
 
-  阶段：M1；前置：[T002 #2](https://github.com/bao-linfeng/exhibition-ai/issues/2)、[T007 #7](https://github.com/bao-linfeng/exhibition-ai/issues/7)、[T010 #10](https://github.com/bao-linfeng/exhibition-ai/issues/10)；状态：in_review；GitHub Issue：[#11](https://github.com/bao-linfeng/exhibition-ai/issues/11)；PR：[#54](https://github.com/bao-linfeng/exhibition-ai/pull/54)。
+  阶段：M1；前置：[T002 #2](https://github.com/bao-linfeng/exhibition-ai/issues/2)、[T007 #7](https://github.com/bao-linfeng/exhibition-ai/issues/7)、[T010 #10](https://github.com/bao-linfeng/exhibition-ai/issues/10)；状态：done；GitHub Issue：[#11](https://github.com/bao-linfeng/exhibition-ai/issues/11)；PR：[#54](https://github.com/bao-linfeng/exhibition-ai/pull/54)。
 
   需求：FR-05、§10、AC-11、AC-17。目录：packages/backend/src/infrastructure/storage；packages/backend/src/modules/assets；packages/db；apps/api/src/modules/assets；infra。
 
   范围：实现StorageProvider流式接口、临时upload session、PUT/GET签名、幂等complete和下载授权；分离internal/public endpoint，初始化私有Bucket和精确CORS。
 
-  - [ ] 真实RustFS PUT/GET/HEAD、签名过期、错误Host、CORS和浏览器直传有证据
-  - [ ] 未上传complete失败；重复complete返回同资产/Task
-  - [ ] 对象入口可达但无匿名读写权限；DB/日志不持久保存完整签名URL
+  - [x] 真实RustFS PUT/GET/HEAD、签名过期、错误Host、CORS和浏览器直传有证据
+  - [x] 未上传complete失败；重复complete返回同资产/Task
+  - [x] 对象入口可达但无匿名读写权限；DB/日志不持久保存完整签名URL
 
 - [ ] **T012 实现素材校验、缩略图和上传管理页** — [Issue 正文](docs/issues/T012.md)
 
