@@ -78,6 +78,13 @@
       "when": 1757980800000,
       "tag": "0010_add_design_directions",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1789420800000,
+      "tag": "0011_add_task_retried_audit_event",
+      "breakpoints": true
     }
   ]
 }

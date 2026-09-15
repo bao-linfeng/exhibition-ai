@@ -11,7 +11,11 @@ import {
   ReconcileTaskResponseSchema,
   UuidSchema,
 } from '@exhibition/contracts';
-import type { ListTasksQuery } from '@exhibition/contracts';
+import type {
+  ListTasksQuery,
+  ReconcileTaskRequest,
+  RetryTaskRequest,
+} from '@exhibition/contracts';
 
 export async function taskRoutes(app: FastifyInstance) {
   async function currentUser(sessionId: string | undefined) {
@@ -174,10 +178,48 @@ export async function taskRoutes(app: FastifyInstance) {
         },
       },
     },
-    async () => {
-      throw app.httpErrors.notImplemented(
-        'Retry task not implemented in T010; extended by T013/T018',
+    async (request, reply) => {
+      const user = await currentUser(request.cookies.sessionId);
+      if (!user) throw app.httpErrors.unauthorized('Not authenticated');
+
+      const { id } = request.params as { id: string };
+      const body = request.body as RetryTaskRequest;
+      const result = await app.services!.taskService.retryTask(
+        id,
+        user.id,
+        user.role === 'admin',
+        isMemberFn(user),
+        body,
       );
+
+      if (result === 'not_found')
+        throw app.httpErrors.notFound('Task not found');
+      if (result === 'forbidden') throw app.httpErrors.forbidden();
+      if (result === 'not_retryable') {
+        throw app.httpErrors.unprocessableEntity(
+          'Task cannot be retried: not_retryable',
+        );
+      }
+      if (result === 'unsupported_kind') {
+        throw app.httpErrors.unprocessableEntity(
+          'Task cannot be retried: unsupported_kind',
+        );
+      }
+
+      void app
+        .services!.auditService.log({
+          eventType: 'task.retried',
+          actorId: user.id,
+          actorEmail: user.email,
+          resourceType: 'task',
+          resourceId: id,
+          metadata: { retryTaskId: result.id },
+        })
+        .catch(() => undefined);
+
+      return reply.code(201).send({
+        data: { taskId: result.id, status: 'pending' },
+      });
     },
   );
 
@@ -196,10 +238,49 @@ export async function taskRoutes(app: FastifyInstance) {
         },
       },
     },
-    async () => {
-      throw app.httpErrors.notImplemented(
-        'Reconcile task not implemented in T010; extended by T018',
+    async (request) => {
+      const user = await currentUser(request.cookies.sessionId);
+      if (!user) throw app.httpErrors.unauthorized('Not authenticated');
+      if (user.role !== 'admin') throw app.httpErrors.forbidden();
+
+      const { id } = request.params as { id: string };
+      const body = request.body as ReconcileTaskRequest;
+      const result = await app.services!.taskService.reconcileTaskOutput(
+        id,
+        user.id,
+        true,
+        isMemberFn(user),
+        body,
       );
+
+      if (result === 'not_found')
+        throw app.httpErrors.notFound('Task not found');
+      if (result === 'forbidden') throw app.httpErrors.forbidden();
+      if (result === 'not_reconciling') {
+        throw app.httpErrors.conflict('Task is not reconciling');
+      }
+      if (result === 'ordinal_not_found') {
+        throw app.httpErrors.unprocessableEntity(
+          'Task output ordinal not found',
+        );
+      }
+
+      void app
+        .services!.auditService.log({
+          eventType: 'task.reconciled',
+          actorId: user.id,
+          actorEmail: user.email,
+          resourceType: 'task',
+          resourceId: id,
+          metadata: {
+            ordinal: body.ordinal,
+            outcome: body.outcome,
+            reason: body.reason,
+          },
+        })
+        .catch(() => undefined);
+
+      return { data: result };
     },
   );
 }

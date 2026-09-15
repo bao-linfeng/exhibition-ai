@@ -24,6 +24,7 @@ export const auditEventTypeEnum = pgEnum('audit_event_type', [
   'brief.confirmed',
   'generation.created',
   'task.cancelled',
+  'task.retried',
   'task.reconciled',
   'asset.uploaded',
   'asset.hidden',
