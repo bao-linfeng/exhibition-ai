@@ -16,7 +16,8 @@
     "@fastify/cookie": "10.0.1",
     "@sinclair/typebox": "0.34.52",
     "@exhibition/backend": "workspace:*",
-    "@exhibition/contracts": "workspace:*"
+    "@exhibition/contracts": "workspace:*",
+    "fastify-plugin": "6.0.0"
   },
   "devDependencies": {
     "@types/node": "24.13.4"
