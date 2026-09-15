@@ -7235,9 +7235,13 @@
                           "providerId",
                           "modelId",
                           "displayName",
+                          "capabilities",
                           "costPerImageMinor",
                           "currency",
-                          "isActive"
+                          "isActive",
+                          "maxConcurrent",
+                          "createdAt",
+                          "updatedAt"
                         ],
                         "properties": {
                           "id": { "format": "uuid", "type": "string" },
@@ -7260,13 +7264,109 @@
                             "maxLength": 1000,
                             "type": "string"
                           },
+                          "capabilities": {
+                            "type": "array",
+                            "items": { "type": "string" }
+                          },
                           "costPerImageMinor": {
                             "minimum": 0,
                             "type": "integer"
                           },
                           "currency": { "maxLength": 3, "type": "string" },
-                          "isActive": { "type": "boolean" }
+                          "isActive": { "type": "boolean" },
+                          "maxConcurrent": { "minimum": 1, "type": "integer" },
+                          "createdAt": {
+                            "format": "date-time",
+                            "type": "string"
+                          },
+                          "updatedAt": {
+                            "format": "date-time",
+                            "type": "string"
+                          }
                         }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/models/{id}": {
+      "get": {
+        "operationId": "getModelConfig",
+        "tags": ["models"],
+        "description": "Get a single AI model config by id.",
+        "parameters": [
+          {
+            "schema": { "format": "uuid", "type": "string" },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "type": "object",
+                  "required": ["data"],
+                  "properties": {
+                    "data": {
+                      "additionalProperties": false,
+                      "type": "object",
+                      "required": [
+                        "id",
+                        "providerId",
+                        "modelId",
+                        "displayName",
+                        "capabilities",
+                        "costPerImageMinor",
+                        "currency",
+                        "isActive",
+                        "maxConcurrent",
+                        "createdAt",
+                        "updatedAt"
+                      ],
+                      "properties": {
+                        "id": { "format": "uuid", "type": "string" },
+                        "providerId": {
+                          "minLength": 1,
+                          "maxLength": 100,
+                          "type": "string"
+                        },
+                        "modelId": {
+                          "minLength": 1,
+                          "maxLength": 100,
+                          "type": "string"
+                        },
+                        "displayName": {
+                          "minLength": 1,
+                          "maxLength": 200,
+                          "type": "string"
+                        },
+                        "description": { "maxLength": 1000, "type": "string" },
+                        "capabilities": {
+                          "type": "array",
+                          "items": { "type": "string" }
+                        },
+                        "costPerImageMinor": {
+                          "minimum": 0,
+                          "type": "integer"
+                        },
+                        "currency": { "maxLength": 3, "type": "string" },
+                        "isActive": { "type": "boolean" },
+                        "maxConcurrent": { "minimum": 1, "type": "integer" },
+                        "createdAt": {
+                          "format": "date-time",
+                          "type": "string"
+                        },
+                        "updatedAt": { "format": "date-time", "type": "string" }
                       }
                     }
                   }
@@ -7381,6 +7481,254 @@
           }
         }
       }
+    },
+    "/api/v1/settings/model-configs/{id}": {
+      "patch": {
+        "operationId": "updateModelConfig",
+        "summary": "（管理员）更新模型配置",
+        "tags": ["settings"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "minProperties": 1,
+                "type": "object",
+                "properties": {
+                  "isActive": { "type": "boolean" },
+                  "maxConcurrent": {
+                    "minimum": 1,
+                    "maximum": 20,
+                    "type": "integer"
+                  },
+                  "costPerImageMinor": { "minimum": 0, "type": "integer" },
+                  "displayName": {
+                    "minLength": 1,
+                    "maxLength": 200,
+                    "type": "string"
+                  },
+                  "description": { "maxLength": 1000, "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "schema": { "format": "uuid", "type": "string" },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "type": "object",
+                  "required": ["data"],
+                  "properties": {
+                    "data": {
+                      "additionalProperties": false,
+                      "type": "object",
+                      "required": [
+                        "id",
+                        "providerId",
+                        "modelId",
+                        "displayName",
+                        "capabilities",
+                        "costPerImageMinor",
+                        "currency",
+                        "isActive",
+                        "maxConcurrent",
+                        "createdAt",
+                        "updatedAt"
+                      ],
+                      "properties": {
+                        "id": { "format": "uuid", "type": "string" },
+                        "providerId": {
+                          "minLength": 1,
+                          "maxLength": 100,
+                          "type": "string"
+                        },
+                        "modelId": {
+                          "minLength": 1,
+                          "maxLength": 100,
+                          "type": "string"
+                        },
+                        "displayName": {
+                          "minLength": 1,
+                          "maxLength": 200,
+                          "type": "string"
+                        },
+                        "description": { "maxLength": 1000, "type": "string" },
+                        "capabilities": {
+                          "type": "array",
+                          "items": { "type": "string" }
+                        },
+                        "costPerImageMinor": {
+                          "minimum": 0,
+                          "type": "integer"
+                        },
+                        "currency": { "maxLength": 3, "type": "string" },
+                        "isActive": { "type": "boolean" },
+                        "maxConcurrent": { "minimum": 1, "type": "integer" },
+                        "createdAt": {
+                          "format": "date-time",
+                          "type": "string"
+                        },
+                        "updatedAt": { "format": "date-time", "type": "string" }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/settings/quota": {
+      "get": {
+        "operationId": "getQuota",
+        "summary": "查询额度账户",
+        "tags": ["settings"],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "type": "object",
+                  "required": ["data"],
+                  "properties": {
+                    "data": {
+                      "additionalProperties": false,
+                      "type": "object",
+                      "required": [
+                        "id",
+                        "ownerType",
+                        "ownerId",
+                        "balanceMinor",
+                        "reservedMinor",
+                        "availableMinor",
+                        "currency"
+                      ],
+                      "properties": {
+                        "id": { "format": "uuid", "type": "string" },
+                        "ownerType": {
+                          "anyOf": [
+                            { "type": "string", "enum": ["system"] },
+                            { "type": "string", "enum": ["user"] }
+                          ]
+                        },
+                        "ownerId": {
+                          "anyOf": [
+                            { "format": "uuid", "type": "string" },
+                            { "type": "null" }
+                          ]
+                        },
+                        "balanceMinor": { "minimum": 0, "type": "integer" },
+                        "reservedMinor": { "minimum": 0, "type": "integer" },
+                        "availableMinor": { "minimum": 0, "type": "integer" },
+                        "currency": { "maxLength": 3, "type": "string" }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/settings/quota/topup": {
+      "post": {
+        "operationId": "topupQuota",
+        "summary": "（管理员）充值额度",
+        "tags": ["settings"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "type": "object",
+                "required": ["ownerType", "amountMinor", "currency", "reason"],
+                "properties": {
+                  "ownerType": {
+                    "anyOf": [
+                      { "type": "string", "enum": ["system"] },
+                      { "type": "string", "enum": ["user"] }
+                    ]
+                  },
+                  "ownerId": { "format": "uuid", "type": "string" },
+                  "amountMinor": { "minimum": 1, "type": "integer" },
+                  "currency": { "maxLength": 3, "type": "string" },
+                  "reason": {
+                    "minLength": 1,
+                    "maxLength": 500,
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "type": "object",
+                  "required": ["data"],
+                  "properties": {
+                    "data": {
+                      "additionalProperties": false,
+                      "type": "object",
+                      "required": [
+                        "id",
+                        "ownerType",
+                        "ownerId",
+                        "balanceMinor",
+                        "reservedMinor",
+                        "availableMinor",
+                        "currency"
+                      ],
+                      "properties": {
+                        "id": { "format": "uuid", "type": "string" },
+                        "ownerType": {
+                          "anyOf": [
+                            { "type": "string", "enum": ["system"] },
+                            { "type": "string", "enum": ["user"] }
+                          ]
+                        },
+                        "ownerId": {
+                          "anyOf": [
+                            { "format": "uuid", "type": "string" },
+                            { "type": "null" }
+                          ]
+                        },
+                        "balanceMinor": { "minimum": 0, "type": "integer" },
+                        "reservedMinor": { "minimum": 0, "type": "integer" },
+                        "availableMinor": { "minimum": 0, "type": "integer" },
+                        "currency": { "maxLength": 3, "type": "string" }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "tags": [
@@ -7400,6 +7748,7 @@
     { "name": "audit", "description": "Audit logs" },
     { "name": "models", "description": "AI model information" },
     { "name": "events", "description": "Real-time events" },
-    { "name": "dashboard", "description": "Dashboard summary" }
+    { "name": "dashboard", "description": "Dashboard summary" },
+    { "name": "settings", "description": "Model configurations and quotas" }
   ]
 }

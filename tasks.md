@@ -240,7 +240,7 @@ docker compose --env-file .env -f infra/compose.dev.yaml down
 
 - [ ] **T014 实现额度预留、费用账本和配置服务** — [Issue 正文](docs/issues/T014.md)
 
-  阶段：M2；前置：[T013 #13](https://github.com/bao-linfeng/exhibition-ai/issues/13)；状态：todo；GitHub Issue：[#14](https://github.com/bao-linfeng/exhibition-ai/issues/14)；PR：—。
+  阶段：M2；前置：[T013 #13](https://github.com/bao-linfeng/exhibition-ai/issues/13)；状态：in_progress；GitHub Issue：[#14](https://github.com/bao-linfeng/exhibition-ai/issues/14)；PR：[#57](https://github.com/bao-linfeng/exhibition-ai/pull/57)（待 T013 合并后 rebase）。
 
   需求：FR-11、FR-12、§8、AC-03、AC-14。目录：packages/backend/src/modules/{settings,tasks,audit}；packages/db；apps/api/src/modules/settings。
 

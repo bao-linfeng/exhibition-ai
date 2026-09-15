@@ -335,10 +335,10 @@
       "bodyFile": "docs/issues/T014.md",
       "issueNumber": 14,
       "issueUrl": "https://github.com/bao-linfeng/exhibition-ai/issues/14",
-      "branch": null,
-      "prNumber": null,
-      "prUrl": null,
-      "status": "todo"
+      "branch": "feat/issue-14-quota-ledger-settings",
+      "prNumber": 57,
+      "prUrl": "https://github.com/bao-linfeng/exhibition-ai/pull/57",
+      "status": "in_progress"
     },
     {
       "id": "T015",
