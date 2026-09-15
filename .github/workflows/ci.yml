@@ -88,11 +88,11 @@ jobs:
       - name: Initialize storage
         run: docker compose -p "$PROJECT_NAME" --env-file .env -f "$COMPOSE_FILE" --profile tools run --rm storage-init
 
-      - name: Run checks
-        run: docker compose -p "$PROJECT_NAME" --env-file .env -f "$COMPOSE_FILE" --profile tools run --rm devtools pnpm check
-
       - name: Build packages
         run: docker compose -p "$PROJECT_NAME" --env-file .env -f "$COMPOSE_FILE" --profile tools run --rm devtools pnpm build
+
+      - name: Run checks
+        run: docker compose -p "$PROJECT_NAME" --env-file .env -f "$COMPOSE_FILE" --profile tools run --rm devtools pnpm check
 
       - name: Start application services
         run: docker compose -p "$PROJECT_NAME" --env-file .env -f "$COMPOSE_FILE" up -d --wait api worker web
