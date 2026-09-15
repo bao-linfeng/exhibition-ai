@@ -433,10 +433,10 @@
       "bodyFile": "docs/issues/T018.md",
       "issueNumber": 18,
       "issueUrl": "https://github.com/bao-linfeng/exhibition-ai/issues/18",
-      "branch": null,
-      "prNumber": null,
-      "prUrl": null,
-      "status": "todo"
+      "branch": "feat/issue-18-cancel-retry-reconcile",
+      "prNumber": 62,
+      "prUrl": "https://github.com/bao-linfeng/exhibition-ai/pull/62",
+      "status": "in_review"
     },
     {
       "id": "T019",
