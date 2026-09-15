@@ -524,7 +524,8 @@ export interface paths {
       path?: never;
       cookie?: never;
     };
-    get?: never;
+    /** @description List image generation tasks for a project. */
+    get: operations['listGenerations'];
     put?: never;
     /** @description Create image generation task. */
     post: operations['createGeneration'];
@@ -2894,6 +2895,70 @@ export interface operations {
               url: string;
               /** Format: date-time */
               expiresAt: string;
+            };
+          };
+        };
+      };
+    };
+  };
+  listGenerations: {
+    parameters: {
+      query?: {
+        cursor?: string;
+        limit?: number;
+        status?:
+          | 'pending'
+          | 'queued'
+          | 'running'
+          | 'succeeded'
+          | 'partially_succeeded'
+          | 'failed'
+          | 'cancelled';
+      };
+      header?: never;
+      path: {
+        projectId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Default Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': {
+            data: {
+              /** Format: uuid */
+              id: string;
+              /** Format: uuid */
+              projectId: string;
+              mode: 'generate' | 'edit';
+              status:
+                | 'pending'
+                | 'queued'
+                | 'running'
+                | 'succeeded'
+                | 'partially_succeeded'
+                | 'failed'
+                | 'cancelled';
+              stage?: string;
+              progress: number | null;
+              totalOutputs: number;
+              succeededOutputs: number;
+              failedOutputs: number;
+              /** Format: uuid */
+              createdBy: string;
+              /** Format: date-time */
+              createdAt: string;
+              startedAt: string | null;
+              finishedAt: string | null;
+            }[];
+            page: {
+              nextCursor: string | null;
+              hasMore: boolean;
             };
           };
         };

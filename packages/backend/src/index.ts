@@ -24,10 +24,16 @@ import { DashboardService } from './modules/dashboard/index.js';
 import { AuditService } from './modules/audit/index.js';
 import { TaskService, TaskRepository } from './modules/tasks/index.js';
 import { AssetService, AssetRepository } from './modules/assets/index.js';
+import {
+  GenerationService,
+  GenerationRepository,
+} from './modules/generations/index.js';
 import { S3StorageProvider } from './infrastructure/storage.js';
 import {
   createAssetValidationQueue,
   QUEUE_ASSET_VALIDATION,
+  createImageGenerationQueue,
+  QUEUE_IMAGE_GENERATION,
 } from './infrastructure/queue.js';
 
 export {
@@ -47,6 +53,8 @@ export {
   TaskRepository,
   AssetService,
   AssetRepository,
+  GenerationService,
+  GenerationRepository,
 };
 export { S3StorageProvider } from './infrastructure/storage.js';
 export type { StorageProvider } from './infrastructure/storage.js';
@@ -60,6 +68,8 @@ export {
 export {
   createAssetValidationQueue,
   QUEUE_ASSET_VALIDATION,
+  createImageGenerationQueue,
+  QUEUE_IMAGE_GENERATION,
 } from './infrastructure/queue.js';
 
 export {
@@ -105,6 +115,7 @@ export interface Services {
   auditService: AuditService;
   taskService: TaskService;
   assetService: AssetService;
+  generationService: GenerationService;
   connectRedis(): Promise<void>;
   readiness(): Promise<{ postgres: boolean; redis: boolean; storage: boolean }>;
   close(): Promise<void>;
@@ -129,10 +140,24 @@ export function createServices(): Services {
   const assetValidationQueue = createAssetValidationQueue({
     connection: queueConnection,
   });
-  const queues = new Map([
-    [QUEUE_ASSET_VALIDATION, assetValidationQueue as import('bullmq').Queue],
-  ]);
+  const queues = new Map<string, import('bullmq').Queue>();
+  queues.set(
+    QUEUE_ASSET_VALIDATION,
+    assetValidationQueue as import('bullmq').Queue,
+  );
   const taskService = new TaskService(new TaskRepository(drizzleDb), queues);
+  const imageGenerationQueue = createImageGenerationQueue({
+    connection: queueConnection,
+  });
+  queues.set(
+    QUEUE_IMAGE_GENERATION,
+    imageGenerationQueue as import('bullmq').Queue,
+  );
+  const generationService = new GenerationService(
+    new GenerationRepository(drizzleDb),
+    new TaskRepository(drizzleDb),
+    queues,
+  );
   const verificationRedis = new Redis(connection);
   verificationRedis.on('error', () => undefined);
   const authService = new AuthService(
@@ -212,6 +237,7 @@ export function createServices(): Services {
     verificationRedis.disconnect();
     s3.destroy();
     await assetValidationQueue.close();
+    await imageGenerationQueue.close();
     queueConnection.disconnect();
     await closeDatabase();
   }
@@ -226,6 +252,7 @@ export function createServices(): Services {
     auditService,
     taskService,
     assetService,
+    generationService,
     redis,
     s3,
     bucket,
