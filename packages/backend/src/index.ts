@@ -23,6 +23,8 @@ import { UserService, UserRepository } from './modules/users/index.js';
 import { DashboardService } from './modules/dashboard/index.js';
 import { AuditService } from './modules/audit/index.js';
 import { TaskService, TaskRepository } from './modules/tasks/index.js';
+import { AssetService, AssetRepository } from './modules/assets/index.js';
+import { S3StorageProvider } from './infrastructure/storage.js';
 import {
   createAssetValidationQueue,
   QUEUE_ASSET_VALIDATION,
@@ -43,7 +45,10 @@ export {
   AuditService,
   TaskService,
   TaskRepository,
+  AssetService,
+  AssetRepository,
 };
+export { S3StorageProvider } from './infrastructure/storage.js';
 
 export {
   env,
@@ -98,6 +103,7 @@ export interface Services {
   dashboardService: DashboardService;
   auditService: AuditService;
   taskService: TaskService;
+  assetService: AssetService;
   connectRedis(): Promise<void>;
   readiness(): Promise<{ postgres: boolean; redis: boolean; storage: boolean }>;
   close(): Promise<void>;
@@ -157,6 +163,17 @@ export function createServices(): Services {
     maxAttempts: 1,
     requestHandler: { connectionTimeout: 5000, requestTimeout: 5000 },
   });
+  const storageProvider = new S3StorageProvider(
+    s3,
+    env.S3_PUBLIC_ENDPOINT,
+    env.S3_REGION,
+  );
+  const assetService = new AssetService(
+    new AssetRepository(drizzleDb),
+    storageProvider,
+    bucket,
+    taskService,
+  );
   let connecting: Promise<unknown> | undefined;
   async function connectRedis() {
     if (redis.isReady) return;
@@ -207,6 +224,7 @@ export function createServices(): Services {
     dashboardService,
     auditService,
     taskService,
+    assetService,
     redis,
     s3,
     bucket,
