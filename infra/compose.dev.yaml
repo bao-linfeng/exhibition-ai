@@ -144,7 +144,7 @@ services:
           CMD,
           node,
           -e,
-          "const f=require('node:fs');try{process.exit(Date.now()-f.statSync('/tmp/exhibition-worker-health').mtimeMs<30000?0:1)}catch{process.exit(1)}",
+          "const f=require('node:fs'),p=process.env.WORKER_HEALTH_FILE||'/tmp/exhibition-worker-health';try{process.exit(Date.now()-f.statSync(p).mtimeMs<30000?0:1)}catch{process.exit(1)}",
         ]
       interval: 10s
       timeout: 5s

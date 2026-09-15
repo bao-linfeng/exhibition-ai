@@ -1,10 +1,15 @@
-import Fastify from 'fastify';
+import Fastify, {
+  type FastifyInstance,
+  type RawReplyDefaultExpression,
+  type RawRequestDefaultExpression,
+  type RawServerDefault,
+} from 'fastify';
 import swagger from '@fastify/swagger';
 import sensible from '@fastify/sensible';
 import cookie from '@fastify/cookie';
-import { HealthSchema, ReadySchema } from '@exhibition/contracts';
-import type { createServices } from '@exhibition/backend';
+import { env, logger, type createServices } from '@exhibition/backend';
 import { errorHandlerPlugin } from './plugins/error-handler.js';
+import healthPlugin from './health/health.plugin.js';
 import { authRoutes } from './modules/auth.js';
 import { userRoutes } from './modules/users.js';
 import { customerRoutes } from './modules/customers.js';
@@ -23,8 +28,17 @@ import { modelRoutes } from './modules/models.js';
 import { eventRoutes } from './modules/events.js';
 import { dashboardRoutes } from './modules/dashboard.js';
 
-export async function buildApp(services?: ReturnType<typeof createServices>) {
-  const app = Fastify({ logger: false });
+export async function buildApp(
+  services?: ReturnType<typeof createServices>,
+): Promise<
+  FastifyInstance<
+    RawServerDefault,
+    RawRequestDefaultExpression<RawServerDefault>,
+    RawReplyDefaultExpression<RawServerDefault>,
+    typeof logger
+  >
+> {
+  const app = Fastify({ loggerInstance: logger });
 
   // 将 services 附加到 app 实例以便路由访问
   if (services) {
@@ -34,10 +48,7 @@ export async function buildApp(services?: ReturnType<typeof createServices>) {
   // Register plugins
   await app.register(errorHandlerPlugin);
   await app.register(sensible);
-  await app.register(cookie, {
-    secret:
-      process.env.COOKIE_SECRET || 'development-secret-change-in-production',
-  });
+  await app.register(cookie, { secret: env.COOKIE_SECRET });
   await app.register(swagger, {
     openapi: {
       openapi: '3.0.3',
@@ -64,36 +75,7 @@ export async function buildApp(services?: ReturnType<typeof createServices>) {
     },
   });
 
-  // Health checks
-  app.get(
-    '/api/health',
-    {
-      schema: {
-        operationId: 'getHealth',
-        description: 'Process liveness.',
-        response: { 200: HealthSchema },
-      },
-    },
-    async () => ({ status: 'ok' as const }),
-  );
-  app.get(
-    '/api/ready',
-    {
-      schema: {
-        operationId: 'getReadiness',
-        description: 'PostgreSQL, Redis and object storage readiness.',
-        response: { 200: ReadySchema, 503: ReadySchema },
-      },
-    },
-    async (_request, reply) => {
-      if (!services) throw new Error('Readiness services are unavailable');
-      const dependencies = await services.readiness();
-      const ready = Object.values(dependencies).every(Boolean);
-      return reply
-        .code(ready ? 200 : 503)
-        .send({ status: ready ? 'ready' : 'not_ready', dependencies });
-    },
-  );
+  await app.register(healthPlugin);
 
   // Register API routes
   await app.register(authRoutes);

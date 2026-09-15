@@ -9,7 +9,7 @@ import {
 } from '@aws-sdk/client-s3';
 import { createClient, type RedisClientType } from 'redis';
 import { Redis } from 'ioredis';
-import { createDatabase } from '@exhibition/db';
+import { env, initDatabase, closeDatabase } from './infrastructure/index.js';
 import { AuthService, AuthRepository } from './modules/auth/index.js';
 import { MailService } from './modules/mail/mail.service.js';
 import { VerificationService } from './modules/verification/verification.service.js';
@@ -20,6 +20,7 @@ import {
 import { ProjectService, ProjectRepository } from './modules/projects/index.js';
 import { UserService, UserRepository } from './modules/users/index.js';
 import { DashboardService } from './modules/dashboard/index.js';
+import { AuditService } from './modules/audit/index.js';
 
 export {
   AuthService,
@@ -31,7 +32,10 @@ export {
   UserService,
   UserRepository,
   DashboardService,
+  AuditService,
 };
+
+export { env, logger, childLogger } from './infrastructure/index.js';
 
 export {
   HeadBucketCommand,
@@ -44,17 +48,11 @@ export {
 export { Queue, QueueEvents, Worker } from 'bullmq';
 export const probeQueue = 'exhibition-local-probe';
 
-function required(name: string): string {
-  const value = process.env[name];
-  if (!value) throw new Error(`Missing environment variable: ${name}`);
-  return value;
-}
-
 export function redisConnection() {
   return {
-    host: process.env.REDIS_HOST ?? 'localhost',
-    port: Number(process.env.REDIS_PORT ?? '6379'),
-    password: required('REDIS_PASSWORD'),
+    host: env.REDIS_HOST,
+    port: env.REDIS_PORT,
+    password: env.REDIS_PASSWORD,
     connectTimeout: 5000,
     maxRetriesPerRequest: null,
   };
@@ -69,7 +67,7 @@ export function createQueueConnection(): Redis {
 }
 
 export interface Services {
-  pool: ReturnType<typeof createDatabase>['pool'];
+  pool: ReturnType<typeof initDatabase>['pool'];
   redis: RedisClientType;
   s3: S3Client;
   bucket: string;
@@ -78,13 +76,14 @@ export interface Services {
   projectService: ProjectService;
   userService: UserService;
   dashboardService: DashboardService;
+  auditService: AuditService;
   connectRedis(): Promise<void>;
   readiness(): Promise<{ postgres: boolean; redis: boolean; storage: boolean }>;
   close(): Promise<void>;
 }
 
 export function createServices(): Services {
-  const { pool, db: drizzleDb } = createDatabase();
+  const { pool, db: drizzleDb } = initDatabase();
 
   // 初始化认证服务
   const authRepository = new AuthRepository(drizzleDb);
@@ -94,6 +93,7 @@ export function createServices(): Services {
   const projectService = new ProjectService(new ProjectRepository(drizzleDb));
   const userService = new UserService(new UserRepository(drizzleDb));
   const dashboardService = new DashboardService(drizzleDb);
+  const auditService = new AuditService(drizzleDb);
 
   const connection = redisConnection();
   const verificationRedis = new Redis(connection);
@@ -115,14 +115,14 @@ export function createServices(): Services {
   redis.on('error', () => {
     /* Readiness reports dependency failure without connection details. */
   });
-  const bucket = required('S3_BUCKET');
+  const bucket = env.S3_BUCKET;
   const s3 = new S3Client({
-    endpoint: required('S3_ENDPOINT'),
-    region: process.env.S3_REGION ?? 'us-east-1',
+    endpoint: env.S3_ENDPOINT,
+    region: env.S3_REGION,
     forcePathStyle: true,
     credentials: {
-      accessKeyId: required('S3_ACCESS_KEY'),
-      secretAccessKey: required('S3_SECRET_KEY'),
+      accessKeyId: env.S3_ACCESS_KEY,
+      secretAccessKey: env.S3_SECRET_KEY,
     },
     maxAttempts: 1,
     requestHandler: { connectionTimeout: 5000, requestTimeout: 5000 },
@@ -163,7 +163,7 @@ export function createServices(): Services {
     if (redis.isOpen) redis.destroy();
     verificationRedis.disconnect();
     s3.destroy();
-    await pool.end();
+    await closeDatabase();
   }
   return {
     pool,
@@ -172,6 +172,7 @@ export function createServices(): Services {
     projectService,
     userService,
     dashboardService,
+    auditService,
     redis,
     s3,
     bucket,

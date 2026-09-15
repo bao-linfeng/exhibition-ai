@@ -41,7 +41,8 @@ function parsePort(name: string, defaultValue?: number): number | undefined {
 }
 
 function parseEnv(): Environment {
-  const appEnvValue = process.env.APP_ENV ?? 'development';
+  const appEnvValue =
+    process.env.APP_ENV ?? process.env.NODE_ENV ?? 'development';
   const missing: string[] = [];
   const invalid: string[] = [];
   const validLogLevels = ['trace', 'debug', 'info', 'warn', 'error', 'fatal'];

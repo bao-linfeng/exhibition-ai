@@ -15,14 +15,15 @@
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
-    "@exhibition/db": "workspace:*",
-    "@exhibition/contracts": "workspace:*",
-    "drizzle-orm": "0.37.0",
-    "redis": "6.2.1",
-    "ioredis": "5.11.1",
-    "bullmq": "6.3.6",
     "@aws-sdk/client-s3": "3.1131.0",
-    "nodemailer": "7.0.11"
+    "@exhibition/contracts": "workspace:*",
+    "@exhibition/db": "workspace:*",
+    "bullmq": "6.3.6",
+    "drizzle-orm": "0.37.0",
+    "ioredis": "5.11.1",
+    "nodemailer": "7.0.11",
+    "pino": "10.3.1",
+    "redis": "6.2.1"
   },
   "devDependencies": {
     "@types/node": "24.13.4",
