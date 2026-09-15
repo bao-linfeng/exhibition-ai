@@ -10,15 +10,24 @@ import { CustomerRepository } from './customers.repository.js';
 export class CustomerService {
   constructor(private repo: CustomerRepository) {}
 
-  async listCustomers(query: {
-    status?: CustomerStatus;
-    search?: string;
-    cursor?: string;
-    limit?: number;
-  }): Promise<{
-    data: CustomerContract[];
-    page: { nextCursor: string | null; hasMore: boolean };
-  }> {
+  async listCustomers(
+    query: {
+      status?: CustomerStatus;
+      search?: string;
+      cursor?: string;
+      limit?: number;
+    },
+    requestingUser: { id: string; role: string },
+  ): Promise<
+    | {
+        data: CustomerContract[];
+        page: { nextCursor: string | null; hasMore: boolean };
+      }
+    | 'forbidden'
+  > {
+    if (!['admin', 'designer', 'sales', 'viewer'].includes(requestingUser.role))
+      return 'forbidden';
+
     const result = await this.repo.findAll(query);
     return {
       data: result.data.map((customer) => this.toCustomer(customer)),
@@ -29,11 +38,20 @@ export class CustomerService {
   async createCustomer(
     data: CreateCustomerRequest,
     createdBy: string,
-  ): Promise<CustomerContract> {
+    requestingUser: { id: string; role: string },
+  ): Promise<CustomerContract | 'forbidden'> {
+    if (!['admin', 'sales'].includes(requestingUser.role)) return 'forbidden';
+
     return this.toCustomer(await this.repo.create({ ...data, createdBy }));
   }
 
-  async getCustomer(id: string): Promise<CustomerContract | null> {
+  async getCustomer(
+    id: string,
+    requestingUser: { id: string; role: string },
+  ): Promise<CustomerContract | null | 'forbidden'> {
+    if (!['admin', 'designer', 'sales', 'viewer'].includes(requestingUser.role))
+      return 'forbidden';
+
     const customer = await this.repo.findById(id);
     return customer ? this.toCustomer(customer) : null;
   }
@@ -42,7 +60,15 @@ export class CustomerService {
     id: string,
     data: UpdateCustomerRequest,
     expectedRevision: number,
-  ): Promise<CustomerContract | null | 'conflict'> {
+    requestingUser: { id: string; role: string },
+  ): Promise<CustomerContract | null | 'conflict' | 'forbidden'> {
+    if (
+      !['admin', 'sales'].includes(requestingUser.role) ||
+      (data.status !== undefined && requestingUser.role !== 'admin')
+    ) {
+      return 'forbidden';
+    }
+
     const customer = await this.repo.update(
       id,
       {
@@ -57,6 +83,7 @@ export class CustomerService {
       },
       expectedRevision,
     );
+
     if (customer) return this.toCustomer(customer);
     return (await this.repo.findById(id)) ? 'conflict' : null;
   }

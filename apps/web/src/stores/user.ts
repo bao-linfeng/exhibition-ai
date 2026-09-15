@@ -16,6 +16,13 @@ export const useUserStore = defineStore('user', () => {
 
   const isAuthenticated = computed(() => user.value !== null);
   const isAdmin = computed(() => user.value?.role === 'admin');
+  const canManageCustomers = computed(() =>
+    ['admin', 'sales'].includes(user.value?.role ?? ''),
+  );
+  const canCreateProject = computed(() =>
+    ['admin', 'sales'].includes(user.value?.role ?? ''),
+  );
+  const canDeactivateCustomer = computed(() => user.value?.role === 'admin');
 
   function setUser(userData: User | null) {
     user.value = userData;
@@ -29,6 +36,9 @@ export const useUserStore = defineStore('user', () => {
     user,
     isAuthenticated,
     isAdmin,
+    canManageCustomers,
+    canCreateProject,
+    canDeactivateCustomer,
     setUser,
     clearUser,
   };

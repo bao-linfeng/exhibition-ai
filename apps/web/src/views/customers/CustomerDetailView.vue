@@ -3,6 +3,7 @@ import { computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useCustomerQuery } from '../../api/queries/customers.js';
 import { useProjectsQuery } from '../../api/queries/projects.js';
+import { useUserStore } from '../../stores/user.js';
 import PageHeader from '../../components/PageHeader.vue';
 import StatusBadge from '../../components/StatusBadge.vue';
 import {
@@ -19,6 +20,7 @@ import { Button } from '../../components/ui/button/index.js';
 
 const route = useRoute();
 const router = useRouter();
+const userStore = useUserStore();
 const customerId = computed(() => route.params.id as string);
 
 const { data: customer, isLoading } = useCustomerQuery(customerId.value);
@@ -57,7 +59,12 @@ function viewProject(id: string) {
 
     <PageHeader :title="customer.name">
       <template #actions>
-        <Button variant="outline" @click="editCustomer">编辑资料</Button>
+        <Button
+          v-if="userStore.canManageCustomers"
+          variant="outline"
+          @click="editCustomer"
+          >编辑资料</Button
+        >
       </template>
     </PageHeader>
 
@@ -158,6 +165,7 @@ function viewProject(id: string) {
           <div class="p-6 border-b flex justify-between items-center">
             <h3 class="font-semibold text-lg">相关项目</h3>
             <Button
+              v-if="userStore.canCreateProject"
               size="sm"
               variant="outline"
               @click="

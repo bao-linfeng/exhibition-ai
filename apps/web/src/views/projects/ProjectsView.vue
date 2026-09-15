@@ -2,6 +2,7 @@
 import { ref, computed, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { useProjectsQuery } from '../../api/queries/projects.js';
+import { useUserStore } from '../../stores/user.js';
 import {
   Plus,
   Search,
@@ -25,6 +26,7 @@ import {
 } from '../../components/ui/table/index.js';
 
 const router = useRouter();
+const userStore = useUserStore();
 const searchInput = ref('');
 const search = ref('');
 type ProjectStatus =
@@ -91,7 +93,7 @@ function prevPage() {
   <div>
     <PageHeader title="项目管理" description="跟进所有展台设计与交付项目">
       <template #actions>
-        <Button @click="goToNewProject">
+        <Button v-if="userStore.canCreateProject" @click="goToNewProject">
           <Plus class="mr-2 h-4 w-4" />
           新建项目
         </Button>

@@ -179,6 +179,39 @@ export function useRemoveProjectMemberMutation() {
   });
 }
 
+export function useTransferOwnerMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      projectId,
+      userId,
+      expectedRevision,
+    }: {
+      projectId: string;
+      userId: string;
+      expectedRevision: number;
+    }) => {
+      const { data, error } = await apiClient.POST(
+        '/api/v1/projects/{id}/transfer-owner',
+        {
+          params: { path: { id: projectId } },
+          body: { userId, expectedRevision },
+        },
+      );
+      if (error) throw new Error('Failed to transfer owner');
+      return data.data;
+    },
+    onSuccess: (_, { projectId }) => {
+      queryClient.invalidateQueries({
+        queryKey: projectKeys.detail(projectId),
+      });
+      queryClient.invalidateQueries({
+        queryKey: projectKeys.members(projectId),
+      });
+    },
+  });
+}
+
 export const userKeys = {
   all: () => ['users'] as const,
   options: (search?: string) => [...userKeys.all(), 'options', search] as const,

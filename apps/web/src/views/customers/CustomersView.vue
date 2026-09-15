@@ -2,6 +2,7 @@
 import { ref, computed, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { useCustomersQuery } from '../../api/queries/customers.js';
+import { useUserStore } from '../../stores/user.js';
 import {
   Plus,
   Search,
@@ -25,6 +26,7 @@ import {
 } from '../../components/ui/table/index.js';
 
 const router = useRouter();
+const userStore = useUserStore();
 const searchInput = ref('');
 const search = ref('');
 const statusFilter = ref<'active' | 'inactive' | undefined>(undefined);
@@ -90,7 +92,7 @@ function prevPage() {
   <div>
     <PageHeader title="客户管理" description="管理所有客户信息与联系方式">
       <template #actions>
-        <Button @click="goToNewCustomer">
+        <Button v-if="userStore.canManageCustomers" @click="goToNewCustomer">
           <Plus class="mr-2 h-4 w-4" />
           新建客户
         </Button>
@@ -211,6 +213,7 @@ function prevPage() {
                     查看
                   </Button>
                   <Button
+                    v-if="userStore.canManageCustomers"
                     variant="ghost"
                     size="sm"
                     @click="editCustomer(customer.id)"

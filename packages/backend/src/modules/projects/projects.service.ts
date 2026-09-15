@@ -15,18 +15,33 @@ import {
 export class ProjectService {
   constructor(private repo: ProjectRepository) {}
 
-  async listProjects(query: {
-    status?: DbProject['status'];
-    customerId?: string;
-    ownerId?: string;
-    search?: string;
-    cursor?: string;
-    limit?: number;
-  }): Promise<{
-    data: ProjectSummary[];
-    page: { nextCursor: string | null; hasMore: boolean };
-  }> {
-    const result = await this.repo.findAll(query);
+  async listProjects(
+    query: {
+      status?: DbProject['status'];
+      customerId?: string;
+      ownerId?: string;
+      search?: string;
+      cursor?: string;
+      limit?: number;
+    },
+    requestingUser: { id: string; role: string },
+  ): Promise<
+    | {
+        data: ProjectSummary[];
+        page: { nextCursor: string | null; hasMore: boolean };
+      }
+    | 'forbidden'
+  > {
+    if (!['admin', 'designer', 'sales', 'viewer'].includes(requestingUser.role))
+      return 'forbidden';
+
+    const result = await this.repo.findAll({
+      ...query,
+      ...(requestingUser.role === 'admin'
+        ? {}
+        : { memberId: requestingUser.id }),
+    });
+
     return {
       data: result.data.map((project) => this.toSummary(project)),
       page: result.page,
@@ -36,14 +51,31 @@ export class ProjectService {
   async createProject(
     data: CreateProjectRequest,
     requestedBy: string,
-  ): Promise<ProjectContract> {
+    requestingUser: { id: string; role: string },
+  ): Promise<ProjectContract | 'forbidden'> {
+    if (!['admin', 'sales'].includes(requestingUser.role)) return 'forbidden';
+
     const project = await this.repo.create(data);
     await this.repo.addMember(project.id, data.ownerId, requestedBy);
     return this.toProject(project);
   }
 
-  async getProject(id: string): Promise<ProjectContract | null> {
+  async getProject(
+    id: string,
+    requestingUser: { id: string; role: string },
+  ): Promise<ProjectContract | null | 'forbidden'> {
+    if (!['admin', 'designer', 'sales', 'viewer'].includes(requestingUser.role))
+      return 'forbidden';
+
     const project = await this.repo.findById(id);
+    if (
+      project &&
+      requestingUser.role !== 'admin' &&
+      !(await this.repo.isMember(id, requestingUser.id))
+    ) {
+      return null;
+    }
+
     return project ? this.toProject(project) : null;
   }
 
@@ -51,7 +83,25 @@ export class ProjectService {
     id: string,
     data: UpdateProjectRequest,
     expectedRevision: number,
-  ): Promise<ProjectContract | null | 'conflict'> {
+    requestingUser: { id: string; role: string },
+  ): Promise<ProjectContract | null | 'conflict' | 'forbidden'> {
+    const existing = await this.repo.findById(id);
+    if (!existing) return null;
+
+    if (requestingUser.role === 'viewer') return 'forbidden';
+
+    if (requestingUser.role !== 'admin') {
+      if (!(await this.repo.isMember(id, requestingUser.id))) return null;
+
+      if (
+        (requestingUser.role === 'sales' &&
+          existing.ownerId !== requestingUser.id) ||
+        (data.ownerId !== undefined && data.ownerId !== existing.ownerId)
+      ) {
+        return 'forbidden';
+      }
+    }
+
     const project = await this.repo.update(
       id,
       {
@@ -67,11 +117,18 @@ export class ProjectService {
       },
       expectedRevision,
     );
+
     if (project) return this.toProject(project);
     return (await this.repo.findById(id)) ? 'conflict' : null;
   }
 
-  async listMembers(projectId: string): Promise<ProjectMember[]> {
+  async listMembers(
+    projectId: string,
+    requestingUser: { id: string; role: string },
+  ): Promise<ProjectMember[] | null | 'forbidden'> {
+    const project = await this.getProject(projectId, requestingUser);
+    if (!project || project === 'forbidden') return project;
+
     return (await this.repo.findMembers(projectId)).map((member) =>
       this.toMember(member),
     );
@@ -81,9 +138,22 @@ export class ProjectService {
     projectId: string,
     userId: string,
     addedBy: string,
-  ): Promise<ProjectMember | null> {
+    requestingUser: { id: string; role: string },
+  ): Promise<ProjectMember | null | 'forbidden'> {
+    const project = await this.repo.findById(projectId);
+    if (!project) return null;
+
+    if (requestingUser.role !== 'admin') {
+      if (requestingUser.role !== 'sales') return 'forbidden';
+      if (!(await this.repo.isMember(projectId, requestingUser.id))) {
+        return null;
+      }
+      if (project.ownerId !== requestingUser.id) return 'forbidden';
+    }
+
     const created = await this.repo.addMember(projectId, userId, addedBy);
     if (!created) return null;
+
     return (
       (await this.repo.findMembers(projectId))
         .map((member) => this.toMember(member))
@@ -91,7 +161,24 @@ export class ProjectService {
     );
   }
 
-  async removeMember(projectId: string, userId: string): Promise<void> {
+  async removeMember(
+    projectId: string,
+    userId: string,
+    requestingUser: { id: string; role: string },
+  ): Promise<void | null | 'forbidden'> {
+    const project = await this.repo.findById(projectId);
+    if (!project) return null;
+
+    if (requestingUser.role !== 'admin') {
+      if (requestingUser.role !== 'sales') return 'forbidden';
+      if (!(await this.repo.isMember(projectId, requestingUser.id))) {
+        return null;
+      }
+      if (project.ownerId !== requestingUser.id) return 'forbidden';
+    }
+
+    if (userId === project.ownerId) return 'forbidden';
+
     await this.repo.removeMember(projectId, userId);
   }
 
@@ -99,12 +186,16 @@ export class ProjectService {
     projectId: string,
     newOwnerId: string,
     expectedRevision: number,
-  ): Promise<ProjectContract | null | 'conflict'> {
+    requestingUser: { id: string; role: string },
+  ): Promise<ProjectContract | null | 'conflict' | 'forbidden'> {
+    if (requestingUser.role !== 'admin') return 'forbidden';
+
     const project = await this.repo.updateOwner(
       projectId,
       newOwnerId,
       expectedRevision,
     );
+
     if (project) return this.toProject(project);
     return (await this.repo.findById(projectId)) ? 'conflict' : null;
   }
@@ -113,9 +204,13 @@ export class ProjectService {
     projectId: string,
     action: 'archive' | 'restore',
     expectedRevision: number,
-  ): Promise<ProjectContract | null | 'conflict'> {
+    requestingUser: { id: string; role: string },
+  ): Promise<ProjectContract | null | 'conflict' | 'forbidden'> {
+    if (requestingUser.role !== 'admin') return 'forbidden';
+
     const existing = await this.repo.findById(projectId);
     if (!existing) return null;
+
     const update =
       action === 'archive'
         ? { status: 'archived' as const, archivedFromStatus: existing.status }
@@ -123,6 +218,7 @@ export class ProjectService {
             status: existing.archivedFromStatus ?? 'draft',
             archivedFromStatus: null,
           };
+
     const project = await this.repo.update(projectId, update, expectedRevision);
     return project ? this.toProject(project) : 'conflict';
   }
