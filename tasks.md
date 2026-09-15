@@ -116,15 +116,15 @@ docker compose --env-file .env -f infra/compose.dev.yaml down
 
 - [x] **T004 建立数据库迁移、配置和日志基础** — [Issue 正文](docs/issues/T004.md)
 
-  阶段：M0；前置：[T001 #1](https://github.com/bao-linfeng/exhibition-ai/issues/1)、[T002 #2](https://github.com/bao-linfeng/exhibition-ai/issues/2)；状态：done；GitHub Issue：[#4](https://github.com/bao-linfeng/exhibition-ai/issues/4)；PR：[#47](https://github.com/bao-linfeng/exhibition-ai/pull/47)。
+  阶段：M0；前置：[T001 #1](https://github.com/bao-linfeng/exhibition-ai/issues/1)、[T002 #2](https://github.com/bao-linfeng/exhibition-ai/issues/2)；状态：done；GitHub Issue：[#4](https://github.com/bao-linfeng/exhibition-ai/issues/4)；PR：[#47](https://github.com/bao-linfeng/exhibition-ai/pull/47)（初始实现）、[#48](https://github.com/bao-linfeng/exhibition-ai/pull/48)（补充修复：pino日志、seed防护、health模块化）。
 
   需求：§7、§11.2、§11.5。目录：packages/db；packages/backend/src/infrastructure；apps/api/src/health；apps/worker/src。
 
   范围：实现单例连接与事务注入、迁移runner、dev/test seed入口、环境Schema、Pino脱敏和进程健康/优雅退出；各业务表随后由所属Issue增加。 提供追加式审计基础表/服务，供认证和业务Issue同步埋点。
 
-  - [ ] 空数据库迁移和重复执行成功，seed 在生产被拒绝
-  - [ ] 缺少生产必填配置明确退出，日志隐藏凭证与签名query
-  - [ ] API live/ready和Worker心跳可观测，关闭能停止接新任务并释放连接
+  - [x] 空数据库迁移和重复执行成功，seed 在生产被拒绝
+  - [x] 缺少生产必填配置明确退出，日志隐藏凭证与签名query
+  - [x] API live/ready和Worker心跳可观测，关闭能停止接新任务并释放连接
 
 - [ ] **T005 建立容器 CI 与 Issue/PR 交付门禁** — [Issue 正文](docs/issues/T005.md)
 
