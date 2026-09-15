@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/vue-query';
+import { computed, toValue, type MaybeRefOrGetter } from 'vue';
 import { apiClient } from '../client.js';
 import type { paths } from '@exhibition/api-client';
 
@@ -6,6 +7,12 @@ type CreateCustomerBody =
   paths['/api/v1/customers']['post']['requestBody']['content']['application/json'];
 type UpdateCustomerBody =
   paths['/api/v1/customers/{id}']['patch']['requestBody']['content']['application/json'];
+
+type CustomersQueryParams = {
+  status?: 'active' | 'inactive';
+  search?: string;
+  cursor?: string;
+};
 
 export const customerKeys = {
   all: () => ['customers'] as const,
@@ -16,17 +23,17 @@ export const customerKeys = {
   detail: (id: string) => [...customerKeys.details(), id] as const,
 };
 
-export function useCustomersQuery(params?: {
-  status?: 'active' | 'inactive';
-  search?: string;
-  cursor?: string;
-}) {
+export function useCustomersQuery(
+  params?: MaybeRefOrGetter<CustomersQueryParams | undefined>,
+) {
+  const resolvedParams = computed(() => toValue(params));
   return useQuery({
-    queryKey: customerKeys.list(params || {}),
+    queryKey: computed(() => customerKeys.list(resolvedParams.value || {})),
     queryFn: async () => {
+      const p = resolvedParams.value;
       const { data, error } = await apiClient.GET('/api/v1/customers', {
         params: {
-          query: params,
+          query: p,
         },
       });
       if (error) throw new Error('Failed to fetch customers');

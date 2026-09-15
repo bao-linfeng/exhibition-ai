@@ -118,6 +118,57 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/api/v1/auth/send-code': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** @description Send an email verification code. */
+    post: operations['sendVerificationCode'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/auth/register': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** @description Register a user account. */
+    post: operations['register'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/auth/forgot-password': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** @description Reset a password with an email verification code. */
+    post: operations['forgotPassword'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/api/v1/users': {
     parameters: {
       query?: never;
@@ -824,6 +875,23 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/api/v1/dashboard/summary': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** @description Get the current user dashboard project summary. */
+    get: operations['getDashboardSummary'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -1088,6 +1156,102 @@ export interface operations {
             message?: string;
           };
         };
+      };
+    };
+  };
+  sendVerificationCode: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': {
+          /** Format: email */
+          email: string;
+          type: 'register' | 'reset_password';
+        };
+      };
+    };
+    responses: {
+      /** @description Default Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  register: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': {
+          /** Format: email */
+          email: string;
+          code: string;
+          displayName: string;
+          password: string;
+        };
+      };
+    };
+    responses: {
+      /** @description Default Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': {
+            data: {
+              /** Format: uuid */
+              id: string;
+              /** Format: email */
+              email: string;
+              displayName: string;
+              role: 'admin' | 'designer' | 'sales' | 'viewer';
+              status: 'enabled' | 'disabled';
+              mustChangePassword: boolean;
+              /** Format: date-time */
+              createdAt: string;
+            };
+          };
+        };
+      };
+    };
+  };
+  forgotPassword: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': {
+          /** Format: email */
+          email: string;
+          code: string;
+          newPassword: string;
+        };
+      };
+    };
+    responses: {
+      /** @description No content */
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
       };
     };
   };
@@ -3857,6 +4021,46 @@ export interface operations {
         };
         content: {
           'application/json': string;
+        };
+      };
+    };
+  };
+  getDashboardSummary: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Default Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': {
+            totalProjects: number;
+            activeProjects: number;
+            pendingReview: number;
+            approvedThisMonth: number;
+            recentProjects: {
+              /** Format: uuid */
+              id: string;
+              name: string;
+              status:
+                | 'draft'
+                | 'briefing'
+                | 'designing'
+                | 'reviewing'
+                | 'approved'
+                | 'archived';
+              customerName: string;
+              /** Format: date-time */
+              updatedAt: string;
+            }[];
+          };
         };
       };
     };

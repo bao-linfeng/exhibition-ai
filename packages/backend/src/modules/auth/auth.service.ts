@@ -1,6 +1,8 @@
 import { randomBytes, scrypt, timingSafeEqual } from 'node:crypto';
 import { promisify } from 'node:util';
 import { AuthRepository } from './auth.repository.js';
+import { MailService } from '../mail/mail.service.js';
+import { VerificationService } from '../verification/verification.service.js';
 import type { UserSummary } from '@exhibition/contracts';
 import type { User } from '@exhibition/db';
 
@@ -9,7 +11,11 @@ const scryptAsync = promisify(scrypt);
 export class AuthService {
   private readonly SESSION_DURATION_MS = 7 * 24 * 60 * 60 * 1000; // 7 天
 
-  constructor(private authRepo: AuthRepository) {}
+  constructor(
+    private authRepo: AuthRepository,
+    private verificationService: VerificationService,
+    private mailService: MailService,
+  ) {}
 
   async login(
     email: string,
@@ -97,6 +103,82 @@ export class AuthService {
     // 这里需要 UserRepository 来更新密码，暂时简化
 
     return true;
+  }
+
+  async sendVerificationCode(
+    email: string,
+    type: 'register' | 'reset_password',
+  ): Promise<'ok' | 'rate_limited' | 'already_registered' | 'not_found'> {
+    const user = await this.authRepo.findUserByEmail(email);
+    if (type === 'register' && user) return 'already_registered';
+    if (type === 'reset_password' && !user) return 'not_found';
+
+    const result = await this.verificationService.sendCode(email, type);
+    if (result === 'rate_limited') return result;
+
+    const code = await this.verificationService.getCode(email, type);
+    if (!code) throw new Error('Failed to retrieve verification code');
+    await this.mailService.sendVerificationCode(email, code, type);
+    return 'ok';
+  }
+
+  async register(
+    email: string,
+    code: string,
+    displayName: string,
+    password: string,
+  ): Promise<
+    | { sessionId: string; user: UserSummary }
+    | 'invalid_code'
+    | 'already_registered'
+  > {
+    const isValid = await this.verificationService.verifyCode(
+      email,
+      'register',
+      code,
+    );
+    if (!isValid) return 'invalid_code';
+
+    if (await this.authRepo.findUserByEmail(email)) {
+      return 'already_registered';
+    }
+
+    const user = await this.authRepo.createUser(
+      email,
+      displayName,
+      await this.hashPassword(password),
+    );
+    const session = await this.authRepo.createSession({
+      userId: user.id,
+      expiresAt: new Date(Date.now() + this.SESSION_DURATION_MS),
+      createdAt: new Date(),
+    });
+    if (!session) throw new Error('Failed to create session');
+
+    return { sessionId: session.id, user: this.toUserSummary(user) };
+  }
+
+  async forgotPassword(
+    email: string,
+    code: string,
+    newPassword: string,
+  ): Promise<'ok' | 'invalid_code' | 'not_found'> {
+    const isValid = await this.verificationService.verifyCode(
+      email,
+      'reset_password',
+      code,
+    );
+    if (!isValid) return 'invalid_code';
+
+    const user = await this.authRepo.findUserByEmail(email);
+    if (!user) return 'not_found';
+
+    await this.authRepo.updatePassword(
+      user.id,
+      await this.hashPassword(newPassword),
+    );
+    await this.authRepo.deleteSessionsByUserId(user.id);
+    return 'ok';
   }
 
   private async hashPassword(password: string): Promise<string> {

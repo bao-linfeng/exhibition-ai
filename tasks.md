@@ -149,7 +149,7 @@ docker compose --env-file .env -f infra/compose.dev.yaml down
   范围：实现登录/退出/me、Argon2id、数据库Session、Origin/CSRF、限流、首登改密和本人改密；受控容器命令初始化管理员及重置临时密码。
 
   - [x] 空闲8小时/绝对7天过期、退出和停用失效；凭证不进localStorage
-  - [ ] 可信Origin/CSRF及登录限流有正反测试；生产Cookie配置符合基线
+  - [x] 可信Origin/CSRF及登录限流有正反测试；生产Cookie配置符合基线
   - [x] 无默认生产密码，容器命令不打印密码；首登必须改密
 
 - [ ] **T007 实现客户、项目、成员和范围授权** — [Issue 正文](docs/issues/T007.md)

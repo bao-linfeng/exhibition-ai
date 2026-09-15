@@ -20,6 +20,7 @@ import { exportRoutes } from './modules/exports.js';
 import { auditRoutes } from './modules/audit.js';
 import { modelRoutes } from './modules/models.js';
 import { eventRoutes } from './modules/events.js';
+import { dashboardRoutes } from './modules/dashboard.js';
 
 export async function buildApp(services?: ReturnType<typeof createServices>) {
   const app = Fastify({ logger: false });
@@ -56,6 +57,7 @@ export async function buildApp(services?: ReturnType<typeof createServices>) {
         { name: 'audit', description: 'Audit logs' },
         { name: 'models', description: 'AI model information' },
         { name: 'events', description: 'Real-time events' },
+        { name: 'dashboard', description: 'Dashboard summary' },
       ],
     },
   });
@@ -108,6 +110,7 @@ export async function buildApp(services?: ReturnType<typeof createServices>) {
   await app.register(auditRoutes);
   await app.register(modelRoutes);
   await app.register(eventRoutes);
+  await app.register(dashboardRoutes);
 
   // Error handler
   app.setErrorHandler((_error, _request, reply) => {

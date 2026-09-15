@@ -375,6 +375,167 @@
         }
       }
     },
+    "/api/v1/auth/send-code": {
+      "post": {
+        "operationId": "sendVerificationCode",
+        "tags": ["auth"],
+        "description": "Send an email verification code.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "type": "object",
+                "required": ["email", "type"],
+                "properties": {
+                  "email": {
+                    "format": "email",
+                    "maxLength": 255,
+                    "type": "string"
+                  },
+                  "type": {
+                    "anyOf": [
+                      { "type": "string", "enum": ["register"] },
+                      { "type": "string", "enum": ["reset_password"] }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": { "200": { "description": "Default Response" } }
+      }
+    },
+    "/api/v1/auth/register": {
+      "post": {
+        "operationId": "register",
+        "tags": ["auth"],
+        "description": "Register a user account.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "type": "object",
+                "required": ["email", "code", "displayName", "password"],
+                "properties": {
+                  "email": {
+                    "format": "email",
+                    "maxLength": 255,
+                    "type": "string"
+                  },
+                  "code": { "minLength": 6, "maxLength": 6, "type": "string" },
+                  "displayName": {
+                    "minLength": 1,
+                    "maxLength": 100,
+                    "type": "string"
+                  },
+                  "password": {
+                    "minLength": 8,
+                    "maxLength": 255,
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "type": "object",
+                  "required": ["data"],
+                  "properties": {
+                    "data": {
+                      "additionalProperties": false,
+                      "type": "object",
+                      "required": [
+                        "id",
+                        "email",
+                        "displayName",
+                        "role",
+                        "status",
+                        "mustChangePassword",
+                        "createdAt"
+                      ],
+                      "properties": {
+                        "id": { "format": "uuid", "type": "string" },
+                        "email": {
+                          "format": "email",
+                          "maxLength": 255,
+                          "type": "string"
+                        },
+                        "displayName": {
+                          "minLength": 1,
+                          "maxLength": 100,
+                          "type": "string"
+                        },
+                        "role": {
+                          "anyOf": [
+                            { "type": "string", "enum": ["admin"] },
+                            { "type": "string", "enum": ["designer"] },
+                            { "type": "string", "enum": ["sales"] },
+                            { "type": "string", "enum": ["viewer"] }
+                          ]
+                        },
+                        "status": {
+                          "anyOf": [
+                            { "type": "string", "enum": ["enabled"] },
+                            { "type": "string", "enum": ["disabled"] }
+                          ]
+                        },
+                        "mustChangePassword": { "type": "boolean" },
+                        "createdAt": { "format": "date-time", "type": "string" }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/forgot-password": {
+      "post": {
+        "operationId": "forgotPassword",
+        "tags": ["auth"],
+        "description": "Reset a password with an email verification code.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "type": "object",
+                "required": ["email", "code", "newPassword"],
+                "properties": {
+                  "email": {
+                    "format": "email",
+                    "maxLength": 255,
+                    "type": "string"
+                  },
+                  "code": { "minLength": 6, "maxLength": 6, "type": "string" },
+                  "newPassword": {
+                    "minLength": 8,
+                    "maxLength": 255,
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": { "204": { "description": "No content" } }
+      }
+    },
     "/api/v1/users": {
       "get": {
         "operationId": "listUsers",
@@ -6733,6 +6894,77 @@
           }
         }
       }
+    },
+    "/api/v1/dashboard/summary": {
+      "get": {
+        "operationId": "getDashboardSummary",
+        "tags": ["dashboard"],
+        "description": "Get the current user dashboard project summary.",
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "type": "object",
+                  "required": [
+                    "totalProjects",
+                    "activeProjects",
+                    "pendingReview",
+                    "approvedThisMonth",
+                    "recentProjects"
+                  ],
+                  "properties": {
+                    "totalProjects": { "minimum": 0, "type": "integer" },
+                    "activeProjects": { "minimum": 0, "type": "integer" },
+                    "pendingReview": { "minimum": 0, "type": "integer" },
+                    "approvedThisMonth": { "minimum": 0, "type": "integer" },
+                    "recentProjects": {
+                      "maxItems": 5,
+                      "type": "array",
+                      "items": {
+                        "additionalProperties": false,
+                        "type": "object",
+                        "required": [
+                          "id",
+                          "name",
+                          "status",
+                          "customerName",
+                          "updatedAt"
+                        ],
+                        "properties": {
+                          "id": { "format": "uuid", "type": "string" },
+                          "name": {
+                            "minLength": 1,
+                            "maxLength": 120,
+                            "type": "string"
+                          },
+                          "status": {
+                            "anyOf": [
+                              { "type": "string", "enum": ["draft"] },
+                              { "type": "string", "enum": ["briefing"] },
+                              { "type": "string", "enum": ["designing"] },
+                              { "type": "string", "enum": ["reviewing"] },
+                              { "type": "string", "enum": ["approved"] },
+                              { "type": "string", "enum": ["archived"] }
+                            ]
+                          },
+                          "customerName": { "type": "string" },
+                          "updatedAt": {
+                            "format": "date-time",
+                            "type": "string"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "tags": [
@@ -6751,6 +6983,7 @@
     { "name": "exports", "description": "Export tasks" },
     { "name": "audit", "description": "Audit logs" },
     { "name": "models", "description": "AI model information" },
-    { "name": "events", "description": "Real-time events" }
+    { "name": "events", "description": "Real-time events" },
+    { "name": "dashboard", "description": "Dashboard summary" }
   ]
 }

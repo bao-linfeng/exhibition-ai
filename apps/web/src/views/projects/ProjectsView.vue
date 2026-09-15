@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref, computed, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { useProjectsQuery } from '../../api/queries/projects.js';
 import {
@@ -31,6 +31,9 @@ type ProjectStatus =
   'draft' | 'briefing' | 'designing' | 'reviewing' | 'approved' | 'archived';
 const statusFilter = ref<ProjectStatus | undefined>(undefined);
 
+const currentCursor = ref<string | undefined>(undefined);
+const cursorStack = ref<string[]>([]);
+
 watchDebounced(
   searchInput,
   (val) => {
@@ -38,6 +41,12 @@ watchDebounced(
   },
   { debounce: 300 },
 );
+
+// Reset pagination when search or status changes
+watch([search, statusFilter], () => {
+  currentCursor.value = undefined;
+  cursorStack.value = [];
+});
 
 const {
   data: projectsData,
@@ -48,6 +57,7 @@ const {
   computed(() => ({
     search: search.value || undefined,
     status: statusFilter.value,
+    cursor: currentCursor.value,
   })),
 );
 
@@ -57,6 +67,23 @@ function goToNewProject() {
 
 function viewProject(id: string) {
   router.push(`/projects/${id}`);
+}
+
+function nextPage() {
+  if (
+    projectsData.value?.page?.hasMore &&
+    projectsData.value?.page?.nextCursor
+  ) {
+    cursorStack.value.push(currentCursor.value || '');
+    currentCursor.value = projectsData.value.page.nextCursor;
+  }
+}
+
+function prevPage() {
+  if (cursorStack.value.length > 0) {
+    const prevCursor = cursorStack.value.pop();
+    currentCursor.value = prevCursor === '' ? undefined : prevCursor;
+  }
 }
 </script>
 
@@ -210,10 +237,20 @@ function viewProject(id: string) {
           显示 {{ projectsData?.data?.length || 0 }} 条结果
         </div>
         <div class="flex items-center space-x-2">
-          <Button variant="outline" size="icon" disabled>
+          <Button
+            variant="outline"
+            size="icon"
+            :disabled="cursorStack.length === 0"
+            @click="prevPage"
+          >
             <ChevronLeft class="h-4 w-4" />
           </Button>
-          <Button variant="outline" size="icon" disabled>
+          <Button
+            variant="outline"
+            size="icon"
+            :disabled="!projectsData?.page?.hasMore"
+            @click="nextPage"
+          >
             <ChevronRight class="h-4 w-4" />
           </Button>
         </div>

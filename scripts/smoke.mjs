@@ -32,7 +32,7 @@ try {
   if (!Object.values(readiness).every(Boolean))
     throw new Error('Dependencies are not ready');
   stage = 'PostgreSQL vector extension';
-  const extension = await services.db.query(
+  const extension = await services.pool.query(
     "SELECT 1 FROM pg_extension WHERE extname = 'vector'",
   );
   if (extension.rowCount !== 1) throw new Error('Vector extension missing');

@@ -1,14 +1,57 @@
 <script setup lang="ts">
+import { computed } from 'vue';
 import { useAuth } from '../../composables/useAuth.js';
-import { Building2, FolderKanban, Plus } from '@lucide/vue';
+import {
+  Building2,
+  FolderKanban,
+  Plus,
+  Clock,
+  Loader2,
+  AlertCircle,
+} from '@lucide/vue';
 import { useRouter } from 'vue-router';
 import { Button } from '../../components/ui/button/index.js';
+import { useDashboardSummaryQuery } from '../../api/queries/dashboard.js';
+import StatusBadge from '../../components/StatusBadge.vue';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '../../components/ui/table/index.js';
 
 const { user } = useAuth();
 const router = useRouter();
 
+const currentHour = new Date().getHours();
+const greeting = computed(() => {
+  if (currentHour < 12) return '上午好';
+  if (currentHour < 18) return '下午好';
+  return '晚上好';
+});
+
+const {
+  data: summaryData,
+  isLoading,
+  isError,
+  error,
+} = useDashboardSummaryQuery();
+
 function goTo(path: string) {
   router.push(path);
+}
+
+function formatDate(dateStr: string) {
+  if (!dateStr) return '-';
+  const date = new Date(dateStr);
+  return new Intl.DateTimeFormat('zh-CN', {
+    month: 'short',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: 'numeric',
+  }).format(date);
 }
 </script>
 
@@ -16,7 +59,7 @@ function goTo(path: string) {
   <div class="space-y-6">
     <div class="mb-8">
       <h1 class="text-3xl font-bold tracking-tight text-foreground">
-        下午好，{{ user?.displayName || '用户' }}
+        {{ greeting }}，{{ user?.displayName || '用户' }}
       </h1>
       <p class="text-muted-foreground mt-2">
         这里是展台 AI，您的智能设计助手和项目管理中心。
@@ -88,26 +131,136 @@ function goTo(path: string) {
         </div>
       </div>
 
-      <!-- Stats Placeholder -->
+      <!-- Stats Card -->
       <div
         class="rounded-xl border bg-card text-card-foreground shadow-sm relative overflow-hidden flex flex-col justify-between"
       >
         <div class="p-6">
           <h3 class="font-semibold text-lg mb-2">本月概览</h3>
-          <div class="flex items-end justify-between mt-6">
+          <div
+            v-if="isLoading"
+            class="flex items-center justify-center h-20 text-muted-foreground"
+          >
+            <Loader2 class="h-6 w-6 animate-spin mr-2" />
+            <span>加载中...</span>
+          </div>
+          <div
+            v-else-if="isError"
+            class="flex flex-col items-center justify-center h-20 text-destructive text-sm"
+          >
+            <AlertCircle class="h-5 w-5 mb-1" />
+            <span>{{ error?.message || '加载失败' }}</span>
+          </div>
+          <div v-else class="flex items-end justify-between mt-6">
             <div>
               <p class="text-sm text-muted-foreground mb-1">新增项目</p>
-              <p class="text-3xl font-bold">--</p>
+              <p class="text-3xl font-bold">
+                {{ summaryData?.activeProjects ?? '--' }}
+              </p>
             </div>
             <div>
               <p class="text-sm text-muted-foreground mb-1">待审批</p>
-              <p class="text-3xl font-bold">--</p>
+              <p class="text-3xl font-bold">
+                {{ summaryData?.pendingReview ?? '--' }}
+              </p>
             </div>
             <div>
               <p class="text-sm text-muted-foreground mb-1">已交付</p>
-              <p class="text-3xl font-bold text-primary">--</p>
+              <p class="text-3xl font-bold text-primary">
+                {{ summaryData?.approvedThisMonth ?? '--' }}
+              </p>
             </div>
           </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Recent Projects Section -->
+    <div class="mt-8">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-xl font-semibold tracking-tight">最近项目</h2>
+        <Button variant="ghost" size="sm" @click="goTo('/projects')">
+          查看全部项目 <Plus class="ml-2 h-4 w-4 rotate-45" />
+        </Button>
+      </div>
+
+      <div
+        class="rounded-md border bg-card text-card-foreground shadow-sm overflow-hidden"
+      >
+        <div class="overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>项目名称</TableHead>
+                <TableHead>客户名称</TableHead>
+                <TableHead>状态</TableHead>
+                <TableHead class="text-right">更新时间</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              <TableRow v-if="isLoading">
+                <TableCell colspan="4" class="h-24 text-center">
+                  <div
+                    class="flex items-center justify-center text-muted-foreground"
+                  >
+                    <Loader2 class="h-5 w-5 animate-spin mr-2" />
+                    加载中...
+                  </div>
+                </TableCell>
+              </TableRow>
+
+              <TableRow v-else-if="isError">
+                <TableCell
+                  colspan="4"
+                  class="h-24 text-center text-destructive"
+                >
+                  获取最近项目失败
+                </TableCell>
+              </TableRow>
+
+              <TableRow
+                v-else-if="
+                  !summaryData?.recentProjects ||
+                  summaryData.recentProjects.length === 0
+                "
+              >
+                <TableCell
+                  colspan="4"
+                  class="h-32 text-center text-muted-foreground"
+                >
+                  <div class="flex flex-col items-center justify-center">
+                    <FolderKanban class="h-8 w-8 mb-2 opacity-50" />
+                    <p>暂无近期项目</p>
+                  </div>
+                </TableCell>
+              </TableRow>
+
+              <template v-else>
+                <TableRow
+                  v-for="project in summaryData.recentProjects.slice(0, 5)"
+                  :key="project.id"
+                  class="cursor-pointer hover:bg-muted/50 transition-colors"
+                  @click="goTo(`/projects/${project.id}`)"
+                >
+                  <TableCell class="font-medium">
+                    {{ project.name }}
+                  </TableCell>
+                  <TableCell class="text-muted-foreground">
+                    {{ project.customerName }}
+                  </TableCell>
+                  <TableCell>
+                    <StatusBadge :status="project.status" />
+                  </TableCell>
+                  <TableCell class="text-right text-muted-foreground text-sm">
+                    <div class="flex items-center justify-end gap-1.5">
+                      <Clock class="h-3.5 w-3.5" />
+                      {{ formatDate(project.updatedAt) }}
+                    </div>
+                  </TableCell>
+                </TableRow>
+              </template>
+            </TableBody>
+          </Table>
         </div>
       </div>
     </div>

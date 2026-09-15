@@ -42,3 +42,4 @@ export * from './exports/schemas.js';
 export * from './events/schemas.js';
 export * from './models/schemas.js';
 export * from './audit/schemas.js';
+export * from './dashboard/schemas.js';

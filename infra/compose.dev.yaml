@@ -64,6 +64,14 @@ services:
       retries: 20
     networks: [development]
 
+  mailpit:
+    image: axllent/mailpit:latest
+    ports:
+      - '8025:8025'
+      - '1025:1025'
+    restart: unless-stopped
+    networks: [development]
+
   rustfs:
     image: rustfs/rustfs@sha256:97171b3d72cd47dc81000f92ea84de25608bfc35a94c965501afaeb5d99f6035
     environment:

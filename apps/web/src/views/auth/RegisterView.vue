@@ -1,32 +1,125 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { Eye, EyeOff } from 'lucide-vue-next';
-import { useAuth } from '../../composables/useAuth.js';
+import {
+  useSendCodeMutation,
+  useRegisterMutation,
+} from '../../api/queries/auth.js';
 
 const router = useRouter();
-const { login, isLoginPending, loginError } = useAuth();
 
+const sendCodeMutation = useSendCodeMutation();
+const registerMutation = useRegisterMutation();
+
+const step = ref(1);
 const email = ref('');
+const code = ref('');
+const displayName = ref('');
 const password = ref('');
+const confirmPassword = ref('');
 const showPassword = ref(false);
+const showConfirmPassword = ref(false);
+
+const countdown = ref(0);
+let timer: ReturnType<typeof setInterval> | null = null;
+
 const errorMessage = ref('');
 
-async function handleSubmit() {
-  errorMessage.value = '';
+function startCountdown() {
+  countdown.value = 60;
+  if (timer) clearInterval(timer);
+  timer = setInterval(() => {
+    countdown.value--;
+    if (countdown.value <= 0) {
+      if (timer) clearInterval(timer);
+    }
+  }, 1000);
+}
 
-  if (!email.value || !password.value) {
-    errorMessage.value = '请输入邮箱和密码';
+onUnmounted(() => {
+  if (timer) clearInterval(timer);
+});
+
+async function handleSendCode() {
+  errorMessage.value = '';
+  if (!email.value) {
+    errorMessage.value = '请输入邮箱';
     return;
   }
 
   try {
-    await login(email.value, password.value);
-    const redirect = router.currentRoute.value.query.redirect as string;
-    router.push(redirect || '/dashboard');
-  } catch {
-    errorMessage.value =
-      loginError.value?.message || '登录失败，请检查邮箱和密码';
+    await sendCodeMutation.mutateAsync({
+      email: email.value,
+      type: 'register',
+    });
+    step.value = 2;
+    startCountdown();
+  } catch (err: unknown) {
+    const e = err as { status?: number; message?: string } | null;
+    if (e?.status === 429) {
+      errorMessage.value = '发送太频繁，请稍后再试';
+    } else if (e?.status === 409) {
+      errorMessage.value = '该邮箱已注册';
+    } else {
+      errorMessage.value = e?.message ?? '发送验证码失败';
+    }
+  }
+}
+
+async function handleRegister() {
+  errorMessage.value = '';
+  if (
+    !code.value ||
+    !displayName.value ||
+    !password.value ||
+    !confirmPassword.value
+  ) {
+    errorMessage.value = '请填写完整信息';
+    return;
+  }
+  if (password.value !== confirmPassword.value) {
+    errorMessage.value = '两次输入的密码不一致';
+    return;
+  }
+
+  try {
+    await registerMutation.mutateAsync({
+      email: email.value,
+      code: code.value,
+      displayName: displayName.value,
+      password: password.value,
+    });
+    router.push('/dashboard');
+  } catch (err: unknown) {
+    const e = err as { status?: number; message?: string } | null;
+    if (e?.status === 400) {
+      errorMessage.value = '验证码错误或已过期';
+    } else {
+      errorMessage.value = e?.message ?? '注册失败';
+    }
+  }
+}
+
+async function resendCode() {
+  if (countdown.value > 0) return;
+  errorMessage.value = '';
+  try {
+    await sendCodeMutation.mutateAsync({
+      email: email.value,
+      type: 'register',
+    });
+    step.value = 2;
+    startCountdown();
+  } catch (err: unknown) {
+    const e = err as { status?: number; message?: string } | null;
+    if (e?.status === 429) {
+      errorMessage.value = '发送太频繁，请稍后再试';
+    } else if (e?.status === 409) {
+      errorMessage.value = '该邮箱已注册';
+    } else {
+      errorMessage.value = e?.message ?? '发送验证码失败';
+    }
   }
 }
 </script>
@@ -51,11 +144,16 @@ async function handleSubmit() {
           <h2>展台 AI 设计平台</h2>
         </div>
         <div class="auth-header">
-          <h1 class="auth-title">欢迎回来</h1>
-          <p class="auth-subtitle">请登录您的账号</p>
+          <h1 class="auth-title">创建账号</h1>
+          <p class="auth-subtitle">开启您的智能设计之旅</p>
         </div>
 
-        <form class="auth-form" @submit.prevent="handleSubmit">
+        <!-- Step 1 -->
+        <form
+          v-if="step === 1"
+          class="auth-form"
+          @submit.prevent="handleSendCode"
+        >
           <div class="form-group">
             <label for="email" class="form-label">邮箱</label>
             <input
@@ -66,7 +164,64 @@ async function handleSubmit() {
               placeholder="name@company.com"
               required
               autocomplete="email"
-              :disabled="isLoginPending"
+              :disabled="sendCodeMutation.isPending.value"
+            />
+          </div>
+
+          <div v-if="errorMessage" class="error-message">
+            {{ errorMessage }}
+          </div>
+
+          <button
+            type="submit"
+            class="submit-button"
+            :disabled="sendCodeMutation.isPending.value"
+          >
+            {{ sendCodeMutation.isPending.value ? '发送中...' : '发送验证码' }}
+          </button>
+        </form>
+
+        <!-- Step 2 -->
+        <form v-else class="auth-form" @submit.prevent="handleRegister">
+          <div class="form-group">
+            <label class="form-label">已发送验证码至</label>
+            <div class="email-display">
+              <span>{{ email }}</span>
+              <button
+                type="button"
+                class="resend-button"
+                :disabled="countdown > 0 || sendCodeMutation.isPending.value"
+                @click="resendCode"
+              >
+                {{ countdown > 0 ? `${countdown}s 后重发` : '重新发送' }}
+              </button>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="code" class="form-label">验证码</label>
+            <input
+              id="code"
+              v-model="code"
+              type="text"
+              class="form-input"
+              placeholder="6位数字"
+              required
+              maxlength="6"
+              :disabled="registerMutation.isPending.value"
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="displayName" class="form-label">昵称</label>
+            <input
+              id="displayName"
+              v-model="displayName"
+              type="text"
+              class="form-input"
+              placeholder="您的昵称"
+              required
+              :disabled="registerMutation.isPending.value"
             />
           </div>
 
@@ -80,8 +235,8 @@ async function handleSubmit() {
                 class="form-input"
                 placeholder="••••••••"
                 required
-                autocomplete="current-password"
-                :disabled="isLoginPending"
+                autocomplete="new-password"
+                :disabled="registerMutation.isPending.value"
               />
               <button
                 type="button"
@@ -95,6 +250,31 @@ async function handleSubmit() {
             </div>
           </div>
 
+          <div class="form-group">
+            <label for="confirmPassword" class="form-label">确认密码</label>
+            <div class="input-wrapper">
+              <input
+                id="confirmPassword"
+                v-model="confirmPassword"
+                :type="showConfirmPassword ? 'text' : 'password'"
+                class="form-input"
+                placeholder="••••••••"
+                required
+                autocomplete="new-password"
+                :disabled="registerMutation.isPending.value"
+              />
+              <button
+                type="button"
+                class="icon-button"
+                title="显示/隐藏密码"
+                @click="showConfirmPassword = !showConfirmPassword"
+              >
+                <Eye v-if="!showConfirmPassword" class="icon" />
+                <EyeOff v-else class="icon" />
+              </button>
+            </div>
+          </div>
+
           <div v-if="errorMessage" class="error-message">
             {{ errorMessage }}
           </div>
@@ -102,21 +282,16 @@ async function handleSubmit() {
           <button
             type="submit"
             class="submit-button"
-            :disabled="isLoginPending"
+            :disabled="registerMutation.isPending.value"
           >
-            {{ isLoginPending ? '登录中...' : '登录' }}
+            {{ registerMutation.isPending.value ? '注册中...' : '立即注册' }}
           </button>
         </form>
 
         <div class="auth-footer">
           <p class="footer-text">
-            还没有账号？<RouterLink to="/register" class="text-link">
-              立即注册
-            </RouterLink>
-          </p>
-          <p class="footer-text">
-            忘记密码？<RouterLink to="/forgot-password" class="text-link">
-              找回密码
+            已有账号？<RouterLink to="/login" class="text-link">
+              返回登录
             </RouterLink>
           </p>
         </div>

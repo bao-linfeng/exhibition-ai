@@ -77,6 +77,36 @@ export const ChangePasswordRequestSchema = Type.Object(
   { additionalProperties: false },
 );
 
+export const SendCodeRequestSchema = Type.Object(
+  {
+    email: EmailSchema,
+    type: Type.Union([
+      Type.Literal('register'),
+      Type.Literal('reset_password'),
+    ]),
+  },
+  { additionalProperties: false },
+);
+
+export const RegisterRequestSchema = Type.Object(
+  {
+    email: EmailSchema,
+    code: Type.String({ minLength: 6, maxLength: 6 }),
+    displayName: Type.String({ minLength: 1, maxLength: 100 }),
+    password: Type.String({ minLength: 8, maxLength: 255 }),
+  },
+  { additionalProperties: false },
+);
+
+export const ForgotPasswordRequestSchema = Type.Object(
+  {
+    email: EmailSchema,
+    code: Type.String({ minLength: 6, maxLength: 6 }),
+    newPassword: Type.String({ minLength: 8, maxLength: 255 }),
+  },
+  { additionalProperties: false },
+);
+
 // 类型导出
 export type UserRole = Static<typeof UserRoleSchema>;
 export type UserStatus = Static<typeof UserStatusSchema>;
@@ -84,3 +114,6 @@ export type UserSummary = Static<typeof UserSummarySchema>;
 export type LoginRequest = Static<typeof LoginRequestSchema>;
 export type LoginResponse = Static<typeof LoginResponseSchema>;
 export type ChangePasswordRequest = Static<typeof ChangePasswordRequestSchema>;
+export type SendCodeRequest = Static<typeof SendCodeRequestSchema>;
+export type RegisterRequest = Static<typeof RegisterRequestSchema>;
+export type ForgotPasswordRequest = Static<typeof ForgotPasswordRequestSchema>;

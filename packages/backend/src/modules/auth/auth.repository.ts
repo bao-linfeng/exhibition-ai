@@ -1,7 +1,7 @@
 import { eq } from 'drizzle-orm';
 import type { Database } from '@exhibition/db';
 import { users, sessions } from '@exhibition/db';
-import type { User, NewSession } from '@exhibition/db';
+import type { NewSession, User } from '@exhibition/db';
 
 export class AuthRepository {
   constructor(private db: Database) {}
@@ -22,6 +22,26 @@ export class AuthRepository {
       .where(eq(users.id, id))
       .limit(1);
     return user;
+  }
+
+  async createUser(
+    email: string,
+    displayName: string,
+    passwordHash: string,
+  ): Promise<User> {
+    const [user] = await this.db
+      .insert(users)
+      .values({ email, displayName, passwordHash })
+      .returning();
+    if (!user) throw new Error('Failed to create user');
+    return user;
+  }
+
+  async updatePassword(userId: string, passwordHash: string): Promise<void> {
+    await this.db
+      .update(users)
+      .set({ passwordHash, updatedAt: new Date() })
+      .where(eq(users.id, userId));
   }
 
   async createSession(session: NewSession) {
@@ -46,6 +66,10 @@ export class AuthRepository {
   }
 
   async deleteUserSessions(userId: string): Promise<void> {
+    await this.db.delete(sessions).where(eq(sessions.userId, userId));
+  }
+
+  async deleteSessionsByUserId(userId: string): Promise<void> {
     await this.db.delete(sessions).where(eq(sessions.userId, userId));
   }
 

@@ -10,6 +10,18 @@ const routes: RouteRecordRaw[] = [
     meta: { requiresAuth: false },
   },
   {
+    path: '/register',
+    name: 'register',
+    component: () => import('../views/auth/RegisterView.vue'),
+    meta: { requiresAuth: false },
+  },
+  {
+    path: '/forgot-password',
+    name: 'forgot-password',
+    component: () => import('../views/auth/ForgotPasswordView.vue'),
+    meta: { requiresAuth: false },
+  },
+  {
     path: '/',
     component: AppLayout,
     meta: { requiresAuth: true },
@@ -85,7 +97,7 @@ router.beforeEach(async (to, from, next) => {
     }
   }
 
-  if (to.path === '/login') {
+  if (['/login', '/register', '/forgot-password'].includes(to.path)) {
     try {
       const { apiClient } = await import('../api/client.js');
       const { error } = await apiClient.GET('/api/v1/auth/me');
@@ -94,7 +106,7 @@ router.beforeEach(async (to, from, next) => {
         return;
       }
     } catch {
-      // 保持在登录页
+      // 保持在 auth 页
     }
   }
 

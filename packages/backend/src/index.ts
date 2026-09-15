@@ -11,12 +11,15 @@ import { createClient, type RedisClientType } from 'redis';
 import { Redis } from 'ioredis';
 import { createDatabase } from '@exhibition/db';
 import { AuthService, AuthRepository } from './modules/auth/index.js';
+import { MailService } from './modules/mail/mail.service.js';
+import { VerificationService } from './modules/verification/verification.service.js';
 import {
   CustomerService,
   CustomerRepository,
 } from './modules/customers/index.js';
 import { ProjectService, ProjectRepository } from './modules/projects/index.js';
 import { UserService, UserRepository } from './modules/users/index.js';
+import { DashboardService } from './modules/dashboard/index.js';
 
 export {
   AuthService,
@@ -27,6 +30,7 @@ export {
   ProjectRepository,
   UserService,
   UserRepository,
+  DashboardService,
 };
 
 export {
@@ -73,6 +77,7 @@ export interface Services {
   customerService: CustomerService;
   projectService: ProjectService;
   userService: UserService;
+  dashboardService: DashboardService;
   connectRedis(): Promise<void>;
   readiness(): Promise<{ postgres: boolean; redis: boolean; storage: boolean }>;
   close(): Promise<void>;
@@ -83,14 +88,21 @@ export function createServices(): Services {
 
   // 初始化认证服务
   const authRepository = new AuthRepository(drizzleDb);
-  const authService = new AuthService(authRepository);
   const customerService = new CustomerService(
     new CustomerRepository(drizzleDb),
   );
   const projectService = new ProjectService(new ProjectRepository(drizzleDb));
   const userService = new UserService(new UserRepository(drizzleDb));
+  const dashboardService = new DashboardService(drizzleDb);
 
   const connection = redisConnection();
+  const verificationRedis = new Redis(connection);
+  verificationRedis.on('error', () => undefined);
+  const authService = new AuthService(
+    authRepository,
+    new VerificationService(verificationRedis),
+    new MailService(),
+  );
   const redis = createClient({
     socket: {
       host: connection.host,
@@ -149,6 +161,7 @@ export function createServices(): Services {
   }
   async function close() {
     if (redis.isOpen) redis.destroy();
+    verificationRedis.disconnect();
     s3.destroy();
     await pool.end();
   }
@@ -158,6 +171,7 @@ export function createServices(): Services {
     customerService,
     projectService,
     userService,
+    dashboardService,
     redis,
     s3,
     bucket,

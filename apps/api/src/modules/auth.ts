@@ -1,14 +1,20 @@
 import type { FastifyInstance } from 'fastify';
 import type {
+  ForgotPasswordRequest,
   LoginRequest,
   ChangePasswordRequest,
+  RegisterRequest,
+  SendCodeRequest,
 } from '@exhibition/contracts';
 import {
+  ForgotPasswordRequestSchema,
   LoginRequestSchema,
   LoginResponseSchema,
   MeResponseSchema,
   CsrfResponseSchema,
   ChangePasswordRequestSchema,
+  RegisterRequestSchema,
+  SendCodeRequestSchema,
 } from '@exhibition/contracts';
 
 export async function authRoutes(app: FastifyInstance) {
@@ -213,6 +219,131 @@ export async function authRoutes(app: FastifyInstance) {
         return reply.code(400).send({
           error: 'Bad Request',
           message: 'Current password is incorrect',
+        });
+      }
+
+      return reply.code(204).send();
+    },
+  );
+
+  app.post<{ Body: SendCodeRequest }>(
+    '/api/v1/auth/send-code',
+    {
+      schema: {
+        operationId: 'sendVerificationCode',
+        description: 'Send an email verification code.',
+        tags: ['auth'],
+        body: SendCodeRequestSchema,
+      },
+    },
+    async (request, reply) => {
+      const { email, type } = request.body;
+      const result = await app.services!.authService.sendVerificationCode(
+        email,
+        type,
+      );
+
+      if (result === 'rate_limited') {
+        return reply.code(429).send({
+          error: 'Too Many Requests',
+          message: 'Please wait before requesting another code',
+        });
+      }
+      if (result === 'already_registered') {
+        return reply.code(409).send({
+          error: 'Conflict',
+          message: 'Email is already registered',
+        });
+      }
+      if (result === 'not_found') {
+        return reply.code(404).send({
+          error: 'Not Found',
+          message: 'User not found',
+        });
+      }
+
+      return { data: { sent: true } };
+    },
+  );
+
+  app.post<{ Body: RegisterRequest }>(
+    '/api/v1/auth/register',
+    {
+      schema: {
+        operationId: 'register',
+        description: 'Register a user account.',
+        tags: ['auth'],
+        body: RegisterRequestSchema,
+        response: {
+          200: LoginResponseSchema,
+        },
+      },
+    },
+    async (request, reply) => {
+      const { email, code, displayName, password } = request.body;
+      const result = await app.services!.authService.register(
+        email,
+        code,
+        displayName,
+        password,
+      );
+
+      if (result === 'invalid_code') {
+        return reply.code(400).send({
+          error: 'Bad Request',
+          message: 'Invalid verification code',
+        });
+      }
+      if (result === 'already_registered') {
+        return reply.code(409).send({
+          error: 'Conflict',
+          message: 'Email is already registered',
+        });
+      }
+
+      reply.setCookie('sessionId', result.sessionId, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge: 7 * 24 * 60 * 60,
+        path: '/',
+      });
+
+      return { data: result.user };
+    },
+  );
+
+  app.post<{ Body: ForgotPasswordRequest }>(
+    '/api/v1/auth/forgot-password',
+    {
+      schema: {
+        operationId: 'forgotPassword',
+        description: 'Reset a password with an email verification code.',
+        tags: ['auth'],
+        body: ForgotPasswordRequestSchema,
+        response: {
+          204: { type: 'null', description: 'No content' },
+        },
+      },
+    },
+    async (request, reply) => {
+      const { email, code, newPassword } = request.body;
+      const result = await app.services!.authService.forgotPassword(
+        email,
+        code,
+        newPassword,
+      );
+
+      if (result === 'invalid_code') {
+        return reply.code(400).send({
+          error: 'Bad Request',
+          message: 'Invalid verification code',
+        });
+      }
+      if (result === 'not_found') {
+        return reply.code(404).send({
+          error: 'Not Found',
+          message: 'User not found',
         });
       }
 

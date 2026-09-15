@@ -90,6 +90,9 @@ importers:
       clsx:
         specifier: 2.1.1
         version: 2.1.1
+      lucide-vue-next:
+        specifier: 1.0.0
+        version: 1.0.0(vue@3.5.42(typescript@5.9.3))
       openapi-fetch:
         specifier: 0.15.0
         version: 0.15.0
@@ -174,6 +177,9 @@ importers:
       ioredis:
         specifier: 5.11.1
         version: 5.11.1
+      nodemailer:
+        specifier: 7.0.11
+        version: 7.0.11
       redis:
         specifier: 6.2.1
         version: 6.2.1
@@ -181,6 +187,9 @@ importers:
       '@types/node':
         specifier: 24.13.4
         version: 24.13.4
+      '@types/nodemailer':
+        specifier: 6.4.17
+        version: 6.4.17
 
   packages/contracts:
     dependencies:
@@ -1244,6 +1253,9 @@ packages:
   '@types/node@24.13.4':
     resolution: {integrity: sha512-YJ7EqCstVTzIr0fMr7qul/977en+pQHrfmuKIo6Zr9i75Be21dr3MovcfvGtyvi2HAUrRerWps5sMO9I7WaxDw==}
 
+  '@types/nodemailer@6.4.17':
+    resolution: {integrity: sha512-I9CCaIp6DTldEg7vyUTZi8+9Vo0hi1/T8gv3C89yk1rSAAzoKQ8H8ki/jBYJSFoH/BisgLP8tkZMlQ91CIquww==}
+
   '@types/pg@8.23.1':
     resolution: {integrity: sha512-fKVHpikPdg4GKks3JuLEhvwSyvwzF23hnabPy6DD8ljVbC7+6J5dQzdv4arV6jqq57djnMgs1HKBxX4P8aBI3A==}
 
@@ -2127,6 +2139,12 @@ packages:
     resolution: {integrity: sha512-iPZK6eYjbxRu3uB4/WZ3EsEIMJFMqAoopl3R+zuq0UjcAm/MO6KCweDgPfP3elTztoKP3KtnVHxTn2NHBSDVUw==}
     engines: {node: '>=10'}
 
+  lucide-vue-next@1.0.0:
+    resolution: {integrity: sha512-V6SPvx1IHTj/UY+FrIYWV5faISsPSb8BnWSFDxAtezWKvWc9ZZ40PDrdu1/Qb5vg4lHWr1hs1BAMGVGm6V1Xdg==}
+    deprecated: Package deprecated. Please use @lucide/vue instead.
+    peerDependencies:
+      vue: '>=3.0.1'
+
   luxon@3.7.2:
     resolution: {integrity: sha512-vtEhXh/gNjI9Yg1u4jX/0YVPMvxzHuGgCm6tC5kZyb08yjGWGnqAjGJvcXbqQR2P3MyMEFnRbpcdFS6PBcLqew==}
     engines: {node: '>=12'}
@@ -2191,6 +2209,10 @@ packages:
   node-gyp-build-optional-packages@5.2.2:
     resolution: {integrity: sha512-s+w+rBWnpTMwSFbaE0UXsRlg7hU4FjekKU4eyAih5T8nJuNZT1nNsskXpxmeqSK9UzkBl6UgRlnKc8hz8IEqOw==}
     hasBin: true
+
+  nodemailer@7.0.11:
+    resolution: {integrity: sha512-gnXhNRE0FNhD7wPSCGhdNh46Hs6nm+uTyg+Kq0cZukNQiYdnCsoQjodNP9BQVG9XrcK/v6/MgpAPBUFyzh9pvw==}
+    engines: {node: '>=6.0.0'}
 
   nth-check@2.1.1:
     resolution: {integrity: sha512-lqjrjmaOoAnWfMmBPL+XNnynZh2+swxiX3WUE0s4yEHI6m+AwrK2UZOimIRl3X/4QctVqS8AiZjFqyOGrMXb/w==}
@@ -3604,6 +3626,10 @@ snapshots:
     dependencies:
       undici-types: 7.18.2
 
+  '@types/nodemailer@6.4.17':
+    dependencies:
+      '@types/node': 24.13.4
+
   '@types/pg@8.23.1':
     dependencies:
       '@types/node': 24.13.4
@@ -4488,6 +4514,10 @@ snapshots:
     dependencies:
       p-locate: 5.0.0
 
+  lucide-vue-next@1.0.0(vue@3.5.42(typescript@5.9.3)):
+    dependencies:
+      vue: 3.5.42(typescript@5.9.3)
+
   luxon@3.7.2: {}
 
   magic-string-ast@1.0.3:
@@ -4553,6 +4583,8 @@ snapshots:
     dependencies:
       detect-libc: 2.1.2
     optional: true
+
+  nodemailer@7.0.11: {}
 
   nth-check@2.1.1:
     dependencies:

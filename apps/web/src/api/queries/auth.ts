@@ -54,3 +54,58 @@ export function useLogoutMutation() {
     },
   });
 }
+
+export function useSendCodeMutation() {
+  return useMutation({
+    mutationFn: async (params: {
+      email: string;
+      type: 'register' | 'reset_password';
+    }) => {
+      const { data, error } = await apiClient.POST('/api/v1/auth/send-code', {
+        body: params,
+      });
+      if (error) throw error;
+      return data;
+    },
+  });
+}
+
+export function useRegisterMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (params: {
+      email: string;
+      code: string;
+      displayName: string;
+      password: string;
+    }) => {
+      const { data, error } = await apiClient.POST('/api/v1/auth/register', {
+        body: params,
+      });
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: authKeys.me() });
+    },
+  });
+}
+
+export function useForgotPasswordMutation() {
+  return useMutation({
+    mutationFn: async (params: {
+      email: string;
+      code: string;
+      newPassword: string;
+    }) => {
+      const { data, error } = await apiClient.POST(
+        '/api/v1/auth/forgot-password',
+        {
+          body: params,
+        },
+      );
+      if (error) throw error;
+      return data;
+    },
+  });
+}

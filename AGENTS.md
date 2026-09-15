@@ -167,6 +167,26 @@ Worker writes `Date.now()` to `/tmp/exhibition-worker-health`. Compose healthche
 - After merging: update `tasks.md` and `docs/issues/manifest.json`
 - Gate: `pnpm check` must pass (0 errors) before pushing
 
+## After Code Changes — Restart Services
+
+After modifying any source file, restart the affected service(s) so the running container picks up the changes:
+
+```sh
+# API changed
+docker compose --env-file .env -f infra/compose.dev.yaml restart api
+
+# Worker changed
+docker compose --env-file .env -f infra/compose.dev.yaml restart worker
+
+# Web (Vite) changed — Vite hot-reloads automatically; only restart if HMR stalls
+docker compose --env-file .env -f infra/compose.dev.yaml restart web
+
+# Multiple services changed at once
+docker compose --env-file .env -f infra/compose.dev.yaml restart api worker
+```
+
+> **Rule:** every code change session must end with the relevant service(s) restarted and their logs checked (`logs --tail 50 <service>`) before marking work done.
+
 ## Pre-PR Checklist
 
 ```sh

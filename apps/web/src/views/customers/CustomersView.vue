@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, computed, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { useCustomersQuery } from '../../api/queries/customers.js';
 import {
@@ -29,6 +29,9 @@ const searchInput = ref('');
 const search = ref('');
 const statusFilter = ref<'active' | 'inactive' | undefined>(undefined);
 
+const currentCursor = ref<string | undefined>(undefined);
+const cursorStack = ref<string[]>([]);
+
 watchDebounced(
   searchInput,
   (val) => {
@@ -37,15 +40,24 @@ watchDebounced(
   { debounce: 300 },
 );
 
+// Reset pagination when search or status changes
+watch([search, statusFilter], () => {
+  currentCursor.value = undefined;
+  cursorStack.value = [];
+});
+
 const {
   data: customers,
   isLoading,
   isError,
   error,
-} = useCustomersQuery({
-  search: search.value,
-  status: statusFilter.value,
-});
+} = useCustomersQuery(
+  computed(() => ({
+    search: search.value || undefined,
+    status: statusFilter.value,
+    cursor: currentCursor.value,
+  })),
+);
 
 function goToNewCustomer() {
   router.push('/customers/new');
@@ -57,6 +69,20 @@ function viewCustomer(id: string) {
 
 function editCustomer(id: string) {
   router.push(`/customers/${id}/edit`);
+}
+
+function nextPage() {
+  if (customers.value?.page?.hasMore && customers.value?.page?.nextCursor) {
+    cursorStack.value.push(currentCursor.value || '');
+    currentCursor.value = customers.value.page.nextCursor;
+  }
+}
+
+function prevPage() {
+  if (cursorStack.value.length > 0) {
+    const prevCursor = cursorStack.value.pop();
+    currentCursor.value = prevCursor === '' ? undefined : prevCursor;
+  }
 }
 </script>
 
@@ -198,16 +224,26 @@ function editCustomer(id: string) {
         </Table>
       </div>
 
-      <!-- Basic Pagination Placeholder -->
+      <!-- Pagination -->
       <div class="flex items-center justify-between px-4 py-3 border-t">
         <div class="text-sm text-muted-foreground">
           显示 {{ customers?.data?.length || 0 }} 条结果
         </div>
         <div class="flex items-center space-x-2">
-          <Button variant="outline" size="icon" disabled>
+          <Button
+            variant="outline"
+            size="icon"
+            :disabled="cursorStack.length === 0"
+            @click="prevPage"
+          >
             <ChevronLeft class="h-4 w-4" />
           </Button>
-          <Button variant="outline" size="icon" disabled>
+          <Button
+            variant="outline"
+            size="icon"
+            :disabled="!customers?.page?.hasMore"
+            @click="nextPage"
+          >
             <ChevronRight class="h-4 w-4" />
           </Button>
         </div>
