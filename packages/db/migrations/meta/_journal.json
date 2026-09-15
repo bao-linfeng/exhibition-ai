@@ -15,6 +15,20 @@
       "when": 1789396346357,
       "tag": "0001_add_customers_and_projects",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1789396346358,
+      "tag": "0002_add_email_verifications",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1789443151716,
+      "tag": "0003_add_audit_logs",
+      "breakpoints": true
     }
   ]
 }
