@@ -122,21 +122,21 @@ docker compose --env-file .env -f infra/compose.dev.yaml down
 
   范围：实现单例连接与事务注入、迁移runner、dev/test seed入口、环境Schema、Pino脱敏和进程健康/优雅退出；各业务表随后由所属Issue增加。 提供追加式审计基础表/服务，供认证和业务Issue同步埋点。
 
-  - [ ] 空数据库迁移和重复执行成功，seed 在生产被拒绝
-  - [ ] 缺少生产必填配置明确退出，日志隐藏凭证与签名query
-  - [ ] API live/ready和Worker心跳可观测，关闭能停止接新任务并释放连接
+  - [x] 空数据库迁移和重复执行成功，seed 在生产被拒绝
+  - [x] 缺少生产必填配置明确退出，日志隐藏凭证与签名query
+  - [x] API live/ready和Worker心跳可观测，关闭能停止接新任务并释放连接
 
-- [ ] **T005 建立容器 CI 与 Issue/PR 交付门禁** — [Issue 正文](docs/issues/T005.md)
+- [x] **T005 建立容器 CI 与 Issue/PR 交付门禁** — [Issue 正文](docs/issues/T005.md)
 
-  阶段：M0；前置：[T002 #2](https://github.com/bao-linfeng/exhibition-ai/issues/2)、[T003 #3](https://github.com/bao-linfeng/exhibition-ai/issues/3)、[T004 #4](https://github.com/bao-linfeng/exhibition-ai/issues/4)；状态：todo；GitHub Issue：[#5](https://github.com/bao-linfeng/exhibition-ai/issues/5)；PR：—。
+  阶段：M0；前置：[T002 #2](https://github.com/bao-linfeng/exhibition-ai/issues/2)、[T003 #3](https://github.com/bao-linfeng/exhibition-ai/issues/3)、[T004 #4](https://github.com/bao-linfeng/exhibition-ai/issues/4)；状态：done；GitHub Issue：[#5](https://github.com/bao-linfeng/exhibition-ai/issues/5)；PR：待回填。
 
   需求：§13.3、§15；tasks.md。目录：.github/workflows；.github/pull_request_template.md；scripts；tests；docs/DEVELOPMENT.md。
 
   范围：CI 在隔离 Compose 环境执行 lint/typecheck/boundaries/api:check/unit/build；提供真实依赖集成与E2E入口；PR模板要求Issue、目录、迁移、Docker验证与未验证项。
 
-  - [ ] 干净runner可重建镜像并执行检查，不读取开发数据卷
-  - [ ] CI只使用无敏感数据与Mock，不自动调用付费模型
-  - [ ] PR可追踪关联Issue及依赖；失败检查阻止标记完成，模板不把未运行CI预填为通过
+  - [x] 干净runner可重建镜像并执行检查，不读取开发数据卷
+  - [x] CI只使用无敏感数据与Mock，不自动调用付费模型
+  - [x] PR可追踪关联Issue及依赖；失败检查阻止标记完成，模板不把未运行CI预填为通过
 
 ### M1
 
