@@ -14,9 +14,11 @@ import {
   S3StorageProvider,
   AssetRepository,
 } from '@exhibition/backend';
+import { bootstrapProviders } from './bootstrap.js';
 import { processAssetValidation } from './processors/asset-validation.processor.js';
 
 const heartbeat = env.WORKER_HEALTH_FILE;
+export const providers = bootstrapProviders();
 
 // DB + services
 const { db } = initDatabase();

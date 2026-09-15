@@ -21,6 +21,7 @@ x-app: &app
     - contracts_modules:/workspace/packages/contracts/node_modules
     - client_modules:/workspace/packages/api-client/node_modules
     - backend_modules:/workspace/packages/backend/node_modules
+    - ai_modules:/workspace/packages/ai/node_modules
     - db_modules:/workspace/packages/db/node_modules
     - pnpm_store:/pnpm/store
   networks: [development]
@@ -182,5 +183,6 @@ volumes:
   contracts_modules:
   client_modules:
   backend_modules:
+  ai_modules:
   db_modules:
   pnpm_store:

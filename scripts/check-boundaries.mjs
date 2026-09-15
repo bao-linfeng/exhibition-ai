@@ -18,7 +18,7 @@ const allowed = {
   '@exhibition/contracts': [],
   '@exhibition/db': [],
   '@exhibition/backend': ['@exhibition/db', '@exhibition/contracts'],
-  '@exhibition/ai': ['@exhibition/backend', '@exhibition/contracts'],
+  '@exhibition/ai': ['@exhibition/contracts'],
   '@exhibition/api': ['@exhibition/backend', '@exhibition/contracts'],
   '@exhibition/worker': ['@exhibition/backend', '@exhibition/ai'],
 };
