@@ -8,3 +8,4 @@ export * from './briefs.js';
 export * from './tasks.js';
 export * from './assets.js';
 export * from './generations.js';
+export * from './image_versions.js';

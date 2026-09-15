@@ -14,6 +14,14 @@ export class GenerationRepository {
     return row ?? null;
   }
 
+  async findByTaskId(taskId: string) {
+    const [row] = await this.db
+      .select()
+      .from(generationRequests)
+      .where(eq(generationRequests.taskId, taskId));
+    return row ?? null;
+  }
+
   async createWithOutbox(input: {
     projectId: string;
     mode: string;

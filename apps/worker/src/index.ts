@@ -13,9 +13,17 @@ import {
   TaskService,
   S3StorageProvider,
   AssetRepository,
+  GenerationRepository,
+  ImageVersionRepository,
+  createImageGenerationQueue,
+  QUEUE_IMAGE_GENERATION,
 } from '@exhibition/backend';
 import { bootstrapProviders } from './bootstrap.js';
 import { processAssetValidation } from './processors/asset-validation.processor.js';
+import {
+  processImageGeneration,
+  type ImageGenerationJobData,
+} from './processors/image-generation.processor.js';
 
 const heartbeat = env.WORKER_HEALTH_FILE;
 export const providers = bootstrapProviders();
@@ -38,6 +46,8 @@ const s3 = new S3StorageProvider(
   env.S3_REGION,
 );
 const assetRepo = new AssetRepository(db);
+const generationRepo = new GenerationRepository(db);
+const imageVersionRepo = new ImageVersionRepository(db);
 const bucket = env.S3_BUCKET;
 
 // Redis connections
@@ -49,7 +59,13 @@ const scannerConnection = createQueueConnection();
 const assetValidationQueue = createAssetValidationQueue({
   connection: workerConnection,
 });
-const queues = new Map([[QUEUE_ASSET_VALIDATION, assetValidationQueue]]);
+const imageGenerationQueue = createImageGenerationQueue({
+  connection: workerConnection,
+});
+const queues = new Map([
+  [QUEUE_ASSET_VALIDATION, assetValidationQueue],
+  [QUEUE_IMAGE_GENERATION, imageGenerationQueue],
+]);
 const taskService = new TaskService(taskRepo, queues);
 
 // Probe worker (existing)
@@ -100,6 +116,35 @@ assetValidationWorker.on('failed', (job, err) => {
   logger.error({ jobId: job?.id, err }, 'Asset validation job failed');
 });
 
+// Image generation worker
+const imageGenerationWorker = new Worker(
+  QUEUE_IMAGE_GENERATION,
+  async (job) => {
+    const data = job.data as ImageGenerationJobData;
+    logger.info(
+      { taskId: data.taskId, jobId: job.id },
+      'Processing image_generation task',
+    );
+    await processImageGeneration(data, {
+      taskRepo,
+      generationRepo,
+      assetRepo,
+      imageVersionRepo,
+      storage: s3,
+      bucket,
+      imageProviderRegistry: providers.imageProviderRegistry,
+      promptRegistry: providers.promptRegistry,
+    });
+  },
+  { connection: createQueueConnection(), concurrency: 4 },
+);
+imageGenerationWorker.on('error', (err) => {
+  logger.error({ err }, 'Image generation worker error');
+});
+imageGenerationWorker.on('failed', (job, err) => {
+  logger.error({ jobId: job?.id, err }, 'Image generation job failed');
+});
+
 // Heartbeat
 let stopping = false;
 let pulsing = false;
@@ -133,6 +178,7 @@ async function scanOutbox() {
 await Promise.all([
   probeWorker.waitUntilReady(),
   assetValidationWorker.waitUntilReady(),
+  imageGenerationWorker.waitUntilReady(),
 ]);
 await pulse();
 
@@ -152,7 +198,9 @@ async function stop() {
   await Promise.all([
     probeWorker.close(),
     assetValidationWorker.close(),
+    imageGenerationWorker.close(),
     assetValidationQueue.close(),
+    imageGenerationQueue.close(),
   ]);
   probeConnection.disconnect();
   workerConnection.disconnect();
@@ -167,4 +215,6 @@ process.once('SIGTERM', () => {
   void stop();
 });
 
-logger.info('Worker ready: probe + asset_validation + outbox scanner');
+logger.info(
+  'Worker ready: probe + asset_validation + image_generation + outbox scanner',
+);

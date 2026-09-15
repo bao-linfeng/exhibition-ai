@@ -28,6 +28,10 @@ import {
   GenerationService,
   GenerationRepository,
 } from './modules/generations/index.js';
+import {
+  ImageVersionService,
+  ImageVersionRepository,
+} from './modules/image-versions/index.js';
 import { S3StorageProvider } from './infrastructure/storage.js';
 import {
   createAssetValidationQueue,
@@ -55,6 +59,8 @@ export {
   AssetRepository,
   GenerationService,
   GenerationRepository,
+  ImageVersionService,
+  ImageVersionRepository,
 };
 export { S3StorageProvider } from './infrastructure/storage.js';
 export type { StorageProvider } from './infrastructure/storage.js';
@@ -124,6 +130,7 @@ export interface Services {
   taskService: TaskService;
   assetService: AssetService;
   generationService: GenerationService;
+  imageVersionService: ImageVersionService;
   connectRedis(): Promise<void>;
   readiness(): Promise<{ postgres: boolean; redis: boolean; storage: boolean }>;
   close(): Promise<void>;
@@ -165,6 +172,9 @@ export function createServices(): Services {
     new GenerationRepository(drizzleDb),
     new TaskRepository(drizzleDb),
     queues,
+  );
+  const imageVersionService = new ImageVersionService(
+    new ImageVersionRepository(drizzleDb),
   );
   const verificationRedis = new Redis(connection);
   verificationRedis.on('error', () => undefined);
@@ -261,6 +271,7 @@ export function createServices(): Services {
     taskService,
     assetService,
     generationService,
+    imageVersionService,
     redis,
     s3,
     bucket,
