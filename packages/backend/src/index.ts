@@ -22,6 +22,12 @@ import { BriefService, BriefRepository } from './modules/briefs/index.js';
 import { UserService, UserRepository } from './modules/users/index.js';
 import { DashboardService } from './modules/dashboard/index.js';
 import { AuditService } from './modules/audit/index.js';
+import {
+  ModelConfigRepository,
+  QuotaRepository,
+  SettingsService,
+  QuotaService,
+} from './modules/settings/index.js';
 import { TaskService, TaskRepository } from './modules/tasks/index.js';
 import { AssetService, AssetRepository } from './modules/assets/index.js';
 import {
@@ -56,6 +62,13 @@ export {
   GenerationService,
   GenerationRepository,
 };
+export {
+  ModelConfigRepository,
+  QuotaRepository,
+  SettingsService,
+  QuotaService,
+} from './modules/settings/index.js';
+export type { ReserveResult, SettleInput } from './modules/settings/index.js';
 export { S3StorageProvider } from './infrastructure/storage.js';
 export type { StorageProvider } from './infrastructure/storage.js';
 
@@ -116,6 +129,8 @@ export interface Services {
   taskService: TaskService;
   assetService: AssetService;
   generationService: GenerationService;
+  settingsService: SettingsService;
+  quotaService: QuotaService;
   connectRedis(): Promise<void>;
   readiness(): Promise<{ postgres: boolean; redis: boolean; storage: boolean }>;
   close(): Promise<void>;
@@ -134,6 +149,10 @@ export function createServices(): Services {
   const userService = new UserService(new UserRepository(drizzleDb));
   const dashboardService = new DashboardService(drizzleDb);
   const auditService = new AuditService(drizzleDb);
+  const modelConfigRepo = new ModelConfigRepository(drizzleDb);
+  const quotaRepo = new QuotaRepository(drizzleDb);
+  const settingsService = new SettingsService(modelConfigRepo);
+  const quotaService = new QuotaService(drizzleDb, quotaRepo, auditService);
 
   const connection = redisConnection();
   const queueConnection = createQueueConnection();
@@ -253,6 +272,8 @@ export function createServices(): Services {
     taskService,
     assetService,
     generationService,
+    settingsService,
+    quotaService,
     redis,
     s3,
     bucket,

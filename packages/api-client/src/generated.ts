@@ -877,6 +877,23 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/api/v1/models/{id}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** @description Get a single AI model config by id. */
+    get: operations['getModelConfig'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/api/v1/projects/{projectId}/events': {
     parameters: {
       query?: never;
@@ -905,6 +922,57 @@ export interface paths {
     get: operations['getDashboardSummary'];
     put?: never;
     post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/settings/model-configs/{id}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    /** （管理员）更新模型配置 */
+    patch: operations['updateModelConfig'];
+    trace?: never;
+  };
+  '/api/v1/settings/quota': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** 查询额度账户 */
+    get: operations['getQuota'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/settings/quota/topup': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** （管理员）充值额度 */
+    post: operations['topupQuota'];
     delete?: never;
     options?: never;
     head?: never;
@@ -4181,10 +4249,56 @@ export interface operations {
               modelId: string;
               displayName: string;
               description?: string;
+              capabilities: string[];
               costPerImageMinor: number;
               currency: string;
               isActive: boolean;
+              maxConcurrent: number;
+              /** Format: date-time */
+              createdAt: string;
+              /** Format: date-time */
+              updatedAt: string;
             }[];
+          };
+        };
+      };
+    };
+  };
+  getModelConfig: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Default Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': {
+            data: {
+              /** Format: uuid */
+              id: string;
+              providerId: string;
+              modelId: string;
+              displayName: string;
+              description?: string;
+              capabilities: string[];
+              costPerImageMinor: number;
+              currency: string;
+              isActive: boolean;
+              maxConcurrent: number;
+              /** Format: date-time */
+              createdAt: string;
+              /** Format: date-time */
+              updatedAt: string;
+            };
           };
         };
       };
@@ -4249,6 +4363,129 @@ export interface operations {
               /** Format: date-time */
               updatedAt: string;
             }[];
+          };
+        };
+      };
+    };
+  };
+  updateModelConfig: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': {
+          isActive?: boolean;
+          maxConcurrent?: number;
+          costPerImageMinor?: number;
+          displayName?: string;
+          description?: string;
+        };
+      };
+    };
+    responses: {
+      /** @description Default Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': {
+            data: {
+              /** Format: uuid */
+              id: string;
+              providerId: string;
+              modelId: string;
+              displayName: string;
+              description?: string;
+              capabilities: string[];
+              costPerImageMinor: number;
+              currency: string;
+              isActive: boolean;
+              maxConcurrent: number;
+              /** Format: date-time */
+              createdAt: string;
+              /** Format: date-time */
+              updatedAt: string;
+            };
+          };
+        };
+      };
+    };
+  };
+  getQuota: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Default Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': {
+            data: {
+              /** Format: uuid */
+              id: string;
+              ownerType: 'system' | 'user';
+              ownerId: string | null;
+              balanceMinor: number;
+              reservedMinor: number;
+              availableMinor: number;
+              currency: string;
+            };
+          };
+        };
+      };
+    };
+  };
+  topupQuota: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': {
+          ownerType: 'system' | 'user';
+          /** Format: uuid */
+          ownerId?: string;
+          amountMinor: number;
+          currency: string;
+          reason: string;
+        };
+      };
+    };
+    responses: {
+      /** @description Default Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': {
+            data: {
+              /** Format: uuid */
+              id: string;
+              ownerType: 'system' | 'user';
+              ownerId: string | null;
+              balanceMinor: number;
+              reservedMinor: number;
+              availableMinor: number;
+              currency: string;
+            };
           };
         };
       };

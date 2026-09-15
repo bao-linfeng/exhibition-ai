@@ -29,6 +29,8 @@ export const auditEventTypeEnum = pgEnum('audit_event_type', [
   'asset.hidden',
   'version.selected',
   'export.created',
+  'settings.model_config.update',
+  'quota.topup',
 ]);
 
 // 追加式审计日志表
