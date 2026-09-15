@@ -177,7 +177,7 @@
         "T006",
         "T007"
       ],
-      "dirs": "apps/web/src/app；apps/web/src/shared；apps/web/src/stores；apps/web/src/modules/dashboard",
+      "dirs": "apps/web/src/router；apps/web/src/shared；apps/web/src/components；apps/web/src/views/dashboard",
       "refs": "§4、§6.2、FR-03",
       "scope": "集成 shadcn-vue/Tailwind、显式懒加载路由、页面布局、统一错误与空状态；实现可见项目/任务摘要接口及dashboard；Query 管服务端数据，Pinia限UI与用户摘要。",
       "checks": [
@@ -188,10 +188,10 @@
       "bodyFile": "docs/issues/T008.md",
       "issueNumber": 8,
       "issueUrl": "https://github.com/bao-linfeng/exhibition-ai/issues/8",
-      "branch": null,
-      "prNumber": null,
-      "prUrl": null,
-      "status": "todo"
+      "branch": "feat/issue-8-web-shell-routing-cache",
+      "prNumber": 51,
+      "prUrl": "https://github.com/bao-linfeng/exhibition-ai/pull/51",
+      "status": "done"
     },
     {
       "id": "T009",
