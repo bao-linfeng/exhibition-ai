@@ -91,10 +91,10 @@
       "bodyFile": "docs/issues/T004.md",
       "issueNumber": 4,
       "issueUrl": "https://github.com/bao-linfeng/exhibition-ai/issues/4",
-      "branch": null,
-      "prNumber": null,
-      "prUrl": null,
-      "status": "todo"
+      "branch": "feat/issue-4-db-migration-config",
+      "prNumber": 47,
+      "prUrl": "https://github.com/bao-linfeng/exhibition-ai/pull/47",
+      "status": "done"
     },
     {
       "id": "T005",

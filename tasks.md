@@ -114,9 +114,9 @@ docker compose --env-file .env -f infra/compose.dev.yaml down
   - [x] Fastify 示例接口与 Web 类型化调用贯通，错误不泄露堆栈
   - [x] 跨 app、跨包私有 src、服务端进入 Web、循环依赖违规样例能被检查拒绝
 
-- [ ] **T004 建立数据库迁移、配置和日志基础** — [Issue 正文](docs/issues/T004.md)
+- [x] **T004 建立数据库迁移、配置和日志基础** — [Issue 正文](docs/issues/T004.md)
 
-  阶段：M0；前置：[T001 #1](https://github.com/bao-linfeng/exhibition-ai/issues/1)、[T002 #2](https://github.com/bao-linfeng/exhibition-ai/issues/2)；状态：todo；GitHub Issue：[#4](https://github.com/bao-linfeng/exhibition-ai/issues/4)；PR：—。
+  阶段：M0；前置：[T001 #1](https://github.com/bao-linfeng/exhibition-ai/issues/1)、[T002 #2](https://github.com/bao-linfeng/exhibition-ai/issues/2)；状态：done；GitHub Issue：[#4](https://github.com/bao-linfeng/exhibition-ai/issues/4)；PR：[#47](https://github.com/bao-linfeng/exhibition-ai/pull/47)。
 
   需求：§7、§11.2、§11.5。目录：packages/db；packages/backend/src/infrastructure；apps/api/src/health；apps/worker/src。
 
