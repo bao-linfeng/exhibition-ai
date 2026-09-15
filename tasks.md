@@ -126,17 +126,17 @@ docker compose --env-file .env -f infra/compose.dev.yaml down
   - [x] 缺少生产必填配置明确退出，日志隐藏凭证与签名query
   - [x] API live/ready和Worker心跳可观测，关闭能停止接新任务并释放连接
 
-- [x] **T005 建立容器 CI 与 Issue/PR 交付门禁** — [Issue 正文](docs/issues/T005.md)
+- [ ] **T005 建立容器 CI 与 Issue/PR 交付门禁** — [Issue 正文](docs/issues/T005.md)
 
-  阶段：M0；前置：[T002 #2](https://github.com/bao-linfeng/exhibition-ai/issues/2)、[T003 #3](https://github.com/bao-linfeng/exhibition-ai/issues/3)、[T004 #4](https://github.com/bao-linfeng/exhibition-ai/issues/4)；状态：done；GitHub Issue：[#5](https://github.com/bao-linfeng/exhibition-ai/issues/5)；PR：待回填。
+  阶段：M0；前置：[T002 #2](https://github.com/bao-linfeng/exhibition-ai/issues/2)、[T003 #3](https://github.com/bao-linfeng/exhibition-ai/issues/3)、[T004 #4](https://github.com/bao-linfeng/exhibition-ai/issues/4)；状态：in_progress；GitHub Issue：[#5](https://github.com/bao-linfeng/exhibition-ai/issues/5)；PR：[#49](https://github.com/bao-linfeng/exhibition-ai/pull/49)（CI 检查修复中）。
 
   需求：§13.3、§15；tasks.md。目录：.github/workflows；.github/pull_request_template.md；scripts；tests；docs/DEVELOPMENT.md。
 
   范围：CI 在隔离 Compose 环境执行 lint/typecheck/boundaries/api:check/unit/build；提供真实依赖集成与E2E入口；PR模板要求Issue、目录、迁移、Docker验证与未验证项。
 
-  - [x] 干净runner可重建镜像并执行检查，不读取开发数据卷
-  - [x] CI只使用无敏感数据与Mock，不自动调用付费模型
-  - [x] PR可追踪关联Issue及依赖；失败检查阻止标记完成，模板不把未运行CI预填为通过
+  - [ ] 干净runner可重建镜像并执行检查，不读取开发数据卷
+  - [ ] CI只使用无敏感数据与Mock，不自动调用付费模型
+  - [ ] PR可追踪关联Issue及依赖；失败检查阻止标记完成，模板不把未运行CI预填为通过
 
 ### M1
 
@@ -152,17 +152,17 @@ docker compose --env-file .env -f infra/compose.dev.yaml down
   - [x] 可信Origin/CSRF及登录限流有正反测试；生产Cookie配置符合基线
   - [x] 无默认生产密码，容器命令不打印密码；首登必须改密
 
-- [ ] **T007 实现客户、项目、成员和范围授权** — [Issue 正文](docs/issues/T007.md)
+- [x] **T007 实现客户、项目、成员和范围授权** — [Issue 正文](docs/issues/T007.md)
 
-  阶段：M1；前置：[T006 #6](https://github.com/bao-linfeng/exhibition-ai/issues/6)；状态：todo；GitHub Issue：[#7](https://github.com/bao-linfeng/exhibition-ai/issues/7)；PR：—。
+  阶段：M1；前置：[T006 #6](https://github.com/bao-linfeng/exhibition-ai/issues/6)；状态：done；GitHub Issue：[#7](https://github.com/bao-linfeng/exhibition-ai/issues/7)；PR：[#50](https://github.com/bao-linfeng/exhibition-ai/pull/50)。
 
   需求：FR-01～FR-03、AC-02、AC-09。目录：packages/backend/src/modules/{customers,projects}；packages/db；apps/api/src/modules；apps/web/src/modules/{customers,projects}。
 
   范围：实现客户可见/编辑/停用、项目创建/编辑/过滤/分页、负责人转交、成员管理和共享授权Policy；创建项目事务创建默认会话记录；状态审核操作留T026。
 
-  - [ ] admin/designer/sales/viewer及负责人交叉矩阵通过，最后负责人不可直接移除
-  - [ ] 对象越权404、操作不足403；客户停用不破坏历史项目
-  - [ ] revision冲突409保留本地输入；列表无跨项目泄漏，游标稳定
+  - [x] admin/designer/sales/viewer及负责人交叉矩阵通过，最后负责人不可直接移除
+  - [x] 对象越权404、操作不足403；客户停用不破坏历史项目
+  - [x] revision冲突409保留本地输入；列表无跨项目泄漏，游标稳定
 
 - [ ] **T008 实现 Web 应用壳、路由和缓存约定** — [Issue 正文](docs/issues/T008.md)
 
