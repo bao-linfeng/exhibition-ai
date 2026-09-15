@@ -287,10 +287,10 @@
       "bodyFile": "docs/issues/T012.md",
       "issueNumber": 12,
       "issueUrl": "https://github.com/bao-linfeng/exhibition-ai/issues/12",
-      "branch": null,
-      "prNumber": null,
-      "prUrl": null,
-      "status": "todo"
+      "branch": "feat/issue-12-asset-validation-thumbnail-management",
+      "prNumber": 55,
+      "prUrl": "https://github.com/bao-linfeng/exhibition-ai/pull/55",
+      "status": "in_review"
     },
     {
       "id": "T013",
