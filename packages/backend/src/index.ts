@@ -49,6 +49,7 @@ export {
   AssetRepository,
 };
 export { S3StorageProvider } from './infrastructure/storage.js';
+export type { StorageProvider } from './infrastructure/storage.js';
 
 export {
   env,

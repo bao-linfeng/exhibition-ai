@@ -247,4 +247,54 @@ export async function assetRoutes(app: FastifyInstance) {
       return { data: result };
     },
   );
+
+  // DELETE /api/v1/projects/:projectId/assets/:assetId
+  app.delete(
+    '/api/v1/projects/:projectId/assets/:assetId',
+    {
+      schema: {
+        operationId: 'hideAsset',
+        description: 'Hide asset (soft delete).',
+        tags: ['assets'],
+        params: Type.Object({ projectId: UuidSchema, assetId: UuidSchema }),
+        response: {
+          204: Type.Null(),
+        },
+      },
+    },
+    async (request, reply) => {
+      const user = await currentUser(request.cookies.sessionId);
+      if (!user) throw app.httpErrors.unauthorized('Not authenticated');
+
+      const { projectId, assetId } = request.params as {
+        projectId: string;
+        assetId: string;
+      };
+      const result = await app.services!.assetService.hideAsset(
+        assetId,
+        projectId,
+        user.id,
+        isMemberFn(user),
+      );
+
+      if (result === 'not_found')
+        throw app.httpErrors.notFound('Asset not found');
+      if (result === 'forbidden') throw app.httpErrors.forbidden();
+      if (result === 'already_hidden')
+        throw app.httpErrors.conflict('Asset already hidden');
+
+      void app
+        .services!.auditService.log({
+          eventType: 'asset.hidden',
+          actorId: user.id,
+          actorEmail: user.email,
+          resourceType: 'asset',
+          resourceId: assetId,
+          metadata: { projectId },
+        })
+        .catch(() => undefined);
+
+      return reply.status(204).send(null);
+    },
+  );
 }

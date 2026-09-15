@@ -493,7 +493,8 @@ export interface paths {
     get: operations['getAsset'];
     put?: never;
     post?: never;
-    delete?: never;
+    /** @description Hide asset (soft delete). */
+    delete: operations['hideAsset'];
     options?: never;
     head?: never;
     patch?: never;
@@ -2839,6 +2840,27 @@ export interface operations {
             };
           };
         };
+      };
+    };
+  };
+  hideAsset: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        projectId: string;
+        assetId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Default Response */
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
       };
     };
   };

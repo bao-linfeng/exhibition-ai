@@ -1,4 +1,4 @@
-import { and, desc, eq, isNull, lt } from 'drizzle-orm';
+import { and, desc, eq, isNull, lt, ne, sum } from 'drizzle-orm';
 import { assets, uploadSessions, type Database } from '@exhibition/db';
 import type { AssetKind, AssetStatus } from '@exhibition/contracts';
 
@@ -55,6 +55,7 @@ export class AssetRepository {
     mimeType: string;
     sizeBytes: number;
     createdBy: string;
+    sourceAssetId?: string;
   }) {
     const [row] = await this.db.insert(assets).values(input).returning();
     if (!row) throw new Error('Failed to create asset');
@@ -136,6 +137,50 @@ export class AssetRepository {
       .set({ status, updatedAt: new Date(), ...extra })
       .where(eq(assets.id, id))
       .returning();
+    return row ?? null;
+  }
+
+  async getProjectUsageBytes(
+    projectId: string,
+    excludeAssetId: string,
+  ): Promise<number> {
+    const result = await this.db
+      .select({ total: sum(assets.sizeBytes) })
+      .from(assets)
+      .where(
+        and(
+          eq(assets.projectId, projectId),
+          eq(assets.status, 'ready'),
+          ne(assets.id, excludeAssetId),
+        ),
+      );
+    return Number(result[0]?.total ?? 0);
+  }
+
+  async updateStatusAndKey(
+    id: string,
+    status: AssetStatus,
+    extra: { sha256: string; width: number; height: number; objectKey: string },
+  ) {
+    const [row] = await this.db
+      .update(assets)
+      .set({ status, updatedAt: new Date(), ...extra })
+      .where(eq(assets.id, id))
+      .returning();
+    return row ?? null;
+  }
+
+  async findThumbnailBySourceId(sourceAssetId: string) {
+    const [row] = await this.db
+      .select()
+      .from(assets)
+      .where(
+        and(
+          eq(assets.sourceAssetId, sourceAssetId),
+          eq(assets.kind, 'thumbnail'),
+        ),
+      )
+      .limit(1);
     return row ?? null;
   }
 }

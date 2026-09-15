@@ -214,7 +214,7 @@ docker compose --env-file .env -f infra/compose.dev.yaml down
 
 - [ ] **T012 实现素材校验、缩略图和上传管理页** — [Issue 正文](docs/issues/T012.md)
 
-  阶段：M1；前置：[T008 #8](https://github.com/bao-linfeng/exhibition-ai/issues/8)、[T010 #10](https://github.com/bao-linfeng/exhibition-ai/issues/10)、[T011 #11](https://github.com/bao-linfeng/exhibition-ai/issues/11)；状态：todo；GitHub Issue：[#12](https://github.com/bao-linfeng/exhibition-ai/issues/12)；PR：—。
+  阶段：M1；前置：[T008 #8](https://github.com/bao-linfeng/exhibition-ai/issues/8)、[T010 #10](https://github.com/bao-linfeng/exhibition-ai/issues/10)、[T011 #11](https://github.com/bao-linfeng/exhibition-ai/issues/11)；状态：in_review；GitHub Issue：[#12](https://github.com/bao-linfeng/exhibition-ai/issues/12)；PR：[#55](https://github.com/bao-linfeng/exhibition-ai/pull/55)。
 
   需求：FR-05、AC-11、AC-12。目录：apps/worker/src/processors/asset-validation.processor.ts；packages/backend/src/modules/assets；apps/web/src/modules/assets；tests/integration。
 

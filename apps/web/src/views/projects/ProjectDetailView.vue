@@ -165,6 +165,11 @@ const availableUsers = computed(() => {
           @click="router.push(`/projects/${projectId}/brief`)"
           >管理 Brief</Button
         >
+        <Button
+          variant="outline"
+          @click="router.push(`/projects/${projectId}/assets`)"
+          >管理素材</Button
+        >
         <Button disabled>进入设计大厅</Button>
       </template>
     </PageHeader>

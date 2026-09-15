@@ -3,5 +3,6 @@ packages:
   - packages/*
 onlyBuiltDependencies:
   - esbuild
+  - sharp
 ignoredBuiltDependencies:
   - msgpackr-extract

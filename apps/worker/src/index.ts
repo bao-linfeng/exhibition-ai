@@ -1,4 +1,5 @@
 import { writeFile, unlink } from 'node:fs/promises';
+import { S3Client } from '@aws-sdk/client-s3';
 import {
   Worker,
   probeQueue,
@@ -10,13 +11,32 @@ import {
   initDatabase,
   TaskRepository,
   TaskService,
+  S3StorageProvider,
+  AssetRepository,
 } from '@exhibition/backend';
+import { processAssetValidation } from './processors/asset-validation.processor.js';
 
 const heartbeat = env.WORKER_HEALTH_FILE;
 
 // DB + services
 const { db } = initDatabase();
 const taskRepo = new TaskRepository(db);
+const s3 = new S3StorageProvider(
+  new S3Client({
+    endpoint: env.S3_ENDPOINT,
+    region: env.S3_REGION,
+    forcePathStyle: true,
+    credentials: {
+      accessKeyId: env.S3_ACCESS_KEY,
+      secretAccessKey: env.S3_SECRET_KEY,
+    },
+    maxAttempts: 1,
+  }),
+  env.S3_PUBLIC_ENDPOINT,
+  env.S3_REGION,
+);
+const assetRepo = new AssetRepository(db);
+const bucket = env.S3_BUCKET;
 
 // Redis connections
 const probeConnection = createQueueConnection();
@@ -51,33 +71,23 @@ probeWorker.on('failed', () => {
 const assetValidationWorker = new Worker(
   QUEUE_ASSET_VALIDATION,
   async (job) => {
-    const { taskId } = job.data as {
+    const data = job.data as {
       taskId: string;
+      assetId: string;
+      bucket: string;
+      objectKey: string;
+      projectId: string;
     };
-    logger.info({ taskId, jobId: job.id }, 'Processing asset_validation task');
-
-    // Mark task as running
-    await taskRepo.updateStatus(taskId, 'running', { startedAt: new Date() });
-
-    try {
-      // Placeholder: T012 will implement actual validation logic
-      // For now, just mark as succeeded to prove the pipeline works
-      await taskRepo.updateStatus(taskId, 'succeeded', {
-        finishedAt: new Date(),
-        canCancel: false,
-        canRetry: false,
-      });
-      logger.info({ taskId }, 'Asset validation task completed (stub)');
-    } catch (err) {
-      await taskRepo.updateStatus(taskId, 'failed', {
-        finishedAt: new Date(),
-        errorCode: 'VALIDATION_ERROR',
-        errorMessage: String(err),
-        canCancel: false,
-        canRetry: true,
-      });
-      throw err;
-    }
+    logger.info(
+      { taskId: data.taskId, jobId: job.id },
+      'Processing asset_validation task',
+    );
+    await processAssetValidation(data, {
+      assetRepo,
+      taskRepo,
+      storage: s3,
+      bucket,
+    });
   },
   { connection: createQueueConnection(), concurrency: 5 },
 );

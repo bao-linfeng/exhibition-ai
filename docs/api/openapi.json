@@ -4326,6 +4326,26 @@
             }
           }
         }
+      },
+      "delete": {
+        "operationId": "hideAsset",
+        "tags": ["assets"],
+        "description": "Hide asset (soft delete).",
+        "parameters": [
+          {
+            "schema": { "format": "uuid", "type": "string" },
+            "in": "path",
+            "name": "projectId",
+            "required": true
+          },
+          {
+            "schema": { "format": "uuid", "type": "string" },
+            "in": "path",
+            "name": "assetId",
+            "required": true
+          }
+        ],
+        "responses": { "204": { "description": "Default Response" } }
       }
     },
     "/api/v1/projects/{projectId}/assets/{assetId}/download-url": {
