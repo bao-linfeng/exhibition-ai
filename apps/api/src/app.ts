@@ -27,6 +27,7 @@ import { auditRoutes } from './modules/audit.js';
 import { modelRoutes } from './modules/models.js';
 import { eventRoutes } from './modules/events.js';
 import { dashboardRoutes } from './modules/dashboard.js';
+import { settingsRoutes } from './modules/settings.js';
 
 export async function buildApp(
   services?: ReturnType<typeof createServices>,
@@ -71,6 +72,7 @@ export async function buildApp(
         { name: 'models', description: 'AI model information' },
         { name: 'events', description: 'Real-time events' },
         { name: 'dashboard', description: 'Dashboard summary' },
+        { name: 'settings', description: 'Model configurations and quotas' },
       ],
     },
   });
@@ -95,6 +97,7 @@ export async function buildApp(
   await app.register(modelRoutes);
   await app.register(eventRoutes);
   await app.register(dashboardRoutes);
+  await app.register(settingsRoutes);
 
   if (services)
     app.addHook('onClose', async () => {
