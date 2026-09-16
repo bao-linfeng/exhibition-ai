@@ -1,6 +1,12 @@
 import type { Queue } from 'bullmq';
+import type {
+  BriefContent,
+  CreateGenerationRequest,
+} from '@exhibition/contracts';
 import type { Confirmation, Conversation } from '@exhibition/db';
+import type { BriefRepository } from '../briefs/index.js';
 import type { EventsService } from '../events/events.service.js';
+import type { GenerationService } from '../generations/index.js';
 import type { TaskRepository } from '../tasks/index.js';
 import {
   AgentRunRepository,
@@ -18,6 +24,8 @@ export class ConversationService {
     private taskRepo: TaskRepository,
     private queues: Map<string, Queue>,
     private eventsService: EventsService,
+    private briefRepo: BriefRepository,
+    private generationService: GenerationService,
   ) {}
 
   async getOrCreateConversation(
@@ -184,8 +192,8 @@ export class ConversationService {
     | {
         confirmationId: string;
         status: 'approved';
-        taskId: null;
-        briefRevisionId: null;
+        taskId: string | null;
+        briefRevisionId: string | null;
       }
     | 'not_found'
     | 'forbidden'
@@ -201,6 +209,14 @@ export class ConversationService {
     ) {
       return 'forbidden';
     }
+    if (confirmation.status === 'approved') {
+      return {
+        confirmationId: id,
+        status: 'approved',
+        taskId: confirmation.resultTaskId,
+        briefRevisionId: confirmation.resultBriefRevisionId,
+      };
+    }
     if (confirmation.status !== 'pending') return 'not_pending';
     if (confirmation.payloadHash !== payloadHash) return 'hash_mismatch';
     if (confirmation.expiresAt <= new Date()) {
@@ -208,13 +224,96 @@ export class ConversationService {
       return 'expired';
     }
 
-    await this.confirmRepo.updateStatus(id, 'approved');
-    return {
-      confirmationId: id,
-      status: 'approved',
-      taskId: null,
-      briefRevisionId: null,
-    };
+    if (confirmation.action === 'apply_brief_patch') {
+      const projectRevision =
+        await this.briefRepo.findProjectRevision(projectId);
+      if (projectRevision === null) {
+        throw new Error('Project not found while applying brief patch');
+      }
+
+      const revision = await this.briefRepo.createRevision({
+        projectId,
+        content: (confirmation.payload as { patch: BriefContent }).patch,
+        createdBy: requestedBy,
+        expectedRevision: projectRevision,
+      });
+      if (revision === 'conflict') {
+        throw new Error('Project changed while applying brief patch');
+      }
+      if (revision === 'not_found') {
+        throw new Error('Project not found while applying brief patch');
+      }
+
+      await this.confirmRepo.updateStatus(id, 'approved', {
+        resultBriefRevisionId: revision.id,
+      });
+      return {
+        confirmationId: id,
+        status: 'approved',
+        taskId: null,
+        briefRevisionId: revision.id,
+      };
+    }
+
+    if (confirmation.action === 'create_generation') {
+      const projectRevision =
+        await this.briefRepo.findProjectRevision(projectId);
+      if (projectRevision === null) {
+        throw new Error('Project not found while creating generation');
+      }
+
+      const payload = confirmation.payload as {
+        mode?: 'generate' | 'edit';
+        briefRevisionId: string;
+        directionId?: string;
+        instruction: string;
+        modelConfigId: string;
+        parameters?: Record<string, unknown>;
+        parentVersionId?: string;
+        inputAssetIds?: string[];
+        sizePreset?: string;
+        outputCount?: number;
+      };
+      const generation = {
+        mode: payload.mode ?? 'generate',
+        briefRevisionId: payload.briefRevisionId,
+        directionId: payload.directionId,
+        instruction: payload.instruction,
+        modelConfigId: payload.modelConfigId,
+        parameters: {
+          ...payload.parameters,
+          count: payload.parameters?.count ?? payload.outputCount,
+          sizePreset:
+            payload.parameters?.sizePreset ??
+            payload.sizePreset ??
+            'landscape_4_3',
+        },
+        parentVersionId: payload.parentVersionId ?? null,
+        inputAssetIds: payload.inputAssetIds,
+        expectedProjectRevision: projectRevision,
+      } as CreateGenerationRequest;
+      const result = await this.generationService.createGeneration(
+        projectId,
+        generation,
+        requestedBy,
+        true,
+      );
+      if (typeof result === 'string') {
+        throw new Error(`Failed to create generation: ${result}`);
+      }
+
+      await this.confirmRepo.updateStatus(id, 'approved', {
+        resultTaskId: result.taskId,
+      });
+      return {
+        confirmationId: id,
+        status: 'approved',
+        taskId: result.taskId,
+        briefRevisionId: null,
+      };
+    }
+
+    throw new Error(`Unsupported confirmation action: ${confirmation.action}`);
   }
 
   private async relayOutbox(
