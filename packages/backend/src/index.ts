@@ -47,6 +47,13 @@ import {
   ImageVersionRepository,
 } from './modules/image-versions/index.js';
 import { EventsService } from './modules/events/index.js';
+import {
+  ConversationService,
+  ConversationRepository,
+  MessageRepository,
+  AgentRunRepository,
+  ConfirmationRepository,
+} from './modules/conversations/index.js';
 import { S3StorageProvider } from './infrastructure/storage.js';
 import {
   createAssetValidationQueue,
@@ -57,6 +64,8 @@ import {
   QUEUE_BRIEF_PARSE,
   createDesignDirectionQueue,
   QUEUE_DESIGN_DIRECTION,
+  createAgentRunQueue,
+  QUEUE_AGENT_RUN,
 } from './infrastructure/queue.js';
 
 export {
@@ -86,6 +95,13 @@ export {
   ImageVersionRepository,
   EventsService,
 };
+export {
+  ConversationService,
+  ConversationRepository,
+  MessageRepository,
+  AgentRunRepository,
+  ConfirmationRepository,
+} from './modules/conversations/index.js';
 export type { ActorContext } from './shared/ActorContext.js';
 export { ProjectPolicy } from './modules/projects/project.policy.js';
 export {
@@ -121,6 +137,10 @@ export {
   QUEUE_BRIEF_PARSE,
   createDesignDirectionQueue,
   QUEUE_DESIGN_DIRECTION,
+} from './infrastructure/queue.js';
+export {
+  QUEUE_AGENT_RUN,
+  createAgentRunQueue,
 } from './infrastructure/queue.js';
 
 export {
@@ -172,6 +192,7 @@ export interface Services {
   settingsService: SettingsService;
   quotaService: QuotaService;
   imageVersionService: ImageVersionService;
+  conversationService: ConversationService;
   eventsService: EventsService;
   connectRedis(): Promise<void>;
   readiness(): Promise<{ postgres: boolean; redis: boolean; storage: boolean }>;
@@ -233,6 +254,8 @@ export function createServices(): Services {
     QUEUE_DESIGN_DIRECTION,
     designDirectionQueue as import('bullmq').Queue,
   );
+  const agentRunQueue = createAgentRunQueue({ connection: queueConnection });
+  queues.set(QUEUE_AGENT_RUN, agentRunQueue as import('bullmq').Queue);
   const taskRepo = new TaskRepository(drizzleDb);
   const taskService = new TaskService(taskRepo, queues);
   const briefParseService = new BriefParseService(
@@ -253,6 +276,19 @@ export function createServices(): Services {
   );
   const imageVersionService = new ImageVersionService(
     new ImageVersionRepository(drizzleDb),
+  );
+  const convRepo = new ConversationRepository(drizzleDb);
+  const msgRepo = new MessageRepository(drizzleDb);
+  const agentRunRepo = new AgentRunRepository(drizzleDb);
+  const confirmRepo = new ConfirmationRepository(drizzleDb);
+  const conversationService = new ConversationService(
+    convRepo,
+    msgRepo,
+    agentRunRepo,
+    confirmRepo,
+    taskRepo,
+    queues,
+    eventsService,
   );
   const verificationRedis = new Redis(connection);
   verificationRedis.on('error', () => undefined);
@@ -336,6 +372,7 @@ export function createServices(): Services {
     await imageGenerationQueue.close();
     await briefParseQueue.close();
     await designDirectionQueue.close();
+    await agentRunQueue.close();
     queueConnection.disconnect();
     await closeDatabase();
   }
@@ -356,6 +393,7 @@ export function createServices(): Services {
     settingsService,
     quotaService,
     imageVersionService,
+    conversationService,
     eventsService,
     redis,
     s3,

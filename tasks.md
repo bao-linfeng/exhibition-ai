@@ -362,17 +362,17 @@ docker compose --env-file .env -f infra/compose.dev.yaml down
 
 ### M4
 
-- [ ] **T024 实现共享会话、消息协议与 Agent 编排** — [Issue 正文](docs/issues/T024.md)
+- [x] **T024 实现共享会话、消息协议与 Agent 编排** — [Issue 正文](docs/issues/T024.md)
 
-  阶段：M4；前置：[T015 #15](https://github.com/bao-linfeng/exhibition-ai/issues/15)、[T017 #17](https://github.com/bao-linfeng/exhibition-ai/issues/17)、[T021 #21](https://github.com/bao-linfeng/exhibition-ai/issues/21)、[T023 #23](https://github.com/bao-linfeng/exhibition-ai/issues/23)；状态：todo；GitHub Issue：[#24](https://github.com/bao-linfeng/exhibition-ai/issues/24)；PR：—。
+  阶段：M4；前置：[T015 #15](https://github.com/bao-linfeng/exhibition-ai/issues/15)、[T017 #17](https://github.com/bao-linfeng/exhibition-ai/issues/17)、[T021 #21](https://github.com/bao-linfeng/exhibition-ai/issues/21)、[T023 #23](https://github.com/bao-linfeng/exhibition-ai/issues/23)；状态：done；GitHub Issue：[#24](https://github.com/bao-linfeng/exhibition-ai/issues/24)；PR：—。
 
-  需求：FR-09、§9.3。目录：packages/ai/agents；packages/ai/tools；packages/backend/src/modules/conversations；apps/worker/src/processors/agent-run.processor.ts；apps/web/src/modules/conversations。
+  需求：FR-09、§9.3。目录：packages/ai/agents；packages/ai/tools；packages/backend/src/modules/conversations；apps/worker/src/processors/agent-run.processor.ts；apps/web/src/views/design/WorkspaceAgentPanel.vue。
 
-  范围：实现项目默认共享会话、结构化parts、Mastra受控只读工具与操作提案、上下文裁剪、持久化流式offset、执行摘要；变更执行必须等待T025。
+  范围：实现项目默认共享会话、结构化parts、原生受控只读工具与操作提案、上下文裁剪、持久化流式offset、执行摘要；变更执行必须等待T025。
 
-  - [ ] 同clientMessageId复用run，单会话最多1活跃run；取消run不隐式取消图片任务
-  - [ ] 工具最多8次/有效120秒/结构化修复最多1次；每次经Service授权
-  - [ ] 断线重放不重复文本，崩溃尾部interrupted；Markdown/URL安全，不输出隐藏思维链
+  - [x] 同clientMessageId复用run，单会话最多1活跃run；取消run不隐式取消图片任务
+  - [x] 工具最多8次/有效120秒/结构化修复最多1次；每次经Service授权
+  - [x] 断线重放不重复文本，崩溃尾部interrupted；Markdown/URL安全，不输出隐藏思维链
 
 - [ ] **T025 实现 Agent 人工确认及原子执行** — [Issue 正文](docs/issues/T025.md)
 
