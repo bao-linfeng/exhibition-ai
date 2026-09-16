@@ -694,10 +694,10 @@
       "bodyFile": "docs/issues/T028.md",
       "issueNumber": 28,
       "issueUrl": "https://github.com/bao-linfeng/exhibition-ai/issues/28",
-      "branch": null,
-      "prNumber": null,
-      "prUrl": null,
-      "status": "todo"
+      "branch": "feat/issue-28-admin-user-model-quota-audit",
+      "prNumber": 72,
+      "prUrl": "https://github.com/bao-linfeng/exhibition-ai/pull/72",
+      "status": "in_review"
     },
     {
       "id": "T029",

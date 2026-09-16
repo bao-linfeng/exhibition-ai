@@ -412,7 +412,7 @@ docker compose --env-file .env -f infra/compose.dev.yaml down
   - [ ] viewer可导出可见项目；越权不给签名，过期链接可授权重新生成
   - [ ] 导出异步流式处理、失败可恢复，7天清ZIP不删除版本原图
 
-- [ ] **T028 实现管理员用户、模型、额度和审计界面** — [Issue 正文](docs/issues/T028.md)
+- [x] **T028 实现管理员用户、模型、额度和审计界面** — [Issue 正文](docs/issues/T028.md)
 
   阶段：M5；前置：[T006 #6](https://github.com/bao-linfeng/exhibition-ai/issues/6)、[T014 #14](https://github.com/bao-linfeng/exhibition-ai/issues/14)、[T025 #25](https://github.com/bao-linfeng/exhibition-ai/issues/25)、[T026 #26](https://github.com/bao-linfeng/exhibition-ai/issues/26)；状态：todo；GitHub Issue：[#28](https://github.com/bao-linfeng/exhibition-ai/issues/28)；PR：—。
 
