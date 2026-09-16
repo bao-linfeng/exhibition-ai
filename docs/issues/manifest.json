@@ -537,10 +537,10 @@
       "bodyFile": "docs/issues/T022.md",
       "issueNumber": 22,
       "issueUrl": "https://github.com/bao-linfeng/exhibition-ai/issues/22",
-      "branch": null,
-      "prNumber": null,
-      "prUrl": null,
-      "status": "todo"
+      "branch": "feat/issue-22-task-center-runtime-status",
+      "prNumber": 66,
+      "prUrl": "https://github.com/bao-linfeng/exhibition-ai/pull/66",
+      "status": "in_review"
     },
     {
       "id": "T023",
