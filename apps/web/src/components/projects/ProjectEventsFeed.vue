@@ -20,13 +20,13 @@
               'bg-yellow-600 animate-pulse': status === 'connecting',
               'bg-red-600': status === 'error',
             }"
-          ></span>
+          />
           {{ statusText }}
         </span>
         <button
           v-if="!isConnected"
-          @click="reconnect"
           class="text-sm text-blue-600 hover:text-blue-700"
+          @click="reconnect"
         >
           重新连接
         </button>

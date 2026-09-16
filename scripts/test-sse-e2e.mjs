@@ -15,7 +15,6 @@ import { EventSource } from 'eventsource';
 import fetch from 'node-fetch';
 
 const API_URL = process.env.API_URL || 'http://localhost:3000';
-const TEST_TIMEOUT = 60000; // 60 秒
 
 // 测试用户凭证（需要先创建测试用户）
 const TEST_USER = {

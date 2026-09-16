@@ -130,7 +130,7 @@ export async function realTimeRoutes(
       heartbeatInterval = setInterval(() => {
         try {
           reply.raw.write(': heartbeat\n\n');
-        } catch (error) {
+        } catch {
           cleanup();
         }
       }, 15000);

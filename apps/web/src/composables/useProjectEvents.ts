@@ -187,7 +187,7 @@ export function useProjectEvents(
     ];
 
     eventTypes.forEach((type) => {
-      eventSource!.addEventListener(type, (e: MessageEvent) => {
+      eventSource!.addEventListener(type, () => {
         // 已在 message 处理器中统一处理，这里可以添加特定逻辑
       });
     });

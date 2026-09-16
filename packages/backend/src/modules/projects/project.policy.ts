@@ -2,7 +2,7 @@ import type { ActorContext } from '../../shared/ActorContext.js';
 
 type Pool = {
   connect(): Promise<{
-    query: <T = any>(sql: string, params?: unknown[]) => Promise<{ rows: T[] }>;
+    query: <T = unknown>(sql: string, params?: unknown[]) => Promise<{ rows: T[] }>;
     release(): void;
   }>;
 };
