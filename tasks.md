@@ -350,7 +350,7 @@ docker compose --env-file .env -f infra/compose.dev.yaml down
 
 - [ ] **T023 完成响应式三栏设计工作台** — [Issue 正文](docs/issues/T023.md)
 
-  阶段：M3；前置：[T009 #9](https://github.com/bao-linfeng/exhibition-ai/issues/9)、[T012 #12](https://github.com/bao-linfeng/exhibition-ai/issues/12)、[T020 #20](https://github.com/bao-linfeng/exhibition-ai/issues/20)、[T021 #21](https://github.com/bao-linfeng/exhibition-ai/issues/21)、[T022 #22](https://github.com/bao-linfeng/exhibition-ai/issues/22)；状态：todo；GitHub Issue：[#23](https://github.com/bao-linfeng/exhibition-ai/issues/23)；PR：—。
+  阶段：M3；前置：[T009 #9](https://github.com/bao-linfeng/exhibition-ai/issues/9)、[T012 #12](https://github.com/bao-linfeng/exhibition-ai/issues/12)、[T020 #20](https://github.com/bao-linfeng/exhibition-ai/issues/20)、[T021 #21](https://github.com/bao-linfeng/exhibition-ai/issues/21)、[T022 #22](https://github.com/bao-linfeng/exhibition-ai/issues/22)；状态：in_review；GitHub Issue：[#23](https://github.com/bao-linfeng/exhibition-ai/issues/23)；PR：[#67](https://github.com/bao-linfeng/exhibition-ai/pull/67)。
 
   需求：§4.2、NFR-04、NFR-05、NFR-07。目录：apps/web/src/modules/design；apps/web/src/app/layouts；apps/web/src/shared/styles；tests/e2e。
 

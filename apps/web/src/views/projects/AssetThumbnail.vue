@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, watchEffect } from 'vue';
 import { useCreateDownloadUrlMutation } from '../../api/queries/assets.js';
-import { Image as ImageIcon, AlertCircle } from 'lucide-vue-next';
+import { Image as ImageIcon, AlertCircle } from '@lucide/vue';
 
 const props = defineProps<{
   projectId: string;

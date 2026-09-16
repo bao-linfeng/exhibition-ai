@@ -564,10 +564,10 @@
       "bodyFile": "docs/issues/T023.md",
       "issueNumber": 23,
       "issueUrl": "https://github.com/bao-linfeng/exhibition-ai/issues/23",
-      "branch": null,
-      "prNumber": null,
-      "prUrl": null,
-      "status": "todo"
+      "branch": "feat/issue-23-responsive-design-workspace",
+      "prNumber": 67,
+      "prUrl": "https://github.com/bao-linfeng/exhibition-ai/pull/67",
+      "status": "in_review"
     },
     {
       "id": "T024",
