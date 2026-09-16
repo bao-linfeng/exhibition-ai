@@ -1,4 +1,4 @@
-import { eq, sql } from 'drizzle-orm';
+import { and, eq, isNull, sql } from 'drizzle-orm';
 import {
   type Database,
   quotaAccounts,
@@ -7,35 +7,79 @@ import {
   usageLedger,
 } from '@exhibition/db';
 
-type DatabaseTransaction = Parameters<
+export type DatabaseTransaction = Parameters<
   Parameters<Database['transaction']>[0]
 >[0];
 
 export class QuotaRepository {
   constructor(private readonly db: Database) {}
 
-  async findSystemAccount(): Promise<QuotaAccount | undefined> {
-    const rows = await this.db
+  async findSystemAccount(currency: string): Promise<QuotaAccount | undefined> {
+    return this.findSystemAccountIn(this.db, currency);
+  }
+
+  async findSystemAccountIn(
+    db: Database | DatabaseTransaction,
+    currency: string,
+  ): Promise<QuotaAccount | undefined> {
+    const rows = await db
       .select()
       .from(quotaAccounts)
-      .where(eq(quotaAccounts.ownerType, 'system'))
+      .where(
+        and(
+          eq(quotaAccounts.ownerType, 'system'),
+          isNull(quotaAccounts.ownerId),
+          eq(quotaAccounts.currency, currency),
+        ),
+      )
       .limit(1);
     return rows[0];
   }
 
-  async findUserAccount(userId: string): Promise<QuotaAccount | undefined> {
-    const rows = await this.db
+  async findUserAccount(
+    userId: string,
+    currency: string,
+  ): Promise<QuotaAccount | undefined> {
+    return this.findUserAccountIn(this.db, userId, currency);
+  }
+
+  private async findUserAccountIn(
+    db: Database | DatabaseTransaction,
+    userId: string,
+    currency: string,
+  ): Promise<QuotaAccount | undefined> {
+    const rows = await db
       .select()
       .from(quotaAccounts)
-      .where(eq(quotaAccounts.ownerId, userId))
+      .where(
+        and(
+          eq(quotaAccounts.ownerType, 'user'),
+          eq(quotaAccounts.ownerId, userId),
+          eq(quotaAccounts.currency, currency),
+        ),
+      )
       .limit(1);
     return rows[0];
   }
 
   async findOrCreateSystemAccount(currency: string): Promise<QuotaAccount> {
-    const existing = await this.findSystemAccount();
+    return this.findOrCreateSystemAccountInConnection(this.db, currency);
+  }
+
+  async findOrCreateSystemAccountIn(
+    tx: DatabaseTransaction,
+    currency: string,
+  ): Promise<QuotaAccount> {
+    return this.findOrCreateSystemAccountInConnection(tx, currency);
+  }
+
+  private async findOrCreateSystemAccountInConnection(
+    db: Database | DatabaseTransaction,
+    currency: string,
+  ): Promise<QuotaAccount> {
+    const existing = await this.findSystemAccountIn(db, currency);
     if (existing) return existing;
-    const rows = await this.db
+    const rows = await db
       .insert(quotaAccounts)
       .values({
         ownerType: 'system',
@@ -47,16 +91,24 @@ export class QuotaRepository {
       .onConflictDoNothing()
       .returning();
     if (rows[0]) return rows[0];
-    return (await this.findSystemAccount())!;
+    return (await this.findSystemAccountIn(db, currency))!;
   }
 
   async findOrCreateUserAccount(
     userId: string,
     currency: string,
   ): Promise<QuotaAccount> {
-    const existing = await this.findUserAccount(userId);
+    return this.findOrCreateUserAccountInConnection(this.db, userId, currency);
+  }
+
+  private async findOrCreateUserAccountInConnection(
+    db: Database | DatabaseTransaction,
+    userId: string,
+    currency: string,
+  ): Promise<QuotaAccount> {
+    const existing = await this.findUserAccountIn(db, userId, currency);
     if (existing) return existing;
-    const rows = await this.db
+    const rows = await db
       .insert(quotaAccounts)
       .values({
         ownerType: 'user',
@@ -68,7 +120,7 @@ export class QuotaRepository {
       .onConflictDoNothing()
       .returning();
     if (rows[0]) return rows[0];
-    return (await this.findUserAccount(userId))!;
+    return (await this.findUserAccountIn(db, userId, currency))!;
   }
 
   async atomicReserve(

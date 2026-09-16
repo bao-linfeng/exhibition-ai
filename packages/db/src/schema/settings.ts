@@ -1,3 +1,4 @@
+import { sql } from 'drizzle-orm';
 import {
   bigint,
   boolean,
@@ -67,6 +68,12 @@ export const quotaAccounts = pgTable(
   (table) => [
     index('quota_accounts_owner_type_idx').on(table.ownerType),
     index('quota_accounts_owner_id_idx').on(table.ownerId),
+    uniqueIndex('quota_accounts_owner_currency_idx')
+      .on(table.ownerType, table.ownerId, table.currency)
+      .where(sql`${table.ownerId} IS NOT NULL`),
+    uniqueIndex('quota_accounts_system_currency_idx')
+      .on(table.ownerType, table.currency)
+      .where(sql`${table.ownerId} IS NULL AND ${table.ownerType} = 'system'`),
   ],
 );
 
@@ -85,6 +92,7 @@ export const usageLedger = pgTable(
     currency: varchar('currency', { length: 3 }).notNull(),
     provider: varchar('provider', { length: 100 }),
     model: varchar('model', { length: 100 }),
+    providerUsage: jsonb('provider_usage'),
     periodDate: date('period_date').notNull(),
     createdAt: timestamp('created_at', { withTimezone: true })
       .notNull()
@@ -95,6 +103,15 @@ export const usageLedger = pgTable(
     index('usage_ledger_account_id_idx').on(table.accountId),
     index('usage_ledger_period_date_idx').on(table.periodDate),
     index('usage_ledger_entry_type_idx').on(table.entryType),
+    uniqueIndex('usage_ledger_task_reserve_unique_idx')
+      .on(table.taskId)
+      .where(sql`${table.entryType} = 'reserve'`),
+    uniqueIndex('usage_ledger_task_final_unique_idx')
+      .on(table.taskId)
+      .where(sql`${table.entryType} IN ('settle_actual', 'release')`),
+    uniqueIndex('usage_ledger_task_unknown_unique_idx')
+      .on(table.taskId)
+      .where(sql`${table.entryType} = 'settle_unknown'`),
   ],
 );
 

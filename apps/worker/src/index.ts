@@ -17,7 +17,9 @@ import {
   ImageVersionRepository,
   BriefRepository,
   DirectionRepository,
-  ModelConfigRepository,
+  QuotaRepository,
+  QuotaService,
+  AuditService,
   createImageGenerationQueue,
   QUEUE_IMAGE_GENERATION,
   createBriefParseQueue,
@@ -68,11 +70,12 @@ const s3 = new S3StorageProvider(
   env.S3_REGION,
 );
 const assetRepo = new AssetRepository(db);
-const generationRepo = new GenerationRepository(db);
+const quotaRepo = new QuotaRepository(db);
+const generationRepo = new GenerationRepository(db, quotaRepo);
+const quotaService = new QuotaService(db, quotaRepo, new AuditService(db));
 const imageVersionRepo = new ImageVersionRepository(db);
 const briefRepo = new BriefRepository(db);
 const directionRepo = new DirectionRepository(db);
-const modelConfigRepo = new ModelConfigRepository(db);
 const bucket = env.S3_BUCKET;
 
 // Redis connections
@@ -161,11 +164,11 @@ const imageGenerationWorker = new Worker(
       generationRepo,
       assetRepo,
       imageVersionRepo,
+      quotaService,
       storage: s3,
       bucket,
       imageProviderRegistry,
       promptRegistry,
-      modelConfigRepo,
     });
   },
   { connection: createQueueConnection(), concurrency: 4 },

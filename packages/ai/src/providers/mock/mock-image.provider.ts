@@ -118,6 +118,7 @@ export class MockImageProvider implements ImageProvider {
         `Mock: request ${req.requestId} accepted but result unknown`,
         false,
         { requestId: req.requestId },
+        'accepted_unknown',
       );
     }
 

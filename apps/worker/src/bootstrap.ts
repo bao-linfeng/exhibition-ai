@@ -36,8 +36,8 @@ const MOCK_FULL_CONFIG: ProviderModelConfig = {
 
 const OPENAI_IMAGE_CONFIG: ProviderModelConfig = {
   providerId: 'openai',
-  modelId: 'gpt-image-2',
-  displayName: 'GPT Image 2 (OpenAI)',
+  modelId: env.AI_DEFAULT_IMAGE_MODEL ?? 'gpt-image-2.5-flare',
+  displayName: 'GPT Image (OpenAI Compatible)',
   isActive: true,
   capability: {
     supportsGenerate: true,
@@ -53,7 +53,10 @@ const OPENAI_IMAGE_CONFIG: ProviderModelConfig = {
     supportsSeed: false,
     supportsNegativePrompt: false,
   },
-  providerConfig: { outputFormat: 'png', quality: 'medium' },
+  providerConfig: {
+    outputFormat: 'png',
+    quality: env.AI_DEFAULT_IMAGE_QUALITY ?? 'medium',
+  },
 };
 
 export interface BootstrappedProviders {
@@ -83,7 +86,11 @@ export function bootstrapProviders(): BootstrappedProviders {
       'Initializing real OpenAI providers',
     );
 
-    const openaiClient = new OpenAI({ apiKey: env.OPENAI_API_KEY });
+    const openaiClient = new OpenAI({
+      apiKey: env.OPENAI_API_KEY,
+      baseURL: env.OPENAI_BASE_URL,
+      maxRetries: 0,
+    });
 
     const textProvider = new OpenAITextProvider({
       client: openaiClient,

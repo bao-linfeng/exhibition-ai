@@ -103,7 +103,7 @@ export class TaskService {
         backoff: { type: 'exponential', delay: 5000 },
       });
       await this.repo.markOutboxPublished(outboxId);
-      await this.repo.updateStatus(taskId, 'queued');
+      await this.repo.markQueuedIfPending(taskId);
     } catch {
       await this.repo.incrementOutboxAttempt(outboxId);
     }
@@ -201,29 +201,35 @@ export class TaskService {
 
     if (task.kind !== 'image_generation') return 'unsupported_kind';
 
-    const retryOutputs = retryableOutputs.map((output) => ({
-      ...output,
-      state: 'pending' as const,
-      errorCode: null,
-      errorMessage: null,
-    }));
-    const created = await this.repo.createRetryTask({
-      originalTaskId: task.id,
-      outputs: retryOutputs,
-      queueName: 'exhibition-image-generation',
-      payload: { projectId: task.projectId },
-    });
+    // SAFETY: Retry for image_generation is disabled until retry creation can atomically
+    // reserve quota for the new outputs. Without a reservation, a retry task could call
+    // the paid Provider, violating the accounting invariant.
+    // See TODO-T019.md P0 item: "Fix image retry tasks so they cannot call a paid Provider without a reservation."
+    return 'not_retryable';
 
-    if (!created) return 'not_retryable';
+    // const retryOutputs = retryableOutputs.map((output) => ({
+    //   ...output,
+    //   state: 'pending' as const,
+    //   errorCode: null,
+    //   errorMessage: null,
+    // }));
+    // const created = await this.repo.createRetryTask({
+    //   originalTaskId: task.id,
+    //   outputs: retryOutputs,
+    //   queueName: 'exhibition-image-generation',
+    //   payload: { projectId: task.projectId },
+    // });
 
-    await this.relayOutbox(
-      created.outbox.id,
-      created.task.id,
-      created.outbox.queueName,
-      created.outbox.payload as Record<string, unknown>,
-    );
+    // if (!created) return 'not_retryable';
 
-    return toTaskDto(created.task);
+    // await this.relayOutbox(
+    //   created.outbox.id,
+    //   created.task.id,
+    //   created.outbox.queueName,
+    //   created.outbox.payload as Record<string, unknown>,
+    // );
+
+    // return toTaskDto(created.task);
   }
 
   async reconcileTaskOutput(

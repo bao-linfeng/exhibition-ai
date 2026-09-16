@@ -62,6 +62,25 @@ export async function generationRoutes(app: FastifyInstance) {
       if (result === 'conflict') {
         throw app.httpErrors.conflict('Idempotency conflict');
       }
+      if (result === 'insufficient_quota') {
+        throw app.httpErrors.tooManyRequests('Insufficient quota');
+      }
+      if (result === 'pricing_not_configured') {
+        throw app.httpErrors.serviceUnavailable(
+          'Model pricing is not configured',
+        );
+      }
+      if (result === 'model_not_found') {
+        throw app.httpErrors.notFound('Model config not found');
+      }
+      if (result === 'model_disabled') {
+        throw app.httpErrors.conflict('Model config is disabled');
+      }
+      if (result === 'model_not_executable') {
+        throw app.httpErrors.serviceUnavailable(
+          'Model config is not executable',
+        );
+      }
 
       return reply.status(202).send({ data: result });
     },
