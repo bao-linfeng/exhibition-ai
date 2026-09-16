@@ -20,6 +20,7 @@ import {
 } from '@exhibition/contracts';
 import type {
   CreateProjectRequest,
+  Project as ProjectContract,
   ProjectTransitionRequest,
   UpdateProjectRequest,
 } from '@exhibition/contracts';
@@ -333,23 +334,40 @@ export async function projectRoutes(app: FastifyInstance) {
       if (!user) throw app.httpErrors.unauthorized('Not authenticated');
 
       const body = request.body as ProjectTransitionRequest;
-      if (body.action !== 'archive' && body.action !== 'restore') {
-        throw app.httpErrors.notImplemented(
-          'Project transition not implemented',
+      let result:
+        | ProjectContract
+        | null
+        | 'conflict'
+        | 'forbidden'
+        | 'invalid_transition'
+        | 'precondition_failed';
+
+      if (body.action === 'archive' || body.action === 'restore') {
+        result = await app.services!.projectService.transitionArchive(
+          (request.params as { id: string }).id,
+          body.action,
+          body.expectedRevision,
+          user,
+        );
+      } else {
+        result = await app.services!.projectService.transitionReview(
+          (request.params as { id: string }).id,
+          body.action,
+          body.comment,
+          body.expectedRevision,
+          user,
         );
       }
 
-      const result = await app.services!.projectService.transitionArchive(
-        (request.params as { id: string }).id,
-        body.action,
-        body.expectedRevision,
-        user,
-      );
-
       if (result === 'forbidden') throw app.httpErrors.forbidden();
-      if (result === 'conflict') {
+      if (result === 'conflict')
         throw app.httpErrors.conflict('Project revision conflict');
-      }
+      if (result === 'invalid_transition')
+        throw app.httpErrors.unprocessableEntity('Invalid state transition');
+      if (result === 'precondition_failed')
+        throw app.httpErrors.unprocessableEntity(
+          'Precondition failed: no selected version',
+        );
       if (!result) throw app.httpErrors.notFound('Project not found');
 
       return { data: result };

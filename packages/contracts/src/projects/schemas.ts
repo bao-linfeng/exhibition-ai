@@ -60,6 +60,12 @@ export const ProjectSchema = Type.Object(
     nextEventSequence: Type.Integer({ minimum: 1 }),
     createdAt: DateTimeSchema,
     updatedAt: DateTimeSchema,
+    rejectionReason: Type.Union([
+      Type.String({ maxLength: 2000 }),
+      Type.Null(),
+    ]),
+    approvedAt: Type.Union([DateTimeSchema, Type.Null()]),
+    approvedSnapshot: Type.Union([Type.Unknown(), Type.Null()]),
     revision: RevisionSchema,
   },
   { additionalProperties: false },

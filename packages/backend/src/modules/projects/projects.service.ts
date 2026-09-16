@@ -5,18 +5,20 @@ import type {
   ProjectSummary,
   UpdateProjectRequest,
 } from '@exhibition/contracts';
-import type { Project as DbProject } from '@exhibition/db';
+import type { NewProject, Project as DbProject } from '@exhibition/db';
 import {
   ProjectRepository,
   type ProjectMemberWithUser,
   type ProjectWithNames,
 } from './projects.repository.js';
 import type { EventsService } from '../events/events.service.js';
+import type { AuditService } from '../audit/audit.service.js';
 
 export class ProjectService {
   constructor(
     private repo: ProjectRepository,
     private eventsService: EventsService,
+    private auditService: AuditService,
   ) {}
 
   async listProjects(
@@ -246,11 +248,16 @@ export class ProjectService {
     action: 'archive' | 'restore',
     expectedRevision: number,
     requestingUser: { id: string; role: string },
-  ): Promise<ProjectContract | null | 'conflict' | 'forbidden'> {
+  ): Promise<
+    ProjectContract | null | 'conflict' | 'forbidden' | 'invalid_transition'
+  > {
     if (requestingUser.role !== 'admin') return 'forbidden';
 
     const existing = await this.repo.findById(projectId);
     if (!existing) return null;
+    if (action === 'archive' && existing.status === 'reviewing') {
+      return 'invalid_transition';
+    }
 
     const update =
       action === 'archive'
@@ -286,6 +293,119 @@ export class ProjectService {
     return 'conflict';
   }
 
+  async transitionReview(
+    projectId: string,
+    action: 'submit_review' | 'approve' | 'request_changes' | 'reopen',
+    comment: string | undefined,
+    expectedRevision: number,
+    requestingUser: { id: string; role: string },
+  ): Promise<
+    | ProjectContract
+    | null
+    | 'conflict'
+    | 'forbidden'
+    | 'invalid_transition'
+    | 'precondition_failed'
+  > {
+    const existing = await this.repo.findById(projectId);
+    if (!existing) return null;
+
+    if (action === 'submit_review') {
+      if (!['admin', 'sales'].includes(requestingUser.role)) return 'forbidden';
+      if (
+        requestingUser.role === 'sales' &&
+        !(await this.repo.isMember(projectId, requestingUser.id))
+      ) {
+        return null;
+      }
+      if (!existing.selectedVersionId) return 'precondition_failed';
+      if (existing.status !== 'designing') return 'invalid_transition';
+    } else if (action === 'approve') {
+      if (!['admin', 'sales'].includes(requestingUser.role)) return 'forbidden';
+      if (existing.status !== 'reviewing') return 'invalid_transition';
+    } else if (action === 'request_changes') {
+      if (!['admin', 'sales'].includes(requestingUser.role)) return 'forbidden';
+      if (existing.status !== 'reviewing') return 'invalid_transition';
+    } else {
+      if (requestingUser.role !== 'admin') return 'forbidden';
+      if (existing.status !== 'approved') return 'invalid_transition';
+    }
+
+    let updateData: Partial<
+      Omit<NewProject, 'id' | 'createdAt' | 'updatedAt' | 'revision'>
+    >;
+
+    if (action === 'submit_review') {
+      updateData = { status: 'reviewing', rejectionReason: null };
+    } else if (action === 'approve') {
+      const approvedAt = new Date();
+      updateData = {
+        status: 'approved',
+        approvedAt,
+        approvedSnapshot: {
+          selectedVersionId: existing.selectedVersionId,
+          approvedBy: requestingUser.id,
+          approvedAt: approvedAt.toISOString(),
+          comment,
+        },
+        rejectionReason: null,
+      };
+    } else if (action === 'request_changes') {
+      updateData = {
+        status: 'designing',
+        rejectionReason: comment ?? null,
+      };
+    } else {
+      updateData = {
+        status: 'reviewing',
+        approvedAt: null,
+      };
+    }
+
+    const project = await this.repo.update(
+      projectId,
+      updateData,
+      expectedRevision,
+    );
+
+    if (project) {
+      await this.eventsService.appendEvent(
+        projectId,
+        {
+          type: 'project.transitioned',
+          data: {
+            projectId,
+            action,
+            previousStatus: existing.status,
+            newStatus: project.status,
+            comment,
+          },
+          resourceId: projectId,
+          resourceRevision: project.revision,
+        },
+        { userId: requestingUser.id, role: requestingUser.role },
+      );
+
+      await this.auditService.log({
+        eventType: 'project.transitioned',
+        actorId: requestingUser.id,
+        projectId,
+        resourceType: 'project',
+        resourceId: projectId,
+        metadata: {
+          action,
+          previousStatus: existing.status,
+          newStatus: project.status,
+          comment,
+        },
+      });
+
+      return this.toProject(project);
+    }
+
+    return (await this.repo.findById(projectId)) ? 'conflict' : null;
+  }
+
   private toSummary(project: ProjectWithNames): ProjectSummary {
     return {
       id: project.id,
@@ -313,6 +433,9 @@ export class ProjectService {
     return {
       ...this.toSummary(project),
       archivedFromStatus: project.archivedFromStatus,
+      rejectionReason: project.rejectionReason ?? null,
+      approvedAt: project.approvedAt ? project.approvedAt.toISOString() : null,
+      approvedSnapshot: project.approvedSnapshot ?? null,
       ...(project.exhibitionVenue
         ? { exhibitionVenue: project.exhibitionVenue }
         : {}),

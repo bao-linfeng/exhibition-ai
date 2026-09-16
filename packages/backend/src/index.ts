@@ -220,6 +220,7 @@ export function createServices(): Services {
   const projectService = new ProjectService(
     new ProjectRepository(drizzleDb),
     eventsService,
+    auditService,
   );
   const briefService = new BriefService(
     new BriefRepository(drizzleDb),

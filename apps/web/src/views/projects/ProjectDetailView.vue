@@ -8,6 +8,7 @@ import {
   useAddProjectMemberMutation,
   useUserOptionsQuery,
   useTransferOwnerMutation,
+  useTransitionProjectMutation,
 } from '../../api/queries/projects.js';
 import { useUserStore } from '../../stores/user.js';
 import PageHeader from '../../components/PageHeader.vue';
@@ -21,6 +22,12 @@ import {
   ChevronRight,
   Plus,
   Trash2,
+  CheckCircle,
+  XCircle,
+  RotateCcw,
+  Send,
+  Archive,
+  ArchiveRestore,
 } from '@lucide/vue';
 import { Button } from '../../components/ui/button/index.js';
 import {
@@ -58,6 +65,109 @@ const showAddMemberDialog = ref(false);
 const showTransferOwnerDialog = ref(false);
 const selectedUserId = ref('');
 const transferUserId = ref('');
+const showSubmitReviewDialog = ref(false);
+const showRejectDialog = ref(false);
+const rejectComment = ref('');
+
+const transitionMutation = useTransitionProjectMutation();
+
+const canSubmitReview = computed(() => {
+  if (!project.value) return false;
+  if (!['admin', 'sales'].includes(userStore.user?.role ?? '')) return false;
+  return (
+    project.value.status === 'designing' && !!project.value.selectedVersionId
+  );
+});
+
+const canApprove = computed(() => {
+  if (!project.value) return false;
+  if (!['admin', 'sales'].includes(userStore.user?.role ?? '')) return false;
+  return project.value.status === 'reviewing';
+});
+
+const canRequestChanges = computed(() => {
+  if (!project.value) return false;
+  if (!['admin', 'sales'].includes(userStore.user?.role ?? '')) return false;
+  return project.value.status === 'reviewing';
+});
+
+const canReopen = computed(() => {
+  if (!project.value) return false;
+  if (userStore.user?.role !== 'admin') return false;
+  return project.value.status === 'approved';
+});
+
+const canArchive = computed(() => {
+  if (!project.value) return false;
+  if (userStore.user?.role !== 'admin') return false;
+  return !['archived', 'reviewing'].includes(project.value.status);
+});
+
+const canRestore = computed(() => {
+  if (!project.value) return false;
+  if (userStore.user?.role !== 'admin') return false;
+  return project.value.status === 'archived';
+});
+
+async function submitReview() {
+  if (!project.value) return;
+  await transitionMutation.mutateAsync({
+    projectId: projectId.value,
+    action: 'submit_review',
+    expectedRevision: project.value.revision,
+  });
+  showSubmitReviewDialog.value = false;
+}
+
+async function approveProject() {
+  if (!project.value || !confirm('确定批准该项目？批准后将锁定当前选图版本。'))
+    return;
+  await transitionMutation.mutateAsync({
+    projectId: projectId.value,
+    action: 'approve',
+    expectedRevision: project.value.revision,
+  });
+}
+
+async function requestChanges() {
+  if (!project.value || !rejectComment.value.trim()) return;
+  await transitionMutation.mutateAsync({
+    projectId: projectId.value,
+    action: 'request_changes',
+    comment: rejectComment.value,
+    expectedRevision: project.value.revision,
+  });
+  showRejectDialog.value = false;
+  rejectComment.value = '';
+}
+
+async function reopenProject() {
+  if (!project.value || !confirm('确定重新打开该项目？')) return;
+  await transitionMutation.mutateAsync({
+    projectId: projectId.value,
+    action: 'reopen',
+    expectedRevision: project.value.revision,
+  });
+}
+
+async function archiveProject() {
+  if (!project.value || !confirm('确定归档该项目？归档后项目将变为只读。'))
+    return;
+  await transitionMutation.mutateAsync({
+    projectId: projectId.value,
+    action: 'archive',
+    expectedRevision: project.value.revision,
+  });
+}
+
+async function restoreProject() {
+  if (!project.value || !confirm('确定恢复该项目？')) return;
+  await transitionMutation.mutateAsync({
+    projectId: projectId.value,
+    action: 'restore',
+    expectedRevision: project.value.revision,
+  });
+}
 
 const isMember = computed(() =>
   membersData.value?.some(
@@ -151,6 +261,73 @@ const availableUsers = computed(() => {
 
     <PageHeader :title="project.name">
       <template #actions>
+        <!-- 提交评审 -->
+        <Button
+          v-if="canSubmitReview"
+          variant="default"
+          :disabled="transitionMutation.isPending.value"
+          @click="showSubmitReviewDialog = true"
+        >
+          <Send class="mr-2 h-4 w-4" />
+          提交评审
+        </Button>
+
+        <!-- 批准项目 -->
+        <Button
+          v-if="canApprove"
+          class="bg-green-600 hover:bg-green-700 text-white"
+          :disabled="transitionMutation.isPending.value"
+          @click="approveProject"
+        >
+          <CheckCircle class="mr-2 h-4 w-4" />
+          批准
+        </Button>
+
+        <!-- 退回修改 -->
+        <Button
+          v-if="canRequestChanges"
+          variant="destructive"
+          :disabled="transitionMutation.isPending.value"
+          @click="showRejectDialog = true"
+        >
+          <XCircle class="mr-2 h-4 w-4" />
+          退回修改
+        </Button>
+
+        <!-- 重新打开 -->
+        <Button
+          v-if="canReopen"
+          variant="outline"
+          :disabled="transitionMutation.isPending.value"
+          @click="reopenProject"
+        >
+          <RotateCcw class="mr-2 h-4 w-4" />
+          重新打开
+        </Button>
+
+        <!-- 归档 -->
+        <Button
+          v-if="canArchive"
+          variant="outline"
+          class="text-muted-foreground"
+          :disabled="transitionMutation.isPending.value"
+          @click="archiveProject"
+        >
+          <Archive class="mr-2 h-4 w-4" />
+          归档
+        </Button>
+
+        <!-- 恢复 -->
+        <Button
+          v-if="canRestore"
+          variant="outline"
+          :disabled="transitionMutation.isPending.value"
+          @click="restoreProject"
+        >
+          <ArchiveRestore class="mr-2 h-4 w-4" />
+          恢复项目
+        </Button>
+
         <Button
           v-if="canTransferOwner"
           variant="outline"
@@ -267,6 +444,17 @@ const availableUsers = computed(() => {
             <p class="text-sm font-medium mb-2">备注信息</p>
             <p class="text-sm text-muted-foreground whitespace-pre-wrap">
               {{ project.notes }}
+            </p>
+          </div>
+
+          <!-- 退回原因 -->
+          <div
+            v-if="project.rejectionReason"
+            class="p-4 border-t bg-destructive/5 rounded-b-xl"
+          >
+            <p class="text-sm font-medium text-destructive mb-1">退回原因</p>
+            <p class="text-sm text-destructive/80 whitespace-pre-wrap">
+              {{ project.rejectionReason }}
             </p>
           </div>
         </div>
@@ -451,6 +639,73 @@ const availableUsers = computed(() => {
             {{
               transferOwnerMutation.isPending.value ? '转交中...' : '确认转交'
             }}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+
+    <!-- 提交评审确认 Dialog -->
+    <Dialog
+      :open="showSubmitReviewDialog"
+      @update:open="showSubmitReviewDialog = $event"
+    >
+      <DialogContent class="sm:max-w-[425px]">
+        <DialogHeader>
+          <DialogTitle>提交评审</DialogTitle>
+          <DialogDescription>
+            项目将进入评审状态，Brief 和选图将被锁定，无法新建生成任务。
+          </DialogDescription>
+        </DialogHeader>
+        <DialogFooter>
+          <Button variant="outline" @click="showSubmitReviewDialog = false"
+            >取消</Button
+          >
+          <Button
+            type="button"
+            :disabled="transitionMutation.isPending.value"
+            @click="submitReview"
+          >
+            {{ transitionMutation.isPending.value ? '提交中...' : '确认提交' }}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+
+    <!-- 退回修改 Dialog -->
+    <Dialog :open="showRejectDialog" @update:open="showRejectDialog = $event">
+      <DialogContent class="sm:max-w-[425px]">
+        <DialogHeader>
+          <DialogTitle>退回修改</DialogTitle>
+          <DialogDescription>
+            请说明退回原因，项目将返回设计中状态。
+          </DialogDescription>
+        </DialogHeader>
+        <div class="grid gap-4 py-4">
+          <textarea
+            v-model="rejectComment"
+            rows="4"
+            placeholder="请输入退回原因..."
+            class="flex w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring resize-none"
+          />
+        </div>
+        <DialogFooter>
+          <Button
+            variant="outline"
+            @click="
+              showRejectDialog = false;
+              rejectComment = '';
+            "
+            >取消</Button
+          >
+          <Button
+            variant="destructive"
+            type="button"
+            :disabled="
+              !rejectComment.trim() || transitionMutation.isPending.value
+            "
+            @click="requestChanges"
+          >
+            {{ transitionMutation.isPending.value ? '退回中...' : '确认退回' }}
           </Button>
         </DialogFooter>
       </DialogContent>

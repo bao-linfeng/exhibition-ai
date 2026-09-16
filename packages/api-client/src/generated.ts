@@ -1847,6 +1847,9 @@ export interface operations {
               createdAt: string;
               /** Format: date-time */
               updatedAt: string;
+              rejectionReason: string | null;
+              approvedAt: string | null;
+              approvedSnapshot: unknown | null;
               revision: number;
             };
           };
@@ -1914,6 +1917,9 @@ export interface operations {
               createdAt: string;
               /** Format: date-time */
               updatedAt: string;
+              rejectionReason: string | null;
+              approvedAt: string | null;
+              approvedSnapshot: unknown | null;
               revision: number;
             };
           };
@@ -1997,6 +2003,9 @@ export interface operations {
               createdAt: string;
               /** Format: date-time */
               updatedAt: string;
+              rejectionReason: string | null;
+              approvedAt: string | null;
+              approvedSnapshot: unknown | null;
               revision: number;
             };
           };
@@ -2174,6 +2183,9 @@ export interface operations {
               createdAt: string;
               /** Format: date-time */
               updatedAt: string;
+              rejectionReason: string | null;
+              approvedAt: string | null;
+              approvedSnapshot: unknown | null;
               revision: number;
             };
           };
@@ -2255,6 +2267,9 @@ export interface operations {
               createdAt: string;
               /** Format: date-time */
               updatedAt: string;
+              rejectionReason: string | null;
+              approvedAt: string | null;
+              approvedSnapshot: unknown | null;
               revision: number;
             };
           };

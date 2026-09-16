@@ -229,3 +229,46 @@ export function useUserOptionsQuery(search?: string) {
     },
   });
 }
+
+export function useTransitionProjectMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      projectId,
+      action,
+      comment,
+      expectedRevision,
+    }: {
+      projectId: string;
+      action:
+        | 'submit_review'
+        | 'approve'
+        | 'request_changes'
+        | 'reopen'
+        | 'archive'
+        | 'restore';
+      comment?: string;
+      expectedRevision: number;
+    }) => {
+      const { data, error } = await apiClient.POST(
+        '/api/v1/projects/{id}/transitions',
+        {
+          params: { path: { id: projectId } },
+          body: { action, comment, expectedRevision },
+        },
+      );
+      if (error)
+        throw new Error(
+          (error as { message?: string }).message ??
+            'Failed to transition project',
+        );
+      return data.data;
+    },
+    onSuccess: (_, { projectId }) => {
+      queryClient.invalidateQueries({
+        queryKey: projectKeys.detail(projectId),
+      });
+      queryClient.invalidateQueries({ queryKey: projectKeys.lists() });
+    },
+  });
+}

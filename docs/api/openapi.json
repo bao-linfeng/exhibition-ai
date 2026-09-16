@@ -1525,6 +1525,9 @@
                         "nextEventSequence",
                         "createdAt",
                         "updatedAt",
+                        "rejectionReason",
+                        "approvedAt",
+                        "approvedSnapshot",
                         "revision"
                       ],
                       "properties": {
@@ -1609,6 +1612,21 @@
                         "updatedAt": {
                           "format": "date-time",
                           "type": "string"
+                        },
+                        "rejectionReason": {
+                          "anyOf": [
+                            { "maxLength": 2000, "type": "string" },
+                            { "type": "null" }
+                          ]
+                        },
+                        "approvedAt": {
+                          "anyOf": [
+                            { "format": "date-time", "type": "string" },
+                            { "type": "null" }
+                          ]
+                        },
+                        "approvedSnapshot": {
+                          "anyOf": [{}, { "type": "null" }]
                         },
                         "revision": { "minimum": 1, "type": "integer" }
                       }
@@ -1662,6 +1680,9 @@
                         "nextEventSequence",
                         "createdAt",
                         "updatedAt",
+                        "rejectionReason",
+                        "approvedAt",
+                        "approvedSnapshot",
                         "revision"
                       ],
                       "properties": {
@@ -1746,6 +1767,21 @@
                         "updatedAt": {
                           "format": "date-time",
                           "type": "string"
+                        },
+                        "rejectionReason": {
+                          "anyOf": [
+                            { "maxLength": 2000, "type": "string" },
+                            { "type": "null" }
+                          ]
+                        },
+                        "approvedAt": {
+                          "anyOf": [
+                            { "format": "date-time", "type": "string" },
+                            { "type": "null" }
+                          ]
+                        },
+                        "approvedSnapshot": {
+                          "anyOf": [{}, { "type": "null" }]
                         },
                         "revision": { "minimum": 1, "type": "integer" }
                       }
@@ -1831,6 +1867,9 @@
                         "nextEventSequence",
                         "createdAt",
                         "updatedAt",
+                        "rejectionReason",
+                        "approvedAt",
+                        "approvedSnapshot",
                         "revision"
                       ],
                       "properties": {
@@ -1915,6 +1954,21 @@
                         "updatedAt": {
                           "format": "date-time",
                           "type": "string"
+                        },
+                        "rejectionReason": {
+                          "anyOf": [
+                            { "maxLength": 2000, "type": "string" },
+                            { "type": "null" }
+                          ]
+                        },
+                        "approvedAt": {
+                          "anyOf": [
+                            { "format": "date-time", "type": "string" },
+                            { "type": "null" }
+                          ]
+                        },
+                        "approvedSnapshot": {
+                          "anyOf": [{}, { "type": "null" }]
                         },
                         "revision": { "minimum": 1, "type": "integer" }
                       }
@@ -2139,6 +2193,9 @@
                         "nextEventSequence",
                         "createdAt",
                         "updatedAt",
+                        "rejectionReason",
+                        "approvedAt",
+                        "approvedSnapshot",
                         "revision"
                       ],
                       "properties": {
@@ -2223,6 +2280,21 @@
                         "updatedAt": {
                           "format": "date-time",
                           "type": "string"
+                        },
+                        "rejectionReason": {
+                          "anyOf": [
+                            { "maxLength": 2000, "type": "string" },
+                            { "type": "null" }
+                          ]
+                        },
+                        "approvedAt": {
+                          "anyOf": [
+                            { "format": "date-time", "type": "string" },
+                            { "type": "null" }
+                          ]
+                        },
+                        "approvedSnapshot": {
+                          "anyOf": [{}, { "type": "null" }]
                         },
                         "revision": { "minimum": 1, "type": "integer" }
                       }
@@ -2302,6 +2374,9 @@
                         "nextEventSequence",
                         "createdAt",
                         "updatedAt",
+                        "rejectionReason",
+                        "approvedAt",
+                        "approvedSnapshot",
                         "revision"
                       ],
                       "properties": {
@@ -2386,6 +2461,21 @@
                         "updatedAt": {
                           "format": "date-time",
                           "type": "string"
+                        },
+                        "rejectionReason": {
+                          "anyOf": [
+                            { "maxLength": 2000, "type": "string" },
+                            { "type": "null" }
+                          ]
+                        },
+                        "approvedAt": {
+                          "anyOf": [
+                            { "format": "date-time", "type": "string" },
+                            { "type": "null" }
+                          ]
+                        },
+                        "approvedSnapshot": {
+                          "anyOf": [{}, { "type": "null" }]
                         },
                         "revision": { "minimum": 1, "type": "integer" }
                       }
