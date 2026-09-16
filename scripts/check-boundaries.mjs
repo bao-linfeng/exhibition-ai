@@ -49,10 +49,15 @@ for (const [name, pkg] of packages) {
     );
     for (const [, , specifier] of imports) {
       if (specifier.startsWith('@exhibition/')) {
+        // 提取包名（支持子路径导出，如 @exhibition/api-client/generated → @exhibition/api-client）
+        const parts = specifier.split('/');
+        const pkgName = parts[0].startsWith('@')
+          ? `${parts[0]}/${parts[1]}`
+          : parts[0];
         if (
-          !packages.has(specifier) ||
-          !allowed[name]?.includes(specifier) ||
-          !deps[specifier]
+          !packages.has(pkgName) ||
+          !allowed[name]?.includes(pkgName) ||
+          !deps[pkgName]
         )
           errors.push(`${file}: forbidden or undeclared import ${specifier}`);
       }
