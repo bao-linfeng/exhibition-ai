@@ -154,10 +154,10 @@ function getEventTypeLabel(type: string): string {
 
 function getEventDescription(event: ProjectEvent): string {
   switch (event.type) {
-    case 'project.updated':
-      return `项目信息已更新（版本 ${event.data.revision}）`;
     case 'project.created':
       return '项目已创建';
+    case 'project.updated':
+      return '项目信息已更新';
     case 'project.archived':
       return '项目已归档';
     case 'project.restored':
@@ -170,8 +170,16 @@ function getEventDescription(event: ProjectEvent): string {
       return `版本 V${event.data.sequence} 已创建`;
     case 'asset.ready':
       return `资产 ${event.data.kind} 已就绪`;
+    case 'message.delta':
+      return '消息增量更新';
+    case 'message.completed':
+      return '消息已完成';
+    case 'confirmation.created':
+      return '确认请求已创建';
+    case 'stream.reset':
+      return '事件流已重置';
     default:
-      return JSON.stringify(event.data);
+      return '未知事件';
   }
 }
 

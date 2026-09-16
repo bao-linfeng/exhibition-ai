@@ -269,10 +269,10 @@ export function useProjectEvents(
   });
 
   return {
-    status: readonly(status),
-    events: readonly(events),
-    latestSequence: readonly(latestSequence),
-    isConnected: readonly(isConnected),
+    status: readonly(status) as Readonly<Ref<'connecting' | 'connected' | 'disconnected' | 'error'>>,
+    events: readonly(events) as Readonly<Ref<ProjectEvent[]>>,
+    latestSequence: readonly(latestSequence) as Readonly<Ref<number | null>>,
+    isConnected: readonly(isConnected) as Readonly<Ref<boolean>>,
     connect,
     disconnect,
     reconnect,
