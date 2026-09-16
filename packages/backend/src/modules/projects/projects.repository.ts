@@ -176,6 +176,15 @@ export class ProjectRepository {
     return member !== undefined;
   }
 
+  async findMemberProjectIds(userId: string): Promise<string[]> {
+    const rows = await this.db
+      .select({ projectId: projectMembers.projectId })
+      .from(projectMembers)
+      .where(eq(projectMembers.userId, userId));
+
+    return rows.map((row) => row.projectId);
+  }
+
   async addMember(
     projectId: string,
     userId: string,

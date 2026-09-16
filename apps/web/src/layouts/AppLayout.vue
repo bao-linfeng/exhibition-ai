@@ -6,6 +6,7 @@ import {
   LayoutDashboard,
   Building2,
   FolderKanban,
+  ClipboardList,
   Menu,
   LogOut,
   ChevronLeft,
@@ -39,12 +40,14 @@ const navigation = [
   { name: '仪表盘', href: '/dashboard', icon: LayoutDashboard },
   { name: '客户管理', href: '/customers', icon: Building2 },
   { name: '项目管理', href: '/projects', icon: FolderKanban },
+  { name: '任务中心', href: '/tasks', icon: ClipboardList },
 ];
 
 const currentRouteName = computed(() => {
   if (route.name === 'dashboard') return '仪表盘';
   if (route.path.startsWith('/customers')) return '客户管理';
   if (route.path.startsWith('/projects')) return '项目管理';
+  if (route.path.startsWith('/tasks')) return '任务中心';
   return '';
 });
 

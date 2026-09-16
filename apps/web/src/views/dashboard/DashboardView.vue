@@ -8,6 +8,7 @@ import {
   Clock,
   Loader2,
   AlertCircle,
+  ClipboardList,
 } from '@lucide/vue';
 import { useRouter } from 'vue-router';
 import { Button } from '../../components/ui/button/index.js';
@@ -66,7 +67,7 @@ function formatDate(dateStr: string) {
       </p>
     </div>
 
-    <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+    <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
       <!-- Welcome Card -->
       <div
         class="rounded-xl border bg-card text-card-foreground shadow-sm relative overflow-hidden group"
@@ -170,6 +171,46 @@ function formatDate(dateStr: string) {
                 {{ summaryData?.approvedThisMonth ?? '--' }}
               </p>
             </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Task Center Card -->
+      <div
+        class="rounded-xl border bg-card text-card-foreground shadow-sm relative overflow-hidden group"
+      >
+        <div class="p-6">
+          <div class="flex items-center gap-4 mb-4">
+            <div
+              class="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center"
+            >
+              <ClipboardList class="h-6 w-6 text-primary" />
+            </div>
+            <div>
+              <h3 class="font-semibold text-lg">任务中心</h3>
+              <p class="text-sm text-muted-foreground">
+                查看后台任务与运行状态
+              </p>
+            </div>
+          </div>
+          <div class="flex gap-3 mt-[1.35rem]">
+            <Button
+              v-if="(summaryData?.activeTasks ?? 0) > 0"
+              class="w-full bg-blue-50 text-blue-600 hover:bg-blue-100 border border-blue-200"
+              @click="goTo('/tasks')"
+              variant="outline"
+            >
+              <Loader2 class="mr-2 h-4 w-4 animate-spin" />
+              {{ summaryData?.activeTasks }} 个任务进行中
+            </Button>
+            <Button
+              v-else
+              variant="outline"
+              class="w-full text-muted-foreground"
+              @click="goTo('/tasks')"
+            >
+              暂无运行中任务
+            </Button>
           </div>
         </div>
       </div>

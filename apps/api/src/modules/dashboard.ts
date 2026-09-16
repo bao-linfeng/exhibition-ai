@@ -19,9 +19,14 @@ export async function dashboardRoutes(app: FastifyInstance) {
       },
     },
     async (request) => {
-      if (!(await currentUser(request.cookies.sessionId)))
-        throw app.httpErrors.unauthorized('Not authenticated');
-      return app.services!.dashboardService.getSummary();
+      const user = await currentUser(request.cookies.sessionId);
+      if (!user) throw app.httpErrors.unauthorized('Not authenticated');
+
+      const visibleProjectIds =
+        user.role === 'admin'
+          ? 'all'
+          : await app.services!.projectService.listVisibleProjectIds(user.id);
+      return app.services!.dashboardService.getSummary(visibleProjectIds);
     },
   );
 }

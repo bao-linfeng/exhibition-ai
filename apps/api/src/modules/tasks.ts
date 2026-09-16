@@ -54,6 +54,10 @@ export async function taskRoutes(app: FastifyInstance) {
 
       const query = request.query as ListTasksQuery;
       const isAdmin = user.role === 'admin';
+      const visibleProjectIds =
+        !isAdmin && !query.projectId
+          ? await app.services!.projectService.listVisibleProjectIds(user.id)
+          : undefined;
 
       const result = await app.services!.taskService.listTasks(
         {
@@ -66,6 +70,7 @@ export async function taskRoutes(app: FastifyInstance) {
         user.id,
         isAdmin,
         isMemberFn(user),
+        visibleProjectIds,
       );
 
       if (result === 'forbidden') throw app.httpErrors.forbidden();

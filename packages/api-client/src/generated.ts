@@ -4400,6 +4400,7 @@ export interface operations {
           'application/json': {
             totalProjects: number;
             activeProjects: number;
+            activeTasks: number;
             pendingReview: number;
             approvedThisMonth: number;
             recentProjects: {
