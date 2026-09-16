@@ -156,6 +156,7 @@ export class TaskRepository {
 
   async list(opts: {
     projectId?: string;
+    projectIds?: string[];
     kind?: TaskKind;
     status?: TaskStatus;
     cursor?: string;
@@ -165,6 +166,13 @@ export class TaskRepository {
 
     const conditions = [];
     if (opts.projectId) conditions.push(eq(tasks.projectId, opts.projectId));
+    if (opts.projectIds) {
+      conditions.push(
+        opts.projectIds.length > 0
+          ? inArray(tasks.projectId, opts.projectIds)
+          : sql`false`,
+      );
+    }
     if (opts.kind) conditions.push(eq(tasks.kind, opts.kind));
     if (opts.status) conditions.push(eq(tasks.status, opts.status));
     if (opts.cursor)

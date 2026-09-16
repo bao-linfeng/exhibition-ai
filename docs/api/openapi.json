@@ -7514,6 +7514,7 @@
                   "required": [
                     "totalProjects",
                     "activeProjects",
+                    "activeTasks",
                     "pendingReview",
                     "approvedThisMonth",
                     "recentProjects"
@@ -7521,6 +7522,7 @@
                   "properties": {
                     "totalProjects": { "minimum": 0, "type": "integer" },
                     "activeProjects": { "minimum": 0, "type": "integer" },
+                    "activeTasks": { "minimum": 0, "type": "integer" },
                     "pendingReview": { "minimum": 0, "type": "integer" },
                     "approvedThisMonth": { "minimum": 0, "type": "integer" },
                     "recentProjects": {

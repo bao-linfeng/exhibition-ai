@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
 import { useRoute } from 'vue-router';
-import { useQuery } from '@tanstack/vue-query';
+import { useQuery, useQueryClient } from '@tanstack/vue-query';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
@@ -18,9 +18,14 @@ import VersionGrid from '../image-versions/VersionGrid.vue';
 import VersionCompare from '../image-versions/VersionCompare.vue';
 import VersionTree from '../image-versions/VersionTree.vue';
 import { apiClient } from '@/api/client.js';
+import { useProjectEvents } from '@/composables/useProjectEvents.js';
+import { listTasksOptions } from '@/api/queries/tasks.js';
+import { useRouter } from 'vue-router';
+import { Loader2 } from '@lucide/vue';
 import {
   listVersionsOptions,
   useUpdateSelectedVersion,
+  versionKeys,
 } from '@/api/queries/versions.js';
 import { useCreateGeneration } from '@/api/queries/generations.js';
 import type {
@@ -29,8 +34,33 @@ import type {
 } from '@exhibition/contracts';
 
 const route = useRoute();
+const router = useRouter();
+const queryClient = useQueryClient();
 const { toast } = useToast();
 const projectId = computed(() => route.params.id as string);
+
+// SSE 及任务状态监听
+const { status: sseStatus } = useProjectEvents({
+  projectId: projectId.value,
+  onEvent: (event) => {
+    if (event.type === 'task.updated' || event.type === 'version.created') {
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      queryClient.invalidateQueries({
+        queryKey: versionKeys.list(projectId.value),
+      });
+    }
+  },
+});
+
+const { data: tasksData } = useQuery(
+  listTasksOptions({ projectId: projectId.value, limit: 100 }, 5000),
+);
+
+const activeTasksCount = computed(() => {
+  const activeStatuses = ['pending', 'queued', 'running', 'reconciling'];
+  const tasks = tasksData.value?.data ?? [];
+  return tasks.filter((t) => activeStatuses.includes(t.status)).length;
+});
 
 // 获取项目信息
 const {
@@ -162,6 +192,27 @@ function handleViewDetails(version: ImageVersion) {
           </div>
 
           <div class="flex items-center gap-2">
+            <!-- SSE Status Indicator -->
+            <div
+              class="w-2 h-2 rounded-full mr-2"
+              :class="
+                sseStatus === 'connected' ? 'bg-green-500' : 'bg-slate-500'
+              "
+              :title="sseStatus === 'connected' ? '已连接实时同步' : '未连接'"
+            ></div>
+
+            <!-- Active Tasks Badge -->
+            <Button
+              v-if="activeTasksCount > 0"
+              variant="secondary"
+              size="sm"
+              class="bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 border border-blue-500/20 h-9 mr-2"
+              @click="router.push(`/tasks?projectId=${projectId}`)"
+            >
+              <Loader2 class="w-4 h-4 mr-2 animate-spin" />
+              {{ activeTasksCount }} 个任务进行中
+            </Button>
+
             <Button
               variant="outline"
               class="border-slate-700 bg-slate-900 hover:bg-slate-800"

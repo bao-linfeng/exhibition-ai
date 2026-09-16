@@ -99,6 +99,10 @@ export class ProjectService {
     return project ? this.toProject(project) : null;
   }
 
+  async listVisibleProjectIds(userId: string): Promise<string[]> {
+    return this.repo.findMemberProjectIds(userId);
+  }
+
   async updateProject(
     id: string,
     data: UpdateProjectRequest,

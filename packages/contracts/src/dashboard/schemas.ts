@@ -17,6 +17,7 @@ export const DashboardSummaryResponseSchema = Type.Object(
   {
     totalProjects: Type.Integer({ minimum: 0 }),
     activeProjects: Type.Integer({ minimum: 0 }),
+    activeTasks: Type.Integer({ minimum: 0 }),
     pendingReview: Type.Integer({ minimum: 0 }),
     approvedThisMonth: Type.Integer({ minimum: 0 }),
     recentProjects: Type.Array(DashboardRecentProjectSchema, { maxItems: 5 }),

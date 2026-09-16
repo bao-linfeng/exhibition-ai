@@ -134,6 +134,7 @@ export class TaskService {
     requestingUserId: string,
     isAdmin: boolean,
     isMemberFn: (projectId: string) => Promise<boolean>,
+    visibleProjectIds?: string[],
   ): Promise<
     | { data: Task[]; page: { nextCursor: string | null; hasMore: boolean } }
     | 'forbidden'
@@ -141,6 +142,21 @@ export class TaskService {
     if (opts.projectId && !isAdmin) {
       const ok = await isMemberFn(opts.projectId);
       if (!ok) return 'forbidden';
+    }
+
+    if (!isAdmin && !opts.projectId) {
+      if (!visibleProjectIds || visibleProjectIds.length === 0) {
+        return { data: [], page: { nextCursor: null, hasMore: false } };
+      }
+
+      const result = await this.repo.list({
+        ...opts,
+        projectIds: visibleProjectIds,
+      });
+      return {
+        data: result.data.map(toTaskDto),
+        page: result.page,
+      };
     }
 
     const result = await this.repo.list(opts);
