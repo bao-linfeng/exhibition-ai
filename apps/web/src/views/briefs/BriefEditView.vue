@@ -484,7 +484,7 @@ function reloadPage() {
         </div>
         <div class="p-6 space-y-4">
           <div
-            v-for="(area, idx) in formData.functionalAreas"
+            v-for="(briefArea, idx) in formData.functionalAreas"
             :key="idx"
             class="p-4 border rounded-lg bg-card flex flex-col gap-4 relative pr-10"
           >
@@ -499,7 +499,7 @@ function reloadPage() {
               <div class="space-y-2">
                 <Label>区域类型</Label>
                 <select
-                  v-model="area.type"
+                  v-model="briefArea.type"
                   class="flex h-10 w-full items-center justify-between rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm"
                 >
                   <option
@@ -514,7 +514,7 @@ function reloadPage() {
               <div class="space-y-2">
                 <Label>数量</Label>
                 <Input
-                  v-model="area.quantity"
+                  v-model="briefArea.quantity"
                   type="number"
                   min="1"
                   max="100"
@@ -525,7 +525,7 @@ function reloadPage() {
               >
                 <label class="flex items-center gap-2 cursor-pointer">
                   <input
-                    v-model="area.required"
+                    v-model="briefArea.required"
                     type="checkbox"
                     class="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary"
                   />
@@ -536,7 +536,7 @@ function reloadPage() {
             <div class="space-y-2">
               <Label>要求说明</Label>
               <Input
-                v-model="area.description"
+                v-model="briefArea.description"
                 placeholder="对该区域的特定要求或面积建议"
                 maxlength="500"
               />
