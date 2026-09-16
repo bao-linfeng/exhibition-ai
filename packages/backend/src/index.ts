@@ -289,6 +289,8 @@ export function createServices(): Services {
     taskRepo,
     queues,
     eventsService,
+    new BriefRepository(drizzleDb),
+    generationService,
   );
   const verificationRedis = new Redis(connection);
   verificationRedis.on('error', () => undefined);

@@ -15,6 +15,14 @@ import {
 import { apiClient } from '@/api/client.js';
 import { useProjectEvents } from '@/composables/useProjectEvents.js';
 import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from '@/components/ui/dialog';
 import type { Message } from '@exhibition/contracts';
 
 const props = defineProps<{ projectId: string }>();
@@ -47,6 +55,92 @@ const { data: conversationData } = useQuery({
   },
 });
 const conversation = computed(() => conversationData.value?.data);
+
+// --- Confirmation Dialog State ---
+const confirmationDialogOpen = ref(false);
+const activeConfirmationId = ref<string | null>(null);
+const isApproving = ref(false);
+const isRejecting = ref(false);
+
+const confirmationDetailKey = computed(() => [
+  'confirmation',
+  activeConfirmationId.value || '',
+]);
+
+const { data: confirmationDetailData, isLoading: isLoadingConfirmation } =
+  useQuery({
+    queryKey: confirmationDetailKey,
+    queryFn: async () => {
+      if (!activeConfirmationId.value) return null;
+      const { data, error } = await apiClient.GET(
+        '/api/v1/confirmations/{id}',
+        {
+          params: { path: { id: activeConfirmationId.value } },
+        },
+      );
+      if (error) throw new Error('Failed to load confirmation');
+      return data;
+    },
+    enabled: computed(
+      () => !!activeConfirmationId.value && confirmationDialogOpen.value,
+    ),
+  });
+
+const confirmationDetail = computed(() => confirmationDetailData.value?.data);
+
+function openConfirmationDialog(confirmationId: string) {
+  if (!confirmationId) return;
+  activeConfirmationId.value = confirmationId;
+  confirmationDialogOpen.value = true;
+}
+
+async function handleApprove() {
+  if (!confirmationDetail.value || isApproving.value) return;
+  isApproving.value = true;
+  try {
+    const { error } = await apiClient.POST(
+      '/api/v1/confirmations/{id}/approve',
+      {
+        params: { path: { id: confirmationDetail.value.id } },
+        body: { payloadHash: confirmationDetail.value.payloadHash },
+      },
+    );
+    if (error) {
+      alert(
+        '批准失败：' + ((error as { message?: string }).message ?? '未知错误'),
+      );
+      return;
+    }
+    confirmationDialogOpen.value = false;
+    queryClient.invalidateQueries({ queryKey: messagesKey.value });
+    queryClient.invalidateQueries({ queryKey: conversationKey.value });
+  } finally {
+    isApproving.value = false;
+  }
+}
+
+async function handleReject() {
+  if (!confirmationDetail.value || isRejecting.value) return;
+  isRejecting.value = true;
+  try {
+    const { error } = await apiClient.POST(
+      '/api/v1/confirmations/{id}/reject',
+      {
+        params: { path: { id: confirmationDetail.value.id } },
+        body: { reason: undefined },
+      },
+    );
+    if (error) {
+      alert('拒绝失败');
+      return;
+    }
+    confirmationDialogOpen.value = false;
+    queryClient.invalidateQueries({ queryKey: messagesKey.value });
+    queryClient.invalidateQueries({ queryKey: conversationKey.value });
+  } finally {
+    isRejecting.value = false;
+  }
+}
 
 // Load Messages
 const { data: messagesResponse } = useQuery({
@@ -361,7 +455,7 @@ function handleInput(e: Event) {
                   size="sm"
                   variant="outline"
                   class="w-full h-8 text-amber-400 border-amber-900/50 hover:bg-amber-950/50"
-                  @click="() => {}"
+                  @click="openConfirmationDialog(part.confirmationId!)"
                   >查看详情</Button
                 >
               </div>
@@ -468,5 +562,124 @@ function handleInput(e: Event) {
         </span>
       </div>
     </div>
+
+    <!-- Confirmation Detail Dialog -->
+    <Dialog v-model:open="confirmationDialogOpen">
+      <DialogContent
+        class="bg-slate-900 border-slate-700 text-slate-100 max-w-md"
+      >
+        <DialogHeader>
+          <DialogTitle class="text-slate-100 flex items-center gap-2">
+            <AlertCircle class="w-5 h-5 text-amber-500" />
+            确认操作
+          </DialogTitle>
+          <DialogDescription class="text-slate-400">
+            请确认以下 Agent 操作是否继续执行
+          </DialogDescription>
+        </DialogHeader>
+
+        <div v-if="isLoadingConfirmation" class="py-8 flex justify-center">
+          <Loader2 class="w-6 h-6 text-slate-400 animate-spin" />
+        </div>
+
+        <div v-else-if="confirmationDetail" class="space-y-4">
+          <!-- Action type -->
+          <div class="bg-slate-800/60 rounded-lg p-3 space-y-2">
+            <div class="flex items-center gap-2">
+              <span class="text-xs text-slate-400">操作类型</span>
+              <span
+                class="text-xs font-medium px-2 py-0.5 rounded-full"
+                :class="
+                  confirmationDetail.action === 'apply_brief_patch'
+                    ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30'
+                    : 'bg-purple-500/20 text-purple-400 border border-purple-500/30'
+                "
+              >
+                {{
+                  confirmationDetail.action === 'apply_brief_patch'
+                    ? '修改需求文档'
+                    : '生成图片'
+                }}
+              </span>
+            </div>
+          </div>
+
+          <!-- Estimated fee (if any) -->
+          <div
+            v-if="confirmationDetail.estimatedFee"
+            class="bg-amber-950/30 border border-amber-900/50 rounded-lg p-3"
+          >
+            <div class="text-xs text-amber-400 font-medium mb-1">预计费用</div>
+            <div class="text-sm text-amber-300">
+              {{
+                (confirmationDetail.estimatedFee.maxAmountMinor / 100).toFixed(
+                  2,
+                )
+              }}
+              {{ confirmationDetail.estimatedFee.currency }}
+            </div>
+            <div class="text-xs text-amber-500/70 mt-1">批准后将预留该额度</div>
+          </div>
+
+          <!-- Expiry -->
+          <div class="text-xs text-slate-500 flex items-center gap-1">
+            <span>有效期至</span>
+            <span class="text-slate-400">{{
+              new Date(confirmationDetail.expiresAt).toLocaleString('zh-CN')
+            }}</span>
+          </div>
+
+          <!-- Status indicator -->
+          <div
+            v-if="confirmationDetail.status !== 'pending'"
+            class="bg-slate-800/40 rounded-lg p-3 text-center text-sm"
+            :class="{
+              'text-green-400': confirmationDetail.status === 'approved',
+              'text-red-400': confirmationDetail.status === 'rejected',
+              'text-slate-400': confirmationDetail.status === 'expired',
+            }"
+          >
+            {{
+              confirmationDetail.status === 'approved'
+                ? '✓ 已批准'
+                : confirmationDetail.status === 'rejected'
+                  ? '✗ 已拒绝'
+                  : '⏰ 已过期'
+            }}
+          </div>
+        </div>
+
+        <DialogFooter
+          v-if="confirmationDetail?.status === 'pending'"
+          class="gap-2 sm:gap-2"
+        >
+          <Button
+            variant="outline"
+            size="sm"
+            class="border-slate-700 text-slate-300 hover:bg-slate-800 hover:text-slate-100"
+            :disabled="isRejecting || isApproving"
+            @click="handleReject"
+          >
+            <Loader2
+              v-if="isRejecting"
+              class="w-3.5 h-3.5 mr-1.5 animate-spin"
+            />
+            拒绝
+          </Button>
+          <Button
+            size="sm"
+            class="bg-amber-600 hover:bg-amber-500 text-white"
+            :disabled="isApproving || isRejecting"
+            @click="handleApprove"
+          >
+            <Loader2
+              v-if="isApproving"
+              class="w-3.5 h-3.5 mr-1.5 animate-spin"
+            />
+            批准执行
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   </div>
 </template>

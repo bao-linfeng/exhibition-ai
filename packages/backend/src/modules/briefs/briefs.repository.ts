@@ -6,6 +6,16 @@ import { briefRevisions, projects } from '@exhibition/db';
 export class BriefRepository {
   constructor(private db: Database) {}
 
+  async findProjectRevision(projectId: string): Promise<number | null> {
+    const [project] = await this.db
+      .select({ revision: projects.revision })
+      .from(projects)
+      .where(eq(projects.id, projectId))
+      .limit(1);
+
+    return project?.revision ?? null;
+  }
+
   async findCurrentByProjectId(
     projectId: string,
   ): Promise<typeof briefRevisions.$inferSelect | null> {

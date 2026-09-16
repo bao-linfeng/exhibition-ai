@@ -53,6 +53,7 @@ import {
   processAgentRun,
   type AgentRunJobData,
 } from './processors/agent-run.processor.js';
+import { runConfirmationExpiry } from './schedulers/confirmation-expiry.js';
 import { runTimeoutReconciler } from './schedulers/timeout-reconciler.js';
 
 const heartbeat = env.WORKER_HEALTH_FILE;
@@ -321,6 +322,17 @@ async function scanStuckTasks() {
   }
 }
 
+let expiringConfirmations = false;
+async function scanExpiredConfirmations() {
+  if (expiringConfirmations || stopping) return;
+  expiringConfirmations = true;
+  try {
+    await runConfirmationExpiry(confirmRepo);
+  } finally {
+    expiringConfirmations = false;
+  }
+}
+
 await Promise.all([
   probeWorker.waitUntilReady(),
   assetValidationWorker.waitUntilReady(),
@@ -343,6 +355,9 @@ const reconcilerTimer = setInterval(
   },
   5 * 60 * 1000,
 );
+const confirmationExpiryTimer = setInterval(() => {
+  void scanExpiredConfirmations();
+}, 60_000);
 
 async function stop() {
   if (stopping) return;
@@ -350,6 +365,7 @@ async function stop() {
   clearInterval(heartbeatTimer);
   clearInterval(outboxTimer);
   clearInterval(reconcilerTimer);
+  clearInterval(confirmationExpiryTimer);
   await unlink(heartbeat).catch(() => {});
   await Promise.all([
     probeWorker.close(),
@@ -378,5 +394,5 @@ process.once('SIGTERM', () => {
 });
 
 logger.info(
-  'Worker ready: probe + asset_validation + brief_parse + design_direction + image_generation + agent_run + outbox scanner + timeout reconciler',
+  'Worker ready: probe + asset_validation + brief_parse + design_direction + image_generation + agent_run + outbox scanner + timeout reconciler + confirmation expiry',
 );
