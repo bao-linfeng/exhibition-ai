@@ -590,10 +590,10 @@
       "bodyFile": "docs/issues/T024.md",
       "issueNumber": 24,
       "issueUrl": "https://github.com/bao-linfeng/exhibition-ai/issues/24",
-      "branch": null,
+      "branch": "feat/issue-24-conversations-agent-orchestration",
       "prNumber": null,
       "prUrl": null,
-      "status": "todo"
+      "status": "done"
     },
     {
       "id": "T025",

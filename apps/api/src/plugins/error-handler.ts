@@ -17,7 +17,10 @@ const HTTP_CODE_NAMES: Record<number, string> = {
 const errorHandler: FastifyPluginAsync = async (app) => {
   app.setErrorHandler((error: FastifyError, request, reply) => {
     const statusCode = error.statusCode ?? 500;
-    const code = HTTP_CODE_NAMES[statusCode] ?? 'INTERNAL_SERVER_ERROR';
+    const code =
+      error.code === 'ACTIVE_RUN_EXISTS'
+        ? error.code
+        : (HTTP_CODE_NAMES[statusCode] ?? 'INTERNAL_SERVER_ERROR');
     const message =
       statusCode >= 500
         ? 'Internal server error'

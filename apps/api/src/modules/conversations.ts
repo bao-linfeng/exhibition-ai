@@ -8,6 +8,49 @@ import {
   SendMessageResponseSchema,
   UuidSchema,
 } from '@exhibition/contracts';
+import type { SendMessageRequest } from '@exhibition/contracts';
+
+function toConversationDto(row: {
+  id: string;
+  projectId: string;
+  title: string;
+  activeRunId: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+}) {
+  return {
+    id: row.id,
+    projectId: row.projectId,
+    title: row.title,
+    activeRunId: row.activeRunId,
+    createdAt: row.createdAt.toISOString(),
+    updatedAt: row.updatedAt.toISOString(),
+  };
+}
+
+function toMessageDto(row: {
+  id: string;
+  conversationId: string;
+  role: string;
+  parts: unknown;
+  status: string;
+  clientMessageId: string | null;
+  createdBy: string | null;
+  createdAt: Date;
+  streamOffset: number;
+  runId: string | null;
+}) {
+  return {
+    id: row.id,
+    conversationId: row.conversationId,
+    role: row.role,
+    parts: row.parts as unknown[],
+    status: row.status,
+    clientMessageId: row.clientMessageId,
+    createdBy: row.createdBy,
+    createdAt: row.createdAt.toISOString(),
+  };
+}
 
 export async function conversationRoutes(app: FastifyInstance) {
   // GET /api/v1/projects/:projectId/conversation
@@ -24,8 +67,28 @@ export async function conversationRoutes(app: FastifyInstance) {
         },
       },
     },
-    async () => {
-      throw app.httpErrors.notImplemented('Get conversation not implemented');
+    async (request) => {
+      const actorContext = request.actorContext;
+      if (!actorContext) throw app.httpErrors.unauthorized('Not authenticated');
+
+      const { projectId } = request.params as { projectId: string };
+      if (!app.projectPolicy) {
+        throw app.httpErrors.internalServerError(
+          'Project policy not initialized',
+        );
+      }
+      if (!(await app.projectPolicy.canViewProject(actorContext, projectId))) {
+        throw app.httpErrors.notFound('Project not found');
+      }
+
+      const conversation =
+        await app.services!.conversationService.getOrCreateConversation(
+          projectId,
+          true,
+        );
+      if (conversation === 'forbidden') throw app.httpErrors.forbidden();
+
+      return { data: toConversationDto(conversation) };
     },
   );
 
@@ -44,8 +107,39 @@ export async function conversationRoutes(app: FastifyInstance) {
         },
       },
     },
-    async () => {
-      throw app.httpErrors.notImplemented('List messages not implemented');
+    async (request) => {
+      const actorContext = request.actorContext;
+      if (!actorContext) throw app.httpErrors.unauthorized('Not authenticated');
+
+      const { projectId } = request.params as { projectId: string };
+      const query = request.query as { before?: string; limit?: number };
+      if (!app.projectPolicy) {
+        throw app.httpErrors.internalServerError(
+          'Project policy not initialized',
+        );
+      }
+      if (!(await app.projectPolicy.canViewProject(actorContext, projectId))) {
+        throw app.httpErrors.notFound('Project not found');
+      }
+
+      const conversation =
+        await app.services!.conversationService.getOrCreateConversation(
+          projectId,
+          true,
+        );
+      if (conversation === 'forbidden') throw app.httpErrors.forbidden();
+
+      const result = await app.services!.conversationService.listMessages(
+        conversation.id,
+        query,
+        true,
+      );
+      if (result === 'forbidden') throw app.httpErrors.forbidden();
+
+      return {
+        data: result.data.map(toMessageDto),
+        page: result.page,
+      };
     },
   );
 
@@ -64,8 +158,51 @@ export async function conversationRoutes(app: FastifyInstance) {
         },
       },
     },
-    async () => {
-      throw app.httpErrors.notImplemented('Send message not implemented');
+    async (request, reply) => {
+      const actorContext = request.actorContext;
+      if (!actorContext) throw app.httpErrors.unauthorized('Not authenticated');
+
+      const { projectId } = request.params as { projectId: string };
+      const body = request.body as SendMessageRequest;
+      if (!app.projectPolicy) {
+        throw app.httpErrors.internalServerError(
+          'Project policy not initialized',
+        );
+      }
+      if (!(await app.projectPolicy.canViewProject(actorContext, projectId))) {
+        throw app.httpErrors.notFound('Project not found');
+      }
+      if (actorContext.role === 'viewer') throw app.httpErrors.forbidden();
+
+      const conversation =
+        await app.services!.conversationService.getOrCreateConversation(
+          projectId,
+          true,
+        );
+      if (conversation === 'forbidden') throw app.httpErrors.forbidden();
+
+      const result = await app.services!.conversationService.sendMessage({
+        projectId,
+        conversationId: conversation.id,
+        text: body.text,
+        clientMessageId: body.clientMessageId,
+        assetIds: body.assetIds,
+        requestedBy: actorContext.userId,
+        canGenerate: true,
+      });
+      if (result === 'forbidden') throw app.httpErrors.forbidden();
+      if (result === 'active_run_exists') {
+        const error = app.httpErrors.conflict(
+          'An active agent run already exists',
+        ) as Error & { code?: string };
+        error.code = 'ACTIVE_RUN_EXISTS';
+        throw error;
+      }
+      if (result === 'duplicate') {
+        return reply.status(202).send({ data: result });
+      }
+
+      return reply.status(202).send({ data: result });
     },
   );
 }

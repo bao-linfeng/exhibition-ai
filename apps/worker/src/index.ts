@@ -2,6 +2,7 @@ import { writeFile, unlink } from 'node:fs/promises';
 import { S3Client } from '@aws-sdk/client-s3';
 import {
   Worker,
+  Queue,
   probeQueue,
   createQueueConnection,
   createAssetValidationQueue,
@@ -26,6 +27,13 @@ import {
   QUEUE_BRIEF_PARSE,
   createDesignDirectionQueue,
   QUEUE_DESIGN_DIRECTION,
+  createAgentRunQueue,
+  QUEUE_AGENT_RUN,
+  ConversationRepository,
+  MessageRepository,
+  AgentRunRepository,
+  ConfirmationRepository,
+  EventsService,
 } from '@exhibition/backend';
 import { bootstrapProviders } from './bootstrap.js';
 import { processAssetValidation } from './processors/asset-validation.processor.js';
@@ -41,6 +49,10 @@ import {
   processDesignDirection,
   type DesignDirectionJobData,
 } from './processors/design-direction.processor.js';
+import {
+  processAgentRun,
+  type AgentRunJobData,
+} from './processors/agent-run.processor.js';
 import { runTimeoutReconciler } from './schedulers/timeout-reconciler.js';
 
 const heartbeat = env.WORKER_HEALTH_FILE;
@@ -53,7 +65,7 @@ const {
 } = providers;
 
 // DB + services
-const { db } = initDatabase();
+const { db, pool } = initDatabase();
 const taskRepo = new TaskRepository(db);
 const s3 = new S3StorageProvider(
   new S3Client({
@@ -76,6 +88,11 @@ const quotaService = new QuotaService(db, quotaRepo, new AuditService(db));
 const imageVersionRepo = new ImageVersionRepository(db);
 const briefRepo = new BriefRepository(db);
 const directionRepo = new DirectionRepository(db);
+const convRepo = new ConversationRepository(db);
+const msgRepo = new MessageRepository(db);
+const runRepo = new AgentRunRepository(db);
+const confirmRepo = new ConfirmationRepository(db);
+const eventsService = new EventsService(pool);
 const bucket = env.S3_BUCKET;
 
 // Redis connections
@@ -94,11 +111,13 @@ const briefParseQueue = createBriefParseQueue({ connection: workerConnection });
 const designDirectionQueue = createDesignDirectionQueue({
   connection: workerConnection,
 });
-const queues = new Map([
+const agentRunQueue = createAgentRunQueue({ connection: workerConnection });
+const queues = new Map<string, Queue>([
   [QUEUE_ASSET_VALIDATION, assetValidationQueue],
   [QUEUE_IMAGE_GENERATION, imageGenerationQueue],
   [QUEUE_BRIEF_PARSE, briefParseQueue],
   [QUEUE_DESIGN_DIRECTION, designDirectionQueue],
+  [QUEUE_AGENT_RUN, agentRunQueue],
 ]);
 const taskService = new TaskService(taskRepo, queues);
 
@@ -230,6 +249,37 @@ designDirectionWorker.on('failed', (job, err) => {
   logger.error({ jobId: job?.id, err }, 'Design direction job failed');
 });
 
+const agentRunWorker = new Worker(
+  QUEUE_AGENT_RUN,
+  async (job) => {
+    const data = job.data as AgentRunJobData;
+    logger.info(
+      { taskId: data.taskId, jobId: job.id },
+      'Processing agent_run task',
+    );
+    await processAgentRun(data, {
+      taskRepo,
+      convRepo,
+      msgRepo,
+      runRepo,
+      confirmRepo,
+      briefRepo,
+      assetRepo,
+      imageVersionRepo,
+      eventsService,
+      textProvider: textProviderRegistry.resolve(defaultTextProviderId),
+      textProviderId: defaultTextProviderId,
+    });
+  },
+  { connection: createQueueConnection(), concurrency: 2 },
+);
+agentRunWorker.on('error', (err) => {
+  logger.error({ err }, 'Agent run worker error');
+});
+agentRunWorker.on('failed', (job, err) => {
+  logger.error({ jobId: job?.id, err }, 'Agent run job failed');
+});
+
 // Heartbeat
 let stopping = false;
 let pulsing = false;
@@ -277,6 +327,7 @@ await Promise.all([
   imageGenerationWorker.waitUntilReady(),
   briefParseWorker.waitUntilReady(),
   designDirectionWorker.waitUntilReady(),
+  agentRunWorker.waitUntilReady(),
 ]);
 await pulse();
 
@@ -306,10 +357,12 @@ async function stop() {
     imageGenerationWorker.close(),
     briefParseWorker.close(),
     designDirectionWorker.close(),
+    agentRunWorker.close(),
     assetValidationQueue.close(),
     imageGenerationQueue.close(),
     briefParseQueue.close(),
     designDirectionQueue.close(),
+    agentRunQueue.close(),
   ]);
   probeConnection.disconnect();
   workerConnection.disconnect();
@@ -325,5 +378,5 @@ process.once('SIGTERM', () => {
 });
 
 logger.info(
-  'Worker ready: probe + asset_validation + brief_parse + design_direction + image_generation + outbox scanner + timeout reconciler',
+  'Worker ready: probe + asset_validation + brief_parse + design_direction + image_generation + agent_run + outbox scanner + timeout reconciler',
 );

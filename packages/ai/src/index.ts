@@ -37,3 +37,14 @@ export {
   OpenAITextProvider,
   OpenAIImageProvider,
 } from './providers/openai/index.js';
+
+export { BoothAgent } from './agents/booth-agent.js';
+export { createBoothTools } from './agents/tools.js';
+export type {
+  AgentTool,
+  AgentRunContext,
+  AgentRunOptions,
+  AgentRunResult,
+  MessagePart,
+  AgentMessage,
+} from './agents/types.js';

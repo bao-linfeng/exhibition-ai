@@ -31,7 +31,7 @@ import VersionTree from '../image-versions/VersionTree.vue';
 import WorkspaceBriefPanel from './WorkspaceBriefPanel.vue';
 import WorkspaceAssetsPanel from './WorkspaceAssetsPanel.vue';
 import WorkspaceTasksPanel from './WorkspaceTasksPanel.vue';
-import WorkspaceAgentPlaceholder from './WorkspaceAgentPlaceholder.vue';
+import WorkspaceAgentPanel from './WorkspaceAgentPanel.vue';
 
 import { apiClient } from '@/api/client.js';
 import { useProjectEvents } from '@/composables/useProjectEvents.js';
@@ -284,7 +284,10 @@ function handleViewDetails(version: ImageVersion) {
                   v-if="rightTab === 'tasks'"
                   :project-id="projectId"
                 />
-                <WorkspaceAgentPlaceholder v-if="rightTab === 'agent'" />
+                <WorkspaceAgentPanel
+                  v-if="rightTab === 'agent'"
+                  :project-id="projectId"
+                />
               </div>
             </Tabs>
           </div>
@@ -673,7 +676,10 @@ function handleViewDetails(version: ImageVersion) {
                 v-if="rightTab === 'tasks'"
                 :project-id="projectId"
               />
-              <WorkspaceAgentPlaceholder v-if="rightTab === 'agent'" />
+              <WorkspaceAgentPanel
+                v-if="rightTab === 'agent'"
+                :project-id="projectId"
+              />
             </div>
           </Tabs>
         </div>
@@ -709,7 +715,10 @@ function handleViewDetails(version: ImageVersion) {
                   v-if="rightTab === 'tasks'"
                   :project-id="projectId"
                 />
-                <WorkspaceAgentPlaceholder v-if="rightTab === 'agent'" />
+                <WorkspaceAgentPanel
+                  v-if="rightTab === 'agent'"
+                  :project-id="projectId"
+                />
               </div>
             </Tabs>
           </SheetContent>

@@ -5,6 +5,7 @@ export const QUEUE_ASSET_VALIDATION = 'exhibition-asset-validation';
 export const QUEUE_IMAGE_GENERATION = 'exhibition-image-generation';
 export const QUEUE_BRIEF_PARSE = 'exhibition-brief-parse';
 export const QUEUE_DESIGN_DIRECTION = 'exhibition-design-direction';
+export const QUEUE_AGENT_RUN = 'exhibition-agent-run';
 
 export interface QueueConfig {
   connection: Redis;
@@ -31,6 +32,13 @@ export type BriefParseJobData = {
 export type DesignDirectionJobData = {
   taskId: string;
   projectId: string;
+  outboxId: string;
+};
+
+export type AgentRunJobData = {
+  taskId: string;
+  projectId: string;
+  conversationId: string;
   outboxId: string;
 };
 
@@ -66,6 +74,16 @@ export function createBriefParseQueue(config: QueueConfig) {
 
 export function createDesignDirectionQueue(config: QueueConfig) {
   return new Queue<DesignDirectionJobData>(QUEUE_DESIGN_DIRECTION, {
+    connection: config.connection,
+    defaultJobOptions: {
+      removeOnComplete: { count: 100 },
+      removeOnFail: { count: 500 },
+    },
+  });
+}
+
+export function createAgentRunQueue(config: QueueConfig) {
+  return new Queue<AgentRunJobData>(QUEUE_AGENT_RUN, {
     connection: config.connection,
     defaultJobOptions: {
       removeOnComplete: { count: 100 },
