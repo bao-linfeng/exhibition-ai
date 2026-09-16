@@ -23,6 +23,9 @@ importers:
       '@types/node':
         specifier: 24.13.4
         version: 24.13.4
+      drizzle-orm:
+        specifier: 0.37.0
+        version: 0.37.0(@types/pg@8.23.1)(pg@8.23.0)
       eslint:
         specifier: 10.10.0
         version: 10.10.0(jiti@2.7.0)
@@ -84,6 +87,9 @@ importers:
       '@exhibition/api-client':
         specifier: workspace:*
         version: link:../../packages/api-client
+      '@exhibition/contracts':
+        specifier: workspace:*
+        version: link:../../packages/contracts
       '@lucide/vue':
         specifier: 1.46.0
         version: 1.46.0(vue@3.5.42(typescript@5.9.3))

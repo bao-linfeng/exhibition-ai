@@ -8,6 +8,11 @@
       "development": "./src/index.ts",
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
+    },
+    "./generated": {
+      "development": "./src/generated.ts",
+      "types": "./dist/generated.d.ts",
+      "import": "./dist/generated.js"
     }
   },
   "scripts": {

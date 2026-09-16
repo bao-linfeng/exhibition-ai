@@ -281,8 +281,9 @@ function reloadPage() {
           size="sm"
           class="mt-3 border-red-200 hover:bg-red-100"
           @click="reloadPage"
-          >刷新页面</Button
         >
+          刷新页面
+        </Button>
       </div>
     </div>
 
@@ -299,22 +300,22 @@ function reloadPage() {
           <div class="space-y-2">
             <Label>宽度 (m) <span class="text-destructive">*</span></Label>
             <Input
+              v-model="formData.booth.widthM"
               type="number"
               step="0.01"
               min="0.01"
               max="100"
-              v-model="formData.booth.widthM"
               required
             />
           </div>
           <div class="space-y-2">
             <Label>深度 (m) <span class="text-destructive">*</span></Label>
             <Input
+              v-model="formData.booth.depthM"
               type="number"
               step="0.01"
               min="0.01"
               max="100"
-              v-model="formData.booth.depthM"
               required
             />
           </div>
@@ -329,11 +330,11 @@ function reloadPage() {
           <div class="space-y-2">
             <Label>限高 (m) <span class="text-destructive">*</span></Label>
             <Input
+              v-model="formData.booth.heightLimitM"
               type="number"
               step="0.01"
               min="0.01"
               max="100"
-              v-model="formData.booth.heightLimitM"
               required
             />
           </div>
@@ -403,8 +404,8 @@ function reloadPage() {
             <Label>主品牌色</Label>
             <div class="flex gap-2">
               <input
-                type="color"
                 v-model="formData.brand.primaryColor"
+                type="color"
                 class="h-10 w-12 rounded border p-1 cursor-pointer"
               />
               <Input
@@ -419,8 +420,8 @@ function reloadPage() {
             <Label>辅助色</Label>
             <div class="flex gap-2">
               <input
-                type="color"
                 v-model="formData.brand.secondaryColor"
+                type="color"
                 class="h-10 w-12 rounded border p-1 cursor-pointer"
               />
               <Input
@@ -436,16 +437,17 @@ function reloadPage() {
             <div class="flex gap-2 mb-2">
               <Input
                 v-model="visualKeywordInput"
-                @keydown.enter.prevent="addVisualKeyword"
                 placeholder="输入关键词后按回车或点击添加"
                 maxlength="40"
+                @keydown.enter.prevent="addVisualKeyword"
               />
               <Button
                 type="button"
                 variant="secondary"
                 @click="addVisualKeyword"
-                >添加</Button
               >
+                添加
+              </Button>
             </div>
             <div class="flex flex-wrap gap-2">
               <div
@@ -456,8 +458,8 @@ function reloadPage() {
                 {{ kw }}
                 <button
                   type="button"
-                  @click="removeVisualKeyword(idx)"
                   class="text-muted-foreground hover:text-foreground"
+                  @click="removeVisualKeyword(idx)"
                 >
                   <Trash2 class="w-3 h-3" />
                 </button>
@@ -488,8 +490,8 @@ function reloadPage() {
           >
             <button
               type="button"
-              @click="removeArea(idx)"
               class="absolute right-4 top-4 text-muted-foreground hover:text-destructive"
+              @click="removeArea(idx)"
             >
               <Trash2 class="w-4 h-4" />
             </button>
@@ -512,10 +514,10 @@ function reloadPage() {
               <div class="space-y-2">
                 <Label>数量</Label>
                 <Input
+                  v-model="area.quantity"
                   type="number"
                   min="1"
                   max="100"
-                  v-model="area.quantity"
                 />
               </div>
               <div
@@ -523,8 +525,8 @@ function reloadPage() {
               >
                 <label class="flex items-center gap-2 cursor-pointer">
                   <input
-                    type="checkbox"
                     v-model="area.required"
+                    type="checkbox"
                     class="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary"
                   />
                   <span class="text-sm font-medium">必须包含 (Required)</span>
@@ -560,13 +562,17 @@ function reloadPage() {
             <div class="flex gap-2 mb-2">
               <Input
                 v-model="styleKeywordInput"
-                @keydown.enter.prevent="addStyleKeyword"
                 placeholder="例如：现代、极简、科技感"
                 maxlength="80"
+                @keydown.enter.prevent="addStyleKeyword"
               />
-              <Button type="button" variant="secondary" @click="addStyleKeyword"
-                >添加</Button
+              <Button
+                type="button"
+                variant="secondary"
+                @click="addStyleKeyword"
               >
+                添加
+              </Button>
             </div>
             <div class="flex flex-wrap gap-2">
               <div
@@ -577,8 +583,8 @@ function reloadPage() {
                 {{ kw }}
                 <button
                   type="button"
-                  @click="removeStyleKeyword(idx)"
                   class="text-primary hover:text-primary/70"
+                  @click="removeStyleKeyword(idx)"
                 >
                   <Trash2 class="w-3 h-3" />
                 </button>
@@ -591,13 +597,13 @@ function reloadPage() {
             <div class="flex gap-2 mb-2">
               <Input
                 v-model="materialInput"
-                @keydown.enter.prevent="addMaterial"
                 placeholder="例如：木纹、拉丝金属"
                 maxlength="80"
+                @keydown.enter.prevent="addMaterial"
               />
-              <Button type="button" variant="secondary" @click="addMaterial"
-                >添加</Button
-              >
+              <Button type="button" variant="secondary" @click="addMaterial">
+                添加
+              </Button>
             </div>
             <div class="flex flex-wrap gap-2">
               <div
@@ -608,8 +614,8 @@ function reloadPage() {
                 {{ m }}
                 <button
                   type="button"
-                  @click="removeMaterial(idx)"
                   class="text-muted-foreground hover:text-foreground"
+                  @click="removeMaterial(idx)"
                 >
                   <Trash2 class="w-3 h-3" />
                 </button>
@@ -622,13 +628,13 @@ function reloadPage() {
             <div class="flex gap-2 mb-2">
               <Input
                 v-model="forbiddenInput"
-                @keydown.enter.prevent="addForbidden"
                 placeholder="绝对不要出现的元素或材质"
                 maxlength="80"
+                @keydown.enter.prevent="addForbidden"
               />
-              <Button type="button" variant="secondary" @click="addForbidden"
-                >添加</Button
-              >
+              <Button type="button" variant="secondary" @click="addForbidden">
+                添加
+              </Button>
             </div>
             <div class="flex flex-wrap gap-2">
               <div
@@ -639,8 +645,8 @@ function reloadPage() {
                 {{ f }}
                 <button
                   type="button"
-                  @click="removeForbidden(idx)"
                   class="text-red-700 hover:text-red-900"
+                  @click="removeForbidden(idx)"
                 >
                   <Trash2 class="w-3 h-3" />
                 </button>
@@ -667,10 +673,10 @@ function reloadPage() {
                 >¥</span
               >
               <Input
+                v-model="budgetYuan"
                 type="number"
                 step="1"
                 min="0"
-                v-model="budgetYuan"
                 class="pl-8"
                 placeholder="填写预算金额"
               />
@@ -679,7 +685,7 @@ function reloadPage() {
 
           <div class="space-y-2">
             <Label>期望定稿日期</Label>
-            <Input type="date" v-model="formData.deadline" />
+            <Input v-model="formData.deadline" type="date" />
           </div>
 
           <div class="space-y-2 md:col-span-2">

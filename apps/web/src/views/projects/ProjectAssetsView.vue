@@ -334,8 +334,8 @@ function getStatusBadgeVariant(status: string) {
     </PageHeader>
 
     <input
-      type="file"
       ref="fileInput"
+      type="file"
       multiple
       accept="image/png,image/jpeg,image/webp"
       class="hidden"
@@ -429,7 +429,7 @@ function getStatusBadgeVariant(status: string) {
           </Button>
         </div>
       </div>
-      <div class="w-px h-6 bg-border mx-2 hidden sm:block"></div>
+      <div class="w-px h-6 bg-border mx-2 hidden sm:block" />
       <div class="flex items-center gap-2">
         <span class="text-sm font-medium text-muted-foreground">状态:</span>
         <div class="flex gap-1 flex-wrap">
@@ -516,8 +516,8 @@ function getStatusBadgeVariant(status: string) {
               :project-id="projectId"
               :asset-id="asset.id"
               :status="asset.status"
-              @click="previewOriginal(asset)"
               class="mb-4"
+              @click="previewOriginal(asset)"
             />
 
             <div class="mt-auto space-y-3">
@@ -554,8 +554,8 @@ function getStatusBadgeVariant(status: string) {
                   variant="ghost"
                   size="icon"
                   class="text-destructive hover:text-destructive hover:bg-destructive/10 shrink-0"
-                  @click="confirmHide(asset)"
                   title="删除"
+                  @click="confirmHide(asset)"
                 >
                   <Trash2 class="h-4 w-4" />
                 </Button>
@@ -583,13 +583,13 @@ function getStatusBadgeVariant(status: string) {
           </p>
         </div>
         <DialogFooter>
-          <Button variant="outline" @click="showHideDialog = false"
-            >取消</Button
-          >
+          <Button variant="outline" @click="showHideDialog = false">
+            取消
+          </Button>
           <Button
             variant="destructive"
-            @click="handleHide"
             :disabled="hideAssetMutation.isPending.value"
+            @click="handleHide"
           >
             {{ hideAssetMutation.isPending.value ? '删除中...' : '确认删除' }}
           </Button>

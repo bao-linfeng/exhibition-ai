@@ -63,8 +63,9 @@ function viewProject(id: string) {
           v-if="userStore.canManageCustomers"
           variant="outline"
           @click="editCustomer"
-          >编辑资料</Button
         >
+          编辑资料
+        </Button>
       </template>
     </PageHeader>
 

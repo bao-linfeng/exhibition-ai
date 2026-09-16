@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@exhibition/api-client": "workspace:*",
+    "@exhibition/contracts": "workspace:*",
     "@lucide/vue": "1.46.0",
     "@tanstack/vue-query": "5.64.1",
     "@vueuse/core": "14.4.0",
