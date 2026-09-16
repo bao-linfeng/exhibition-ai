@@ -3,11 +3,14 @@ import {
   ImageProviderRegistry,
   MockImageProvider,
   MockTextProvider,
+  OpenAIImageProvider,
+  OpenAITextProvider,
   PromptRegistry,
   TextProviderRegistry,
 } from '@exhibition/ai';
 import type { ProviderModelConfig } from '@exhibition/ai';
-import { logger } from '@exhibition/backend';
+import { env, logger } from '@exhibition/backend';
+import OpenAI, { toFile } from 'openai';
 
 const MOCK_FULL_CONFIG: ProviderModelConfig = {
   providerId: 'mock',
@@ -31,10 +34,36 @@ const MOCK_FULL_CONFIG: ProviderModelConfig = {
   providerConfig: {},
 };
 
+const OPENAI_IMAGE_CONFIG: ProviderModelConfig = {
+  providerId: 'openai',
+  modelId: env.AI_DEFAULT_IMAGE_MODEL ?? 'gpt-image-2.5-flare',
+  displayName: 'GPT Image (OpenAI Compatible)',
+  isActive: true,
+  capability: {
+    supportsGenerate: true,
+    supportsEdit: true,
+    supportedSizePresets: [
+      'landscape_4_3',
+      'landscape_16_9',
+      'square_1_1',
+      'portrait_3_4',
+      'portrait_9_16',
+    ],
+    maxOutputCount: 4,
+    supportsSeed: false,
+    supportsNegativePrompt: false,
+  },
+  providerConfig: {
+    outputFormat: 'png',
+    quality: env.AI_DEFAULT_IMAGE_QUALITY ?? 'medium',
+  },
+};
+
 export interface BootstrappedProviders {
   imageProviderRegistry: ImageProviderRegistry;
   textProviderRegistry: TextProviderRegistry;
   promptRegistry: PromptRegistry;
+  defaultTextProviderId: string;
 }
 
 export function bootstrapProviders(): BootstrappedProviders {
@@ -48,19 +77,57 @@ export function bootstrapProviders(): BootstrappedProviders {
   );
 
   const imageProviderRegistry = new ImageProviderRegistry();
-  imageProviderRegistry.register(MOCK_FULL_CONFIG, new MockImageProvider());
+  const textProviderRegistry = new TextProviderRegistry();
+  let defaultTextProviderId: string;
+
+  if (env.AI_PROVIDER_MODE === 'real' && env.OPENAI_API_KEY) {
+    logger.info(
+      { mode: 'real', imageModel: OPENAI_IMAGE_CONFIG.modelId },
+      'Initializing real OpenAI providers',
+    );
+
+    const openaiClient = new OpenAI({
+      apiKey: env.OPENAI_API_KEY,
+      baseURL: env.OPENAI_BASE_URL,
+      maxRetries: 0,
+    });
+
+    const textProvider = new OpenAITextProvider({
+      client: openaiClient,
+      modelId: env.AI_DEFAULT_TEXT_MODEL ?? 'gpt-5.6-terra',
+    });
+    textProviderRegistry.register('openai', textProvider);
+    defaultTextProviderId = 'openai';
+
+    const imageProvider = new OpenAIImageProvider({
+      client: openaiClient,
+      modelId: OPENAI_IMAGE_CONFIG.modelId,
+      capability: OPENAI_IMAGE_CONFIG.capability,
+      toFile: (buffer: Buffer, name: string, opts?: { type?: string }) =>
+        toFile(buffer, name, opts),
+    });
+    imageProviderRegistry.register(OPENAI_IMAGE_CONFIG, imageProvider);
+  } else {
+    if (env.AI_PROVIDER_MODE === 'real' && !env.OPENAI_API_KEY) {
+      logger.warn(
+        'AI_PROVIDER_MODE=real but OPENAI_API_KEY is missing — falling back to mock',
+      );
+    }
+    imageProviderRegistry.register(MOCK_FULL_CONFIG, new MockImageProvider());
+    textProviderRegistry.register('mock-text', new MockTextProvider());
+    defaultTextProviderId = 'mock-text';
+  }
+
   logger.info(
-    {
-      models: imageProviderRegistry
-        .listActive()
-        .map((config) => config.modelId),
-    },
+    { models: imageProviderRegistry.listActive().map((c) => c.modelId) },
     'Image provider registry initialized',
   );
+  logger.info({ defaultTextProviderId }, 'Text provider registry initialized');
 
-  const textProviderRegistry = new TextProviderRegistry();
-  textProviderRegistry.register('mock-text', new MockTextProvider());
-  logger.info('Text provider registry initialized');
-
-  return { imageProviderRegistry, textProviderRegistry, promptRegistry };
+  return {
+    imageProviderRegistry,
+    textProviderRegistry,
+    promptRegistry,
+    defaultTextProviderId,
+  };
 }

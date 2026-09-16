@@ -1,6 +1,17 @@
-import type { Database, QuotaAccount } from '@exhibition/db';
+import { and, eq, sql } from 'drizzle-orm';
+import {
+  type Database,
+  type QuotaAccount,
+  quotaAccounts,
+  tasks,
+  usageLedger,
+} from '@exhibition/db';
 import type { AuditService } from '../audit/audit.service.js';
-import type { QuotaRepository } from './quota.repository.js';
+import type {
+  DatabaseTransaction,
+  QuotaRepository,
+} from './quota.repository.js';
+import { quotaPeriodDate } from './quota-period.js';
 
 export interface ReserveResult {
   ok: boolean;
@@ -11,16 +22,20 @@ export interface ReserveResult {
 
 export interface SettleInput {
   taskId: string;
-  attemptOrdinal: number | null;
-  accountId: string;
-  reservedAmountMinor: number;
   actualAmountMinor: number;
-  feeStatus: 'actual' | 'unknown';
-  currency: string;
-  provider: string;
-  model: string;
-  periodDate: string;
+  providerUsage?: Record<string, unknown> | null;
 }
+
+export type SettleResult =
+  | { ok: true }
+  | {
+      ok: false;
+      reason:
+        | 'no_reserve'
+        | 'already_settled'
+        | 'amount_mismatch'
+        | 'insufficient_reserved';
+    };
 
 export class QuotaService {
   constructor(
@@ -82,7 +97,7 @@ export class QuotaService {
         return;
       }
 
-      const today = new Date().toISOString().slice(0, 10);
+      const today = quotaPeriodDate();
       await this.quotaRepo.insertLedgerEntry(tx, {
         taskId: input.taskId,
         attemptOrdinal: null,
@@ -93,6 +108,7 @@ export class QuotaService {
         currency: input.currency,
         provider: input.provider,
         model: input.model,
+        providerUsage: null,
         periodDate: today,
       });
 
@@ -109,78 +125,194 @@ export class QuotaService {
     return result!;
   }
 
-  async settleTask(input: SettleInput): Promise<void> {
+  async settleTask(input: SettleInput): Promise<SettleResult> {
+    let result: SettleResult | undefined;
     await this.db.transaction(async (tx) => {
-      if (input.feeStatus === 'unknown') {
-        await this.quotaRepo.atomicRelease(
-          tx,
-          input.accountId,
-          input.reservedAmountMinor,
-        );
-        await this.quotaRepo.insertLedgerEntry(tx, {
-          taskId: input.taskId,
-          attemptOrdinal: input.attemptOrdinal,
-          accountId: input.accountId,
-          entryType: 'settle_unknown',
-          feeStatus: 'unknown',
-          amountMinor: input.actualAmountMinor,
-          currency: input.currency,
-          provider: input.provider,
-          model: input.model,
-          periodDate: input.periodDate,
-        });
+      const reserve = await this.lockReserve(tx, input.taskId);
+      if (!reserve) {
+        result = { ok: false, reason: 'no_reserve' };
+        return;
+      }
+      if (await this.hasFinalOrUnknown(tx, input.taskId)) {
+        result = { ok: false, reason: 'already_settled' };
+        return;
+      }
+      if (
+        !Number.isSafeInteger(input.actualAmountMinor) ||
+        input.actualAmountMinor < 0 ||
+        input.actualAmountMinor !== reserve.amountMinor
+      ) {
+        result = { ok: false, reason: 'amount_mismatch' };
         return;
       }
 
-      await this.quotaRepo.atomicSettle(
-        tx,
-        input.accountId,
-        input.reservedAmountMinor,
-        input.actualAmountMinor,
-      );
-      await this.quotaRepo.insertLedgerEntry(tx, {
-        taskId: input.taskId,
-        attemptOrdinal: input.attemptOrdinal,
-        accountId: input.accountId,
-        entryType: 'settle_actual',
-        feeStatus: 'actual',
-        amountMinor: input.actualAmountMinor,
-        currency: input.currency,
-        provider: input.provider,
-        model: input.model,
-        periodDate: input.periodDate,
-      });
-    });
-  }
+      await this.lockAccount(tx, reserve.accountId);
+      const [account] = await tx
+        .update(quotaAccounts)
+        .set({
+          balanceMinor: sql`${quotaAccounts.balanceMinor} - ${input.actualAmountMinor}`,
+          reservedMinor: sql`${quotaAccounts.reservedMinor} - ${reserve.amountMinor}`,
+          updatedAt: new Date(),
+        })
+        .where(
+          and(
+            eq(quotaAccounts.id, reserve.accountId),
+            sql`${quotaAccounts.reservedMinor} >= ${reserve.amountMinor}`,
+          ),
+        )
+        .returning({ id: quotaAccounts.id });
+      if (!account) {
+        result = { ok: false, reason: 'insufficient_reserved' };
+        return;
+      }
 
-  async releaseReservation(input: {
-    taskId: string;
-    accountId: string;
-    reservedAmountMinor: number;
-    currency: string;
-    provider: string;
-    model: string;
-  }): Promise<void> {
-    const today = new Date().toISOString().slice(0, 10);
-    await this.db.transaction(async (tx) => {
-      await this.quotaRepo.atomicRelease(
-        tx,
-        input.accountId,
-        input.reservedAmountMinor,
-      );
       await this.quotaRepo.insertLedgerEntry(tx, {
         taskId: input.taskId,
         attemptOrdinal: null,
-        accountId: input.accountId,
-        entryType: 'release',
-        feeStatus: 'estimated',
-        amountMinor: input.reservedAmountMinor,
-        currency: input.currency,
-        provider: input.provider,
-        model: input.model,
-        periodDate: today,
+        accountId: reserve.accountId,
+        entryType: 'settle_actual',
+        feeStatus: 'actual',
+        amountMinor: input.actualAmountMinor,
+        currency: reserve.currency,
+        provider: reserve.provider,
+        model: reserve.model,
+        providerUsage: jsonSafe(input.providerUsage),
+        periodDate: reserve.periodDate,
       });
+      await tx
+        .update(tasks)
+        .set({
+          fee: {
+            status: 'actual',
+            amountMinor: input.actualAmountMinor,
+            currency: reserve.currency,
+            provider: reserve.provider ?? '',
+            model: reserve.model ?? '',
+          },
+        })
+        .where(eq(tasks.id, input.taskId));
+      result = { ok: true };
     });
+    return result!;
+  }
+
+  async releaseReservation(input: { taskId: string }): Promise<void> {
+    await this.db.transaction(async (tx) => {
+      const reserve = await this.lockReserve(tx, input.taskId);
+      if (!reserve || (await this.hasFinalOrUnknown(tx, input.taskId))) return;
+      await this.lockAccount(tx, reserve.accountId);
+      const [account] = await tx
+        .update(quotaAccounts)
+        .set({
+          reservedMinor: sql`${quotaAccounts.reservedMinor} - ${reserve.amountMinor}`,
+          updatedAt: new Date(),
+        })
+        .where(
+          and(
+            eq(quotaAccounts.id, reserve.accountId),
+            sql`${quotaAccounts.reservedMinor} >= ${reserve.amountMinor}`,
+          ),
+        )
+        .returning({ id: quotaAccounts.id });
+      if (!account) throw new Error('Quota reservation is no longer available');
+      await this.quotaRepo.insertLedgerEntry(tx, {
+        taskId: input.taskId,
+        attemptOrdinal: null,
+        accountId: reserve.accountId,
+        entryType: 'release',
+        feeStatus: 'actual',
+        amountMinor: 0,
+        currency: reserve.currency,
+        provider: reserve.provider,
+        model: reserve.model,
+        providerUsage: null,
+        periodDate: reserve.periodDate,
+      });
+      await tx
+        .update(tasks)
+        .set({
+          fee: {
+            status: 'actual',
+            amountMinor: 0,
+            currency: reserve.currency,
+            provider: reserve.provider ?? '',
+            model: reserve.model ?? '',
+          },
+        })
+        .where(eq(tasks.id, input.taskId));
+    });
+  }
+
+  async markUnknown(input: {
+    taskId: string;
+    providerUsage?: Record<string, unknown> | null;
+  }): Promise<void> {
+    await this.db.transaction(async (tx) => {
+      const reserve = await this.lockReserve(tx, input.taskId);
+      if (!reserve || (await this.hasFinalOrUnknown(tx, input.taskId))) return;
+      await this.lockAccount(tx, reserve.accountId);
+      await this.quotaRepo.insertLedgerEntry(tx, {
+        taskId: input.taskId,
+        attemptOrdinal: null,
+        accountId: reserve.accountId,
+        entryType: 'settle_unknown',
+        feeStatus: 'unknown',
+        amountMinor: reserve.amountMinor,
+        currency: reserve.currency,
+        provider: reserve.provider,
+        model: reserve.model,
+        providerUsage: jsonSafe(input.providerUsage),
+        periodDate: reserve.periodDate,
+      });
+      await tx
+        .update(tasks)
+        .set({
+          fee: {
+            status: 'unknown',
+            amountMinor: reserve.amountMinor,
+            currency: reserve.currency,
+            provider: reserve.provider ?? '',
+            model: reserve.model ?? '',
+          },
+        })
+        .where(eq(tasks.id, input.taskId));
+    });
+  }
+
+  private async lockReserve(tx: DatabaseTransaction, taskId: string) {
+    await tx.execute(
+      sql`SELECT id FROM usage_ledger WHERE task_id = ${taskId} AND entry_type = 'reserve' FOR UPDATE`,
+    );
+    const [reserve] = await tx
+      .select()
+      .from(usageLedger)
+      .where(
+        and(
+          eq(usageLedger.taskId, taskId),
+          eq(usageLedger.entryType, 'reserve'),
+        ),
+      );
+    return reserve ?? null;
+  }
+
+  private async hasFinalOrUnknown(tx: DatabaseTransaction, taskId: string) {
+    const entries = await tx
+      .select({ id: usageLedger.id })
+      .from(usageLedger)
+      .where(
+        and(
+          eq(usageLedger.taskId, taskId),
+          sql`${usageLedger.entryType} IN ('settle_actual', 'release', 'settle_unknown')`,
+        ),
+      )
+      .limit(1);
+    return entries.length > 0;
+  }
+
+  private async lockAccount(tx: DatabaseTransaction, accountId: string) {
+    await tx.execute(
+      sql`SELECT id FROM quota_accounts WHERE id = ${accountId} FOR UPDATE`,
+    );
   }
 
   async topup(input: {
@@ -223,4 +355,11 @@ export class QuotaService {
 
     return this.toDto(updated);
   }
+}
+
+function jsonSafe(
+  value: Record<string, unknown> | null | undefined,
+): Record<string, unknown> | null {
+  if (!value) return null;
+  return JSON.parse(JSON.stringify(value)) as Record<string, unknown>;
 }

@@ -32,6 +32,7 @@ export async function processDesignDirection(
     briefRepo: BriefRepository;
     directionRepo: DirectionRepository;
     textProviderRegistry: TextProviderRegistry;
+    textProviderId: string;
     promptRegistry: PromptRegistry;
   },
 ): Promise<void> {
@@ -41,6 +42,7 @@ export async function processDesignDirection(
     briefRepo,
     directionRepo,
     textProviderRegistry,
+    textProviderId,
     promptRegistry,
   } = deps;
 
@@ -71,7 +73,7 @@ export async function processDesignDirection(
     });
     let result;
     try {
-      const provider = textProviderRegistry.resolve('mock-text');
+      const provider = textProviderRegistry.resolve(textProviderId);
       result = await provider.generate({
         requestId: taskId,
         promptSnapshot: { ...promptSnapshot },

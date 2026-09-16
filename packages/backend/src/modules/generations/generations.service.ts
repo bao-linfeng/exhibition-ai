@@ -6,14 +6,29 @@ import type {
   TaskOutput,
 } from '@exhibition/contracts';
 import type { TaskRepository } from '../tasks/tasks.repository.js';
-import type { GenerationRepository } from './generations.repository.js';
+import { env } from '../../infrastructure/index.js';
+import type { ModelConfigRepository } from '../settings/model-config.repository.js';
+import {
+  GenerationRepository,
+  InsufficientQuotaError,
+} from './generations.repository.js';
 
-function hashParameters(params: Record<string, unknown>): string {
-  const sorted: Record<string, unknown> = {};
-  for (const key of Object.keys(params).sort()) {
-    sorted[key] = params[key];
+function canonicalize(value: unknown): unknown {
+  if (Array.isArray(value)) return value.map(canonicalize);
+  if (value && typeof value === 'object') {
+    return Object.fromEntries(
+      Object.entries(value as Record<string, unknown>)
+        .sort(([left], [right]) => left.localeCompare(right))
+        .map(([key, nested]) => [key, canonicalize(nested)]),
+    );
   }
-  return createHash('sha256').update(JSON.stringify(sorted)).digest('hex');
+  return value;
+}
+
+function hashExecutionInput(input: Record<string, unknown>): string {
+  return createHash('sha256')
+    .update(JSON.stringify(canonicalize(input)))
+    .digest('hex');
 }
 
 function toGenerationSummary(row: {
@@ -52,6 +67,7 @@ export class GenerationService {
   constructor(
     private genRepo: GenerationRepository,
     private taskRepo: TaskRepository,
+    private modelConfigRepo: ModelConfigRepository,
     private queues: Map<string, Queue>,
   ) {}
 
@@ -60,19 +76,32 @@ export class GenerationService {
     body: CreateGenerationRequest,
     requestedBy: string,
     isMemberOrAdmin: boolean,
-  ): Promise<{ taskId: string; status: 'pending' } | 'forbidden' | 'conflict'> {
+  ): Promise<
+    | { taskId: string; status: 'pending' }
+    | 'forbidden'
+    | 'conflict'
+    | 'insufficient_quota'
+    | 'pricing_not_configured'
+    | 'model_not_found'
+    | 'model_disabled'
+    | 'model_not_executable'
+  > {
     if (!isMemberOrAdmin) return 'forbidden';
 
     const directionId =
       body.mode === 'generate' ? body.directionId : (body.directionId ?? null);
-    const paramHash = hashParameters({
+    const paramHash = hashExecutionInput({
       mode: body.mode,
       briefRevisionId: body.briefRevisionId,
       directionId,
       parentVersionId: body.parentVersionId,
+      inputAssetIds: body.inputAssetIds ?? [],
       instruction: body.instruction,
       modelConfigId: body.modelConfigId,
       parameters: body.parameters,
+      expectedProjectRevision: body.expectedProjectRevision,
+      acknowledgeBriefChange:
+        body.mode === 'edit' ? body.acknowledgeBriefChange : undefined,
     });
     const idempotencyKey = createHash('sha256')
       .update(`${projectId}:${requestedBy}:${paramHash}`)
@@ -85,35 +114,70 @@ export class GenerationService {
       return { taskId: task.id, status: 'pending' };
     }
 
+    const modelConfig = await this.modelConfigRepo.findById(body.modelConfigId);
+    if (!modelConfig) return 'model_not_found';
+    if (!modelConfig.isActive) return 'model_disabled';
+
+    if (
+      env.AI_PROVIDER_MODE === 'real' &&
+      modelConfig.providerId !== 'mock' &&
+      modelConfig.costPerImageMinor <= 0
+    ) {
+      return 'pricing_not_configured';
+    }
+
+    const executableModelId =
+      env.AI_PROVIDER_MODE === 'real' &&
+      env.OPENAI_API_KEY &&
+      modelConfig.providerId === 'openai'
+        ? env.AI_DEFAULT_IMAGE_MODEL
+        : env.AI_PROVIDER_MODE !== 'real' && modelConfig.providerId === 'mock'
+          ? 'mock-full'
+          : null;
+    if (modelConfig.modelId !== executableModelId)
+      return 'model_not_executable';
     const outputCount = body.parameters.count ?? 1;
-    const inputSnapshot: Record<string, unknown> = {
-      mode: body.mode,
-      briefRevisionId: body.briefRevisionId,
-      directionId,
-      parentVersionId: body.parentVersionId,
-      inputAssetIds: body.inputAssetIds ?? [],
-      instruction: body.instruction,
-      modelConfigId: body.modelConfigId,
-      parameters: body.parameters,
-      parametersHash: paramHash,
-      requestedAt: new Date().toISOString(),
+    const estimatedFee = {
+      status: 'estimated' as const,
+      amountMinor: modelConfig.costPerImageMinor * outputCount,
+      currency: modelConfig.currency,
+      provider: modelConfig.providerId,
+      model: modelConfig.modelId,
     };
-    const { task, outbox } = await this.genRepo.createWithOutbox({
-      projectId,
-      mode: body.mode,
-      briefRevisionId: body.briefRevisionId,
-      directionId,
-      parentVersionId: body.parentVersionId,
-      inputAssetIds: body.inputAssetIds ?? [],
-      instruction: body.instruction,
-      modelConfigId: body.modelConfigId,
-      parameters: body.parameters as Record<string, unknown>,
-      parametersHash: paramHash,
-      idempotencyKey,
-      requestedBy,
-      outputCount,
-      inputSnapshot,
-    });
+    let created: Awaited<ReturnType<GenerationRepository['createWithOutbox']>>;
+    try {
+      created = await this.genRepo.createWithOutbox({
+        projectId,
+        mode: body.mode,
+        briefRevisionId: body.briefRevisionId,
+        directionId,
+        parentVersionId: body.parentVersionId,
+        inputAssetIds: body.inputAssetIds ?? [],
+        instruction: body.instruction,
+        modelConfigId: body.modelConfigId,
+        parameters: body.parameters as Record<string, unknown>,
+        parametersHash: paramHash,
+        idempotencyKey,
+        requestedBy,
+        outputCount,
+        modelSnapshot: {
+          providerId: modelConfig.providerId,
+          modelId: modelConfig.modelId,
+          costPerImageMinor: modelConfig.costPerImageMinor,
+          currency: modelConfig.currency,
+        },
+        estimatedFee,
+      });
+    } catch (err) {
+      if (err instanceof InsufficientQuotaError) return 'insufficient_quota';
+      if (isUniqueViolation(err)) {
+        const concurrent =
+          await this.genRepo.findByIdempotencyKey(idempotencyKey);
+        if (concurrent) return { taskId: concurrent.taskId, status: 'pending' };
+      }
+      throw err;
+    }
+    const { task, outbox } = created;
 
     await this.relayOutbox(
       outbox.id,
@@ -141,7 +205,7 @@ export class GenerationService {
         backoff: { type: 'exponential', delay: 5000 },
       });
       await this.taskRepo.markOutboxPublished(outboxId);
-      await this.taskRepo.updateStatus(taskId, 'queued');
+      await this.taskRepo.markQueuedIfPending(taskId);
     } catch {
       await this.taskRepo.incrementOutboxAttempt(outboxId);
     }
@@ -166,4 +230,13 @@ export class GenerationService {
       page: result.page,
     };
   }
+}
+
+function isUniqueViolation(err: unknown): boolean {
+  return (
+    typeof err === 'object' &&
+    err !== null &&
+    'code' in err &&
+    err.code === '23505'
+  );
 }

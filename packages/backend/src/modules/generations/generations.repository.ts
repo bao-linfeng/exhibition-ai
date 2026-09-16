@@ -1,10 +1,21 @@
 import { and, desc, eq, lt } from 'drizzle-orm';
 import type { Database } from '@exhibition/db';
 import { generationRequests, taskOutbox, tasks } from '@exhibition/db';
-import type { TaskKind, TaskOutput } from '@exhibition/contracts';
+import type { TaskFee, TaskKind, TaskOutput } from '@exhibition/contracts';
+import type { QuotaRepository } from '../settings/quota.repository.js';
+import { quotaPeriodDate } from '../settings/quota-period.js';
+
+export class InsufficientQuotaError extends Error {
+  constructor(message = 'Insufficient quota') {
+    super(message);
+  }
+}
 
 export class GenerationRepository {
-  constructor(private db: Database) {}
+  constructor(
+    private db: Database,
+    private quotaRepo: QuotaRepository,
+  ) {}
 
   async findByIdempotencyKey(key: string) {
     const [row] = await this.db
@@ -36,9 +47,40 @@ export class GenerationRepository {
     idempotencyKey: string;
     requestedBy: string;
     outputCount: number;
-    inputSnapshot: Record<string, unknown>;
+    modelSnapshot: {
+      providerId: string;
+      modelId: string;
+      costPerImageMinor: number;
+      currency: string;
+    };
+    estimatedFee: TaskFee;
   }) {
     return this.db.transaction(async (tx) => {
+      const account = await this.quotaRepo.findOrCreateSystemAccountIn(
+        tx,
+        input.modelSnapshot.currency,
+      );
+      const periodDate = quotaPeriodDate();
+      const inputSnapshot: Record<string, unknown> = {
+        mode: input.mode,
+        briefRevisionId: input.briefRevisionId,
+        directionId: input.directionId,
+        parentVersionId: input.parentVersionId,
+        inputAssetIds: input.inputAssetIds,
+        instruction: input.instruction,
+        modelConfigId: input.modelConfigId,
+        parameters: input.parameters,
+        parametersHash: input.parametersHash,
+        requestedAt: new Date().toISOString(),
+        model: input.modelSnapshot,
+        fee: input.estimatedFee,
+        quota: {
+          accountId: account.id,
+          reservedAmountMinor: input.estimatedFee.amountMinor,
+          currency: input.estimatedFee.currency,
+          periodDate,
+        },
+      };
       const initialOutputs: TaskOutput[] = Array.from(
         { length: input.outputCount },
         (_, i) => ({
@@ -58,7 +100,8 @@ export class GenerationRepository {
           kind: 'image_generation' as TaskKind,
           subtype: input.mode,
           idempotencyKey: input.idempotencyKey,
-          inputSnapshot: input.inputSnapshot,
+          inputSnapshot,
+          fee: input.estimatedFee,
           requestedBy: input.requestedBy,
           status: 'pending',
           outputs: initialOutputs,
@@ -89,6 +132,27 @@ export class GenerationRepository {
         .returning();
 
       if (!genRequest) throw new Error('Failed to insert generation_request');
+
+      const reservation = await this.quotaRepo.atomicReserve(
+        tx,
+        account.id,
+        input.estimatedFee.amountMinor,
+      );
+      if (!reservation.ok) throw new InsufficientQuotaError();
+
+      await this.quotaRepo.insertLedgerEntry(tx, {
+        taskId: task.id,
+        attemptOrdinal: null,
+        accountId: account.id,
+        entryType: 'reserve',
+        feeStatus: 'estimated',
+        amountMinor: input.estimatedFee.amountMinor,
+        currency: input.estimatedFee.currency,
+        provider: input.estimatedFee.provider,
+        model: input.estimatedFee.model,
+        providerUsage: null,
+        periodDate,
+      });
 
       const [outboxRow] = await tx
         .insert(taskOutbox)

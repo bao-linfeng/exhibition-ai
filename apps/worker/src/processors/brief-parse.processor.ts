@@ -17,11 +17,13 @@ export async function processBriefParse(
   deps: {
     taskRepo: TaskRepository;
     textProviderRegistry: TextProviderRegistry;
+    textProviderId: string;
     promptRegistry: PromptRegistry;
   },
 ): Promise<void> {
   const { taskId } = data;
-  const { taskRepo, textProviderRegistry, promptRegistry } = deps;
+  const { taskRepo, textProviderRegistry, textProviderId, promptRegistry } =
+    deps;
 
   try {
     const task = await taskRepo.findById(taskId);
@@ -43,7 +45,7 @@ export async function processBriefParse(
 
     let result;
     try {
-      const provider = textProviderRegistry.resolve('mock-text');
+      const provider = textProviderRegistry.resolve(textProviderId);
       result = await provider.generate({
         requestId: taskId,
         promptSnapshot,

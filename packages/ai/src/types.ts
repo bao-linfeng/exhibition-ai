@@ -10,12 +10,15 @@ export type ProviderErrorCode =
   | 'provider_error'
   | 'accepted_unknown';
 
+export type ProviderAcceptance = 'rejected' | 'accepted_unknown';
+
 export class ProviderError extends Error {
   constructor(
     public readonly code: ProviderErrorCode,
     message: string,
     public readonly retryable: boolean = false,
     public readonly raw?: unknown,
+    public readonly acceptance: ProviderAcceptance = 'rejected',
   ) {
     super(message);
     this.name = 'ProviderError';
@@ -71,6 +74,7 @@ export interface ImageGenerationRequest {
   seed?: number;
   negativePrompt?: string;
   parentImageBytes?: Buffer;
+  parentImageMimeType?: string;
   maskBytes?: Buffer;
 }
 

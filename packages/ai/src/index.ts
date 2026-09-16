@@ -32,3 +32,8 @@ export {
   ImageProviderRegistry,
   TextProviderRegistry,
 } from './providers/registry.js';
+
+export {
+  OpenAITextProvider,
+  OpenAIImageProvider,
+} from './providers/openai/index.js';

@@ -109,7 +109,7 @@ export class DirectionService {
         backoff: { type: 'exponential', delay: 5000 },
       });
       await this.taskRepo.markOutboxPublished(outboxId);
-      await this.taskRepo.updateStatus(taskId, 'queued');
+      await this.taskRepo.markQueuedIfPending(taskId);
     } catch {
       await this.taskRepo.incrementOutboxAttempt(outboxId);
     }

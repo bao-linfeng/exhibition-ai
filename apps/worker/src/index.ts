@@ -17,6 +17,9 @@ import {
   ImageVersionRepository,
   BriefRepository,
   DirectionRepository,
+  QuotaRepository,
+  QuotaService,
+  AuditService,
   createImageGenerationQueue,
   QUEUE_IMAGE_GENERATION,
   createBriefParseQueue,
@@ -42,6 +45,12 @@ import { runTimeoutReconciler } from './schedulers/timeout-reconciler.js';
 
 const heartbeat = env.WORKER_HEALTH_FILE;
 export const providers = bootstrapProviders();
+const {
+  imageProviderRegistry,
+  textProviderRegistry,
+  promptRegistry,
+  defaultTextProviderId,
+} = providers;
 
 // DB + services
 const { db } = initDatabase();
@@ -61,7 +70,9 @@ const s3 = new S3StorageProvider(
   env.S3_REGION,
 );
 const assetRepo = new AssetRepository(db);
-const generationRepo = new GenerationRepository(db);
+const quotaRepo = new QuotaRepository(db);
+const generationRepo = new GenerationRepository(db, quotaRepo);
+const quotaService = new QuotaService(db, quotaRepo, new AuditService(db));
 const imageVersionRepo = new ImageVersionRepository(db);
 const briefRepo = new BriefRepository(db);
 const directionRepo = new DirectionRepository(db);
@@ -153,10 +164,11 @@ const imageGenerationWorker = new Worker(
       generationRepo,
       assetRepo,
       imageVersionRepo,
+      quotaService,
       storage: s3,
       bucket,
-      imageProviderRegistry: providers.imageProviderRegistry,
-      promptRegistry: providers.promptRegistry,
+      imageProviderRegistry,
+      promptRegistry,
     });
   },
   { connection: createQueueConnection(), concurrency: 4 },
@@ -178,8 +190,9 @@ const briefParseWorker = new Worker(
     );
     await processBriefParse(data, {
       taskRepo,
-      textProviderRegistry: providers.textProviderRegistry,
-      promptRegistry: providers.promptRegistry,
+      textProviderRegistry,
+      textProviderId: defaultTextProviderId,
+      promptRegistry,
     });
   },
   { connection: createQueueConnection(), concurrency: 2 },
@@ -203,8 +216,9 @@ const designDirectionWorker = new Worker(
       taskRepo,
       briefRepo,
       directionRepo,
-      textProviderRegistry: providers.textProviderRegistry,
-      promptRegistry: providers.promptRegistry,
+      textProviderRegistry,
+      textProviderId: defaultTextProviderId,
+      promptRegistry,
     });
   },
   { connection: createQueueConnection(), concurrency: 2 },

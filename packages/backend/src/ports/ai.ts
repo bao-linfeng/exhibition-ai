@@ -32,6 +32,7 @@ export interface ImageProviderPort {
     seed?: number;
     negativePrompt?: string;
     parentImageBytes?: Buffer;
+    parentImageMimeType?: string;
     maskBytes?: Buffer;
   }): Promise<ImageGenerationResultPort>;
 }

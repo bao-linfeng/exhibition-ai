@@ -85,6 +85,13 @@
       "when": 1789420800000,
       "tag": "0011_add_task_retried_audit_event",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1789500000008,
+      "tag": "0012_add_generation_quota_reservation",
+      "breakpoints": true
     }
   ]
 }

@@ -127,6 +127,21 @@ export class TaskRepository {
     return row ?? null;
   }
 
+  async claimForExecution(taskId: string) {
+    const [task] = await this.db
+      .update(tasks)
+      .set({
+        status: 'running',
+        startedAt: new Date(),
+        canCancel: false,
+      })
+      .where(
+        and(eq(tasks.id, taskId), inArray(tasks.status, ['pending', 'queued'])),
+      )
+      .returning();
+    return task ?? null;
+  }
+
   async findByIdempotencyKey(key: string) {
     const [row] = await this.db
       .select()
@@ -277,6 +292,24 @@ export class TaskRepository {
       .set({ status: 'reconciling' })
       .where(and(inArray(tasks.id, ids), eq(tasks.status, 'running')))
       .returning({ id: tasks.id });
+  }
+
+  async markTaskReconciling(id: string) {
+    const [task] = await this.db
+      .update(tasks)
+      .set({ status: 'reconciling', canCancel: false, canRetry: false })
+      .where(and(eq(tasks.id, id), eq(tasks.status, 'running')))
+      .returning();
+    return task ?? null;
+  }
+
+  async markQueuedIfPending(id: string) {
+    const [task] = await this.db
+      .update(tasks)
+      .set({ status: 'queued' })
+      .where(and(eq(tasks.id, id), eq(tasks.status, 'pending')))
+      .returning({ id: tasks.id });
+    return task ?? null;
   }
 
   async reconcileOutput(input: {

@@ -4,6 +4,7 @@ import type {
   AssetRepository,
   GenerationRepository,
   ImageVersionRepository,
+  QuotaService,
   StorageProvider,
   TaskRepository,
 } from '@exhibition/backend';
@@ -36,6 +37,7 @@ export async function processImageGeneration(
     generationRepo: GenerationRepository;
     assetRepo: AssetRepository;
     imageVersionRepo: ImageVersionRepository;
+    quotaService: QuotaService;
     storage: StorageProvider;
     bucket: string;
     imageProviderRegistry: ImageProviderRegistry;
@@ -48,20 +50,19 @@ export async function processImageGeneration(
     generationRepo,
     assetRepo,
     imageVersionRepo,
+    quotaService,
     storage,
     bucket,
     imageProviderRegistry,
     promptRegistry,
   } = deps;
 
+  let providerAttempted = false;
+  let settled = false;
   try {
-    const taskRow = await taskRepo.findById(taskId);
+    const taskRow = await taskRepo.claimForExecution(taskId);
     if (!taskRow) {
-      logger.warn({ taskId }, 'Task not found, skipping');
-      return;
-    }
-    if (taskRow.status === 'cancelled') {
-      logger.info({ taskId }, 'Task already cancelled, skipping execution');
+      logger.info({ taskId }, 'Task was not claimable, skipping execution');
       return;
     }
 
@@ -70,11 +71,14 @@ export async function processImageGeneration(
     const genRequest = await generationRepo.findByTaskId(lookupTaskId);
 
     if (!genRequest) {
-      await failTask(taskRepo, taskId, 'GENERATION_REQUEST_NOT_FOUND');
+      await failBeforeProvider(
+        taskRepo,
+        quotaService,
+        taskId,
+        'GENERATION_REQUEST_NOT_FOUND',
+      );
       return;
     }
-
-    await taskRepo.updateStatus(taskId, 'running', { startedAt: new Date() });
 
     const promptSnapshot = promptRegistry.snapshot('image_generation_prompt', {
       instruction: genRequest.instruction,
@@ -82,22 +86,68 @@ export async function processImageGeneration(
       briefRevisionId: genRequest.briefRevisionId,
     });
 
+    const modelSnapshot = (
+      taskRow.inputSnapshot as {
+        model?: { providerId?: string; modelId?: string };
+      } | null
+    )?.model;
+    if (!modelSnapshot?.providerId || !modelSnapshot.modelId) {
+      await failBeforeProvider(
+        taskRepo,
+        quotaService,
+        taskId,
+        'model_snapshot_missing',
+        'Task model snapshot is missing',
+        false,
+      );
+      return;
+    }
+
     let provider: ReturnType<ImageProviderRegistry['resolve']>['provider'];
     let modelConfig: ReturnType<ImageProviderRegistry['resolve']>['config'];
     try {
       ({ provider, config: modelConfig } = imageProviderRegistry.resolve(
-        genRequest.modelConfigId,
+        modelSnapshot.providerId,
       ));
     } catch (err) {
       if (err instanceof ProviderError) {
-        await failTask(taskRepo, taskId, err.code, err.message, err.retryable);
+        await failBeforeProvider(
+          taskRepo,
+          quotaService,
+          taskId,
+          err.code,
+          err.message,
+          false,
+        );
         return;
       }
       throw err;
     }
+    if (modelConfig.modelId !== modelSnapshot.modelId) {
+      await failBeforeProvider(
+        taskRepo,
+        quotaService,
+        taskId,
+        'model_not_executable',
+        `Task model is not executable: ${modelSnapshot.providerId}/${modelSnapshot.modelId}`,
+        false,
+      );
+      return;
+    }
 
     const parameters = genRequest.parameters as Record<string, unknown>;
-    const outputCount = Math.min(Math.max(Number(parameters.count ?? 1), 1), 4);
+    const outputCount = (taskRow.outputs as Array<unknown> | null)?.length ?? 0;
+    if (outputCount === 0) {
+      await failBeforeProvider(
+        taskRepo,
+        quotaService,
+        taskId,
+        'TASK_OUTPUTS_MISSING',
+        'Task has no claimed outputs to generate',
+        false,
+      );
+      return;
+    }
     const sizePreset = String(parameters.sizePreset ?? 'landscape_4_3');
     const seed =
       parameters.seed !== undefined ? Number(parameters.seed) : undefined;
@@ -107,22 +157,31 @@ export async function processImageGeneration(
         : undefined;
 
     let parentImageBytes: Buffer | undefined;
+    let parentImageMimeType: string | undefined;
     if (genRequest.mode === 'edit' && genRequest.parentVersionId) {
       try {
-        parentImageBytes = await getParentImageBytes(
+        const parentImage = await getParentImage(
           imageVersionRepo,
           storage,
           genRequest.parentVersionId,
         );
+        parentImageBytes = parentImage.bytes;
+        parentImageMimeType = parentImage.mimeType;
       } catch (err) {
         logger.warn({ taskId, err }, 'Parent image could not be loaded');
-        await failTask(taskRepo, taskId, 'PARENT_IMAGE_NOT_FOUND');
+        await failBeforeProvider(
+          taskRepo,
+          quotaService,
+          taskId,
+          'PARENT_IMAGE_NOT_FOUND',
+        );
         return;
       }
     }
 
     let result: ImageGenerationResult;
     try {
+      providerAttempted = true;
       result = await provider.generate({
         requestId: taskId,
         modelConfig,
@@ -133,14 +192,44 @@ export async function processImageGeneration(
         seed,
         negativePrompt,
         parentImageBytes,
+        parentImageMimeType,
       });
     } catch (err) {
       if (err instanceof ProviderError) {
-        await failTask(taskRepo, taskId, err.code, err.message, err.retryable);
+        if (err.acceptance === 'accepted_unknown') {
+          await quotaService.markUnknown({ taskId });
+          await taskRepo.markTaskReconciling(taskId);
+          return;
+        }
+        await failBeforeProvider(
+          taskRepo,
+          quotaService,
+          taskId,
+          err.code,
+          err.message,
+          false,
+        );
         return;
       }
-      throw err;
+      await quotaService.markUnknown({ taskId });
+      await taskRepo.markTaskReconciling(taskId);
+      return;
     }
+
+    const settleResult = await quotaService.settleTask({
+      taskId,
+      actualAmountMinor: getActualAmount(taskRow, outputCount),
+      providerUsage: result.usageHint,
+    });
+    if (!settleResult.ok) {
+      await taskRepo.markTaskReconciling(taskId);
+      logger.error(
+        { taskId, reason: settleResult.reason },
+        'Image generation settlement failed',
+      );
+      throw new Error(`Settlement failed: ${settleResult.reason}`);
+    }
+    settled = true;
 
     const dimensions =
       PRESET_DIMENSIONS[sizePreset] ?? PRESET_DIMENSIONS.landscape_4_3!;
@@ -287,7 +376,7 @@ export async function processImageGeneration(
     await taskRepo.updateStatus(taskId, status, {
       finishedAt: new Date(),
       canCancel: false,
-      canRetry: failedCount > 0,
+      canRetry: false,
     });
 
     logger.info(
@@ -296,29 +385,42 @@ export async function processImageGeneration(
     );
   } catch (err) {
     logger.error({ taskId, err }, 'Image generation error');
-    await failTask(taskRepo, taskId, 'INTERNAL_ERROR');
+    if (!providerAttempted) {
+      await failBeforeProvider(
+        taskRepo,
+        quotaService,
+        taskId,
+        'INTERNAL_ERROR',
+      );
+      return;
+    }
+    if (settled) {
+      await failTask(taskRepo, taskId, 'INTERNAL_ERROR', undefined, false);
+      return;
+    }
     throw err;
   }
 }
 
-async function getParentImageBytes(
+async function getParentImage(
   imageVersionRepo: ImageVersionRepository,
   storage: StorageProvider,
   parentVersionId: string,
-): Promise<Buffer> {
+): Promise<{ bytes: Buffer; mimeType: string }> {
   const parent = await imageVersionRepo.findAssetLocation(parentVersionId);
   if (!parent) throw new Error('Parent image version not found');
 
-  const { body } = await storage.getObject({
+  const { body, contentType } = await storage.getObject({
     bucket: parent.bucket,
     key: parent.objectKey,
   });
+  if (!contentType) throw new Error('Parent image content type is missing');
   const stream = body instanceof Readable ? body : Readable.from(body);
   const chunks: Buffer[] = [];
   for await (const chunk of stream) {
     chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
   }
-  return Buffer.concat(chunks);
+  return { bytes: Buffer.concat(chunks), mimeType: contentType };
 }
 
 async function failTask(
@@ -335,6 +437,41 @@ async function failTask(
     canCancel: false,
     canRetry,
   });
+}
+
+async function failBeforeProvider(
+  taskRepo: TaskRepository,
+  quotaService: QuotaService,
+  taskId: string,
+  errorCode: string,
+  errorMessage?: string,
+  canRetry = false,
+): Promise<void> {
+  await quotaService.releaseReservation({ taskId });
+  await failTask(taskRepo, taskId, errorCode, errorMessage, canRetry);
+}
+
+function getActualAmount(
+  task: { inputSnapshot: unknown },
+  outputCount: number,
+): number {
+  const costPerImageMinor = (
+    task.inputSnapshot as {
+      model?: { costPerImageMinor?: unknown };
+    } | null
+  )?.model?.costPerImageMinor;
+  if (
+    !Number.isSafeInteger(costPerImageMinor) ||
+    (costPerImageMinor as number) < 0 ||
+    !Number.isSafeInteger(outputCount)
+  ) {
+    throw new Error('Task pricing snapshot is invalid');
+  }
+  const actualAmountMinor = (costPerImageMinor as number) * outputCount;
+  if (!Number.isSafeInteger(actualAmountMinor)) {
+    throw new Error('Task actual amount exceeds integer limits');
+  }
+  return actualAmountMinor;
 }
 
 function failedOutput(

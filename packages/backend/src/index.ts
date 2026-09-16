@@ -232,8 +232,9 @@ export function createServices(): Services {
     queues,
   );
   const generationService = new GenerationService(
-    new GenerationRepository(drizzleDb),
+    new GenerationRepository(drizzleDb, quotaRepo),
     taskRepo,
+    modelConfigRepo,
     queues,
   );
   const imageVersionService = new ImageVersionService(

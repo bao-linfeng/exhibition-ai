@@ -1,3 +1,4 @@
+import { sql } from 'drizzle-orm';
 import {
   boolean,
   index,
@@ -7,6 +8,7 @@ import {
   pgTable,
   text,
   timestamp,
+  uniqueIndex,
   uuid,
   varchar,
 } from 'drizzle-orm/pg-core';
@@ -69,6 +71,11 @@ export const tasks = pgTable(
     index('tasks_status_idx').on(table.status),
     index('tasks_kind_idx').on(table.kind),
     index('tasks_idempotency_key_idx').on(table.idempotencyKey),
+    uniqueIndex('tasks_image_generation_idempotency_unique_idx')
+      .on(table.idempotencyKey)
+      .where(
+        sql`${table.kind} = 'image_generation' AND ${table.idempotencyKey} IS NOT NULL`,
+      ),
   ],
 );
 
