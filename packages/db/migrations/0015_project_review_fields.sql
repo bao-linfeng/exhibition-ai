@@ -1,0 +1,4 @@
+ALTER TABLE projects
+  ADD COLUMN IF NOT EXISTS rejection_reason TEXT,
+  ADD COLUMN IF NOT EXISTS approved_at TIMESTAMPTZ,
+  ADD COLUMN IF NOT EXISTS approved_snapshot JSONB;

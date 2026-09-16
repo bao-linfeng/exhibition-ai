@@ -1,5 +1,6 @@
 import {
   integer,
+  jsonb,
   pgEnum,
   pgTable,
   primaryKey,
@@ -49,6 +50,9 @@ export const projects = pgTable('projects', {
   updatedAt: timestamp('updated_at', { withTimezone: true })
     .notNull()
     .defaultNow(),
+  rejectionReason: text('rejection_reason'),
+  approvedAt: timestamp('approved_at', { withTimezone: true }),
+  approvedSnapshot: jsonb('approved_snapshot'),
   revision: integer('revision').notNull().default(1),
 });
 
