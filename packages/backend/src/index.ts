@@ -47,6 +47,7 @@ import {
   ImageVersionRepository,
 } from './modules/image-versions/index.js';
 import { EventsService } from './modules/events/index.js';
+import { ExportService, ExportRepository } from './modules/exports/index.js';
 import {
   ConversationService,
   ConversationRepository,
@@ -66,6 +67,8 @@ import {
   QUEUE_DESIGN_DIRECTION,
   createAgentRunQueue,
   QUEUE_AGENT_RUN,
+  createExportQueue,
+  QUEUE_EXPORT,
 } from './infrastructure/queue.js';
 
 export {
@@ -94,6 +97,8 @@ export {
   ImageVersionService,
   ImageVersionRepository,
   EventsService,
+  ExportService,
+  ExportRepository,
 };
 export {
   ConversationService,
@@ -141,6 +146,8 @@ export {
 export {
   QUEUE_AGENT_RUN,
   createAgentRunQueue,
+  QUEUE_EXPORT,
+  createExportQueue,
 } from './infrastructure/queue.js';
 
 export {
@@ -194,6 +201,7 @@ export interface Services {
   imageVersionService: ImageVersionService;
   conversationService: ConversationService;
   eventsService: EventsService;
+  exportService: ExportService;
   connectRedis(): Promise<void>;
   readiness(): Promise<{ postgres: boolean; redis: boolean; storage: boolean }>;
   close(): Promise<void>;
@@ -257,6 +265,8 @@ export function createServices(): Services {
   );
   const agentRunQueue = createAgentRunQueue({ connection: queueConnection });
   queues.set(QUEUE_AGENT_RUN, agentRunQueue as import('bullmq').Queue);
+  const exportQueue = createExportQueue({ connection: queueConnection });
+  queues.set(QUEUE_EXPORT, exportQueue as import('bullmq').Queue);
   const taskRepo = new TaskRepository(drizzleDb);
   const taskService = new TaskService(taskRepo, queues);
   const briefParseService = new BriefParseService(
@@ -335,6 +345,14 @@ export function createServices(): Services {
     bucket,
     taskService,
   );
+  const exportService = new ExportService(
+    new ExportRepository(drizzleDb),
+    taskRepo,
+    new AssetRepository(drizzleDb),
+    storageProvider,
+    bucket,
+    queues,
+  );
   let connecting: Promise<unknown> | undefined;
   async function connectRedis() {
     if (redis.isReady) return;
@@ -376,6 +394,7 @@ export function createServices(): Services {
     await briefParseQueue.close();
     await designDirectionQueue.close();
     await agentRunQueue.close();
+    await exportQueue.close();
     queueConnection.disconnect();
     await closeDatabase();
   }
@@ -398,6 +417,7 @@ export function createServices(): Services {
     imageVersionService,
     conversationService,
     eventsService,
+    exportService,
     redis,
     s3,
     bucket,

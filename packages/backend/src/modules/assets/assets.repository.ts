@@ -49,6 +49,7 @@ export class AssetRepository {
   async createAsset(input: {
     projectId: string;
     kind: AssetKind;
+    status?: AssetStatus;
     bucket: string;
     objectKey: string;
     originalFilename: string;

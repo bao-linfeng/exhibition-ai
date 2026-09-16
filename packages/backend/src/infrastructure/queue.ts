@@ -6,6 +6,7 @@ export const QUEUE_IMAGE_GENERATION = 'exhibition-image-generation';
 export const QUEUE_BRIEF_PARSE = 'exhibition-brief-parse';
 export const QUEUE_DESIGN_DIRECTION = 'exhibition-design-direction';
 export const QUEUE_AGENT_RUN = 'exhibition-agent-run';
+export const QUEUE_EXPORT = 'exhibition-export';
 
 export interface QueueConfig {
   connection: Redis;
@@ -39,6 +40,13 @@ export type AgentRunJobData = {
   taskId: string;
   projectId: string;
   conversationId: string;
+  outboxId: string;
+};
+
+export type ExportJobData = {
+  taskId: string;
+  projectId: string;
+  exportId: string;
   outboxId: string;
 };
 
@@ -84,6 +92,16 @@ export function createDesignDirectionQueue(config: QueueConfig) {
 
 export function createAgentRunQueue(config: QueueConfig) {
   return new Queue<AgentRunJobData>(QUEUE_AGENT_RUN, {
+    connection: config.connection,
+    defaultJobOptions: {
+      removeOnComplete: { count: 100 },
+      removeOnFail: { count: 500 },
+    },
+  });
+}
+
+export function createExportQueue(config: QueueConfig) {
+  return new Queue<ExportJobData>(QUEUE_EXPORT, {
     connection: config.connection,
     defaultJobOptions: {
       removeOnComplete: { count: 100 },

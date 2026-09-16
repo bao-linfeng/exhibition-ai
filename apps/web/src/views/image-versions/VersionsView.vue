@@ -1,17 +1,23 @@
 <script setup lang="ts">
-import { computed } from 'vue';
-import { useRoute } from 'vue-router';
+import { ref, computed } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
 import { useQuery } from '@tanstack/vue-query';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Button } from '@/components/ui/button';
+import { useToast } from '@/components/ui/toast';
+import { Loader2, Download } from '@lucide/vue';
 import PageLoading from '@/components/PageLoading.vue';
 import PageError from '@/components/PageError.vue';
 import VersionGrid from './VersionGrid.vue';
 import VersionTree from './VersionTree.vue';
 import { listVersionsOptions } from '@/api/queries/versions.js';
+import { useCreateExport } from '@/api/queries/exports.js';
 import { apiClient } from '@/api/client.js';
 import type { ImageVersion } from '@exhibition/contracts';
 
 const route = useRoute();
+const router = useRouter();
+const { toast } = useToast();
 const projectId = computed(() => route.params.id as string);
 
 const {
@@ -39,6 +45,40 @@ const versions = computed(() => {
   const data = versionsData.value?.data ?? [];
   return data as ImageVersion[];
 });
+
+const selectedVersionIds = ref<string[]>([]);
+
+const createExport = useCreateExport();
+const isExporting = ref(false);
+
+async function handleExport() {
+  if (selectedVersionIds.value.length === 0) return;
+
+  isExporting.value = true;
+  try {
+    await createExport.mutateAsync({
+      projectId: projectId.value,
+      versionIds: selectedVersionIds.value,
+    });
+    toast({
+      title: '导出任务已创建',
+      description: '正在后台处理，完成后可下载。',
+    });
+    router.push(`/projects/${projectId.value}/exports`);
+  } catch (err) {
+    toast({
+      title: '创建导出失败',
+      variant: 'destructive',
+      description: err instanceof Error ? err.message : '未知错误',
+    });
+  } finally {
+    isExporting.value = false;
+  }
+}
+
+function handleSelectionChange(ids: string[]) {
+  selectedVersionIds.value = ids;
+}
 </script>
 
 <template>
@@ -47,9 +87,33 @@ const versions = computed(() => {
     <PageError v-else-if="projectError" :error="projectError" />
 
     <div v-else class="flex flex-1 flex-col">
-      <div class="border-b border-slate-800 bg-slate-900 px-6 py-4">
-        <h1 class="text-xl font-semibold text-slate-100">版本历史</h1>
-        <p class="mt-1 text-sm text-slate-400">{{ project?.name }}</p>
+      <div
+        class="flex items-center justify-between border-b border-slate-800 bg-slate-900 px-6 py-4"
+      >
+        <div>
+          <h1 class="text-xl font-semibold text-slate-100">版本历史</h1>
+          <p class="mt-1 text-sm text-slate-400">{{ project?.name }}</p>
+        </div>
+
+        <div class="flex items-center gap-3">
+          <Button
+            variant="secondary"
+            @click="router.push(`/projects/${projectId}/exports`)"
+          >
+            查看导出历史
+          </Button>
+
+          <Button
+            v-if="selectedVersionIds.length > 0"
+            @click="handleExport"
+            :disabled="isExporting"
+            class="bg-cyan-600 hover:bg-cyan-700 text-white"
+          >
+            <Loader2 v-if="isExporting" class="mr-2 h-4 w-4 animate-spin" />
+            <Download v-else class="mr-2 h-4 w-4" />
+            导出 {{ selectedVersionIds.length }} 个版本
+          </Button>
+        </div>
       </div>
 
       <div class="flex-1 overflow-auto p-6">
@@ -64,6 +128,8 @@ const versions = computed(() => {
               :versions="versions"
               :selected-version-id="project?.selectedVersionId ?? null"
               :loading="versionsLoading"
+              :export-selected-ids="selectedVersionIds"
+              @update:export-selected-ids="handleSelectionChange"
             />
           </TabsContent>
 

@@ -9,10 +9,12 @@ interface Props {
   versions: ImageVersion[];
   selectedVersionId: string | null;
   loading?: boolean;
+  exportSelectedIds?: string[];
 }
 
 const props = withDefaults(defineProps<Props>(), {
   loading: false,
+  exportSelectedIds: () => [],
 });
 
 const emit = defineEmits<{
@@ -20,16 +22,30 @@ const emit = defineEmits<{
   compare: [versionA: ImageVersion, versionB: ImageVersion];
   viewDetails: [version: ImageVersion];
   createVariation: [version: ImageVersion];
+  'update:exportSelectedIds': [ids: string[]];
 }>();
 
 function getImageUrl(assetId: string) {
-  // TODO: 实现获取图片 URL 的逻辑（需要签名 URL）
   return `/api/v1/assets/${assetId}/download`;
 }
 
 const isSelected = computed(() => (versionId: string) => {
   return props.selectedVersionId === versionId;
 });
+
+function isExportSelected(versionId: string) {
+  return props.exportSelectedIds.includes(versionId);
+}
+
+function toggleExportSelection(versionId: string) {
+  const current = new Set(props.exportSelectedIds);
+  if (current.has(versionId)) {
+    current.delete(versionId);
+  } else {
+    current.add(versionId);
+  }
+  emit('update:exportSelectedIds', Array.from(current));
+}
 </script>
 
 <template>
@@ -60,11 +76,13 @@ const isSelected = computed(() => (versionId: string) => {
         v-for="version in props.versions"
         :key="version.id"
         :class="{
-          'ring-2 ring-cyan-500': isSelected(version.id),
+          'ring-2 ring-cyan-500':
+            isSelected(version.id) || isExportSelected(version.id),
         }"
       >
         <Card
           class="group relative overflow-hidden border-slate-800 bg-slate-900 transition-all hover:border-cyan-500/50"
+          @click="toggleExportSelection(version.id)"
         >
           <div class="aspect-[4/3] overflow-hidden bg-slate-950">
             <img
@@ -75,8 +93,17 @@ const isSelected = computed(() => (versionId: string) => {
             />
           </div>
 
+          <div class="absolute top-3 left-3 z-20" @click.stop>
+            <input
+              type="checkbox"
+              :checked="isExportSelected(version.id)"
+              class="h-5 w-5 rounded border-slate-600 bg-slate-900/50 text-cyan-500 focus:ring-cyan-500/50 cursor-pointer accent-cyan-500"
+              @change="toggleExportSelection(version.id)"
+            />
+          </div>
+
           <div
-            class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-slate-950 via-slate-950/80 to-transparent p-3"
+            class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-slate-950 via-slate-950/80 to-transparent p-3 pointer-events-none z-10"
           >
             <div class="flex items-center justify-between">
               <div class="flex items-center gap-2">
@@ -90,7 +117,7 @@ const isSelected = computed(() => (versionId: string) => {
                   v-if="isSelected(version.id)"
                   class="bg-cyan-500/20 text-cyan-400 border-cyan-500/30 text-xs"
                 >
-                  已选中
+                  主选定
                 </Badge>
               </div>
             </div>
@@ -102,21 +129,21 @@ const isSelected = computed(() => (versionId: string) => {
 
           <!-- 悬浮操作按钮 -->
           <div
-            class="absolute inset-0 flex items-center justify-center gap-2 bg-slate-950/80 opacity-0 transition-opacity group-hover:opacity-100"
+            class="absolute inset-0 flex items-center justify-center gap-2 bg-slate-950/80 opacity-0 transition-opacity group-hover:opacity-100 z-10"
           >
             <Button
               v-if="!isSelected(version.id)"
               size="sm"
               class="bg-cyan-600 hover:bg-cyan-700"
-              @click="emit('select', version)"
+              @click.stop="emit('select', version)"
             >
-              选中
+              设为主选
             </Button>
             <Button
               size="sm"
               variant="outline"
               class="border-slate-700 bg-slate-900 hover:bg-slate-800"
-              @click="emit('viewDetails', version)"
+              @click.stop="emit('viewDetails', version)"
             >
               查看
             </Button>
@@ -124,7 +151,7 @@ const isSelected = computed(() => (versionId: string) => {
               size="sm"
               variant="outline"
               class="border-slate-700 bg-slate-900 hover:bg-slate-800"
-              @click="emit('createVariation', version)"
+              @click.stop="emit('createVariation', version)"
             >
               修改
             </Button>
