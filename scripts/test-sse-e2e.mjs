@@ -188,7 +188,9 @@ function testSSEConnection() {
     // 保持连接 5 秒后关闭
     setTimeout(() => {
       eventSource.close();
-      success(`SSE 连接测试完成（收到 ${receivedEvents.length} 个事件，${heartbeatCount} 个心跳）`);
+      success(
+        `SSE 连接测试完成（收到 ${receivedEvents.length} 个事件，${heartbeatCount} 个心跳）`,
+      );
       resolve(receivedEvents);
     }, 5000);
   });
@@ -223,23 +225,29 @@ async function testEventPush() {
       info('触发项目更新事件...');
 
       // 先获取当前项目信息
-      const getResponse = await fetch(`${API_URL}/api/v1/projects/${testProjectId}`, {
-        headers: { Cookie: authCookie },
-      });
+      const getResponse = await fetch(
+        `${API_URL}/api/v1/projects/${testProjectId}`,
+        {
+          headers: { Cookie: authCookie },
+        },
+      );
       const project = await getResponse.json();
 
       // 更新项目
-      const updateResponse = await fetch(`${API_URL}/api/v1/projects/${testProjectId}`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          Cookie: authCookie,
+      const updateResponse = await fetch(
+        `${API_URL}/api/v1/projects/${testProjectId}`,
+        {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            Cookie: authCookie,
+          },
+          body: JSON.stringify({
+            notes: `SSE 测试 - ${new Date().toISOString()}`,
+            expectedRevision: project.revision,
+          }),
         },
-        body: JSON.stringify({
-          notes: `SSE 测试 - ${new Date().toISOString()}`,
-          expectedRevision: project.revision,
-        }),
-      });
+      );
 
       if (!updateResponse.ok) {
         error(`更新项目失败: ${updateResponse.status}`);
@@ -315,9 +323,12 @@ async function testReconnection() {
 
     // 触发事件
     setTimeout(async () => {
-      const getResponse = await fetch(`${API_URL}/api/v1/projects/${testProjectId}`, {
-        headers: { Cookie: authCookie },
-      });
+      const getResponse = await fetch(
+        `${API_URL}/api/v1/projects/${testProjectId}`,
+        {
+          headers: { Cookie: authCookie },
+        },
+      );
       const project = await getResponse.json();
 
       await fetch(`${API_URL}/api/v1/projects/${testProjectId}`, {

@@ -114,10 +114,9 @@ SSE 端到端测试
 const projectId = window.location.pathname.split('/')[2];
 
 // 创建 SSE 连接
-const eventSource = new EventSource(
-  `/api/v1/projects/${projectId}/events`,
-  { withCredentials: true }
-);
+const eventSource = new EventSource(`/api/v1/projects/${projectId}/events`, {
+  withCredentials: true,
+});
 
 // 监听连接打开
 eventSource.addEventListener('open', () => {
@@ -174,22 +173,22 @@ let lastSequence = null;
 es1.addEventListener('project.updated', (e) => {
   lastSequence = e.lastEventId;
   console.log('收到事件，sequence:', lastSequence);
-  
+
   // 关闭连接
   es1.close();
   console.log('连接已关闭');
-  
+
   // 2 秒后使用 after 参数重连
   setTimeout(() => {
     console.log('使用 after=' + lastSequence + ' 重连...');
     const es2 = new EventSource(
-      `/api/v1/projects/${projectId}/events?after=${lastSequence}`
+      `/api/v1/projects/${projectId}/events?after=${lastSequence}`,
     );
-    
+
     es2.addEventListener('open', () => {
       console.log('✓ 重连成功（断点续传）');
     });
-    
+
     es2.addEventListener('project.updated', (e) => {
       console.log('✓ 重连后收到新事件:', e.lastEventId);
     });
@@ -215,6 +214,7 @@ done
 ```
 
 **验证指标**：
+
 - 所有连接成功建立
 - 每个连接独立接收事件
 - 服务器内存占用 < 100MB（10 连接）
@@ -230,7 +230,7 @@ const beforeUpdate = Date.now();
 await fetch(`${API_URL}/api/v1/projects/${testProjectId}`, {
   method: 'PATCH',
   headers: { 'Content-Type': 'application/json', Cookie: authCookie },
-  body: JSON.stringify({ notes: 'test', expectedRevision: project.revision })
+  body: JSON.stringify({ notes: 'test', expectedRevision: project.revision }),
 });
 
 eventSource.addEventListener('project.updated', (event) => {
@@ -241,6 +241,7 @@ eventSource.addEventListener('project.updated', (event) => {
 ```
 
 **目标指标**：
+
 - P50 延迟 < 50ms
 - P95 延迟 < 100ms
 - P99 延迟 < 200ms
@@ -253,6 +254,7 @@ timeout 3600 node scripts/test-sse.mjs
 ```
 
 **验证**：
+
 - 连接持续稳定
 - 心跳正常（每 15 秒）
 - 无内存泄漏
@@ -273,12 +275,14 @@ timeout 3600 node scripts/test-sse.mjs
 通过 Nginx 访问 SSE 端点时，需要验证：
 
 1. **禁用缓冲**：
+
    ```bash
    curl -i http://localhost/api/v1/projects/<id>/events \
      -H "Cookie: session=..."
    ```
-   
+
    响应头应包含：
+
    ```
    X-Accel-Buffering: no
    Cache-Control: no-cache
@@ -347,7 +351,7 @@ timeout 3600 node scripts/test-sse.mjs
   <div>
     <h2>项目详情</h2>
     <!-- 其他内容 -->
-    
+
     <!-- SSE 事件动态 -->
     <ProjectEventsFeed :project-id="projectId" />
   </div>
@@ -389,6 +393,7 @@ docker compose logs -f api | grep -i sse
 ```
 
 **关键日志**：
+
 ```
 SSE connection established for project <uuid> by user <uuid>
 SSE connection closed for project <uuid>
@@ -398,6 +403,7 @@ SSE permission check failed for project <uuid>
 ### 8.2 监控指标（待实现）
 
 理想情况下应监控：
+
 - 活跃 SSE 连接数
 - 事件推送速率（events/s）
 - 平均事件延迟
@@ -447,11 +453,13 @@ SSE permission check failed for project <uuid>
 ### 问题：连接立即断开
 
 **可能原因**：
+
 - 未登录或 Session 过期
 - 没有项目访问权限
 - 防火墙阻止长连接
 
 **解决方法**：
+
 ```bash
 # 检查 Cookie
 curl -i http://localhost:3000/api/v1/auth/me \
@@ -465,11 +473,13 @@ curl http://localhost:3000/api/v1/projects/<id> \
 ### 问题：收不到事件
 
 **可能原因**：
+
 - EventsService 未正确注入
 - 事务未提交
 - 事件类型拼写错误
 
 **解决方法**：
+
 ```bash
 # 检查数据库事件表
 docker compose exec postgres psql -U exhibition -d exhibition \
@@ -482,10 +492,12 @@ docker compose logs api --tail 50
 ### 问题：内存泄漏
 
 **可能原因**：
+
 - EventEmitter 监听器未清理
 - SSE 连接未正确关闭
 
 **解决方法**：
+
 ```bash
 # 监控内存使用
 docker stats api

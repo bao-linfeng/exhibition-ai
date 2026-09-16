@@ -135,7 +135,10 @@ export function useProjectEvents(
     status.value = 'connecting';
 
     // 构建 URL
-    const url = new URL(`/api/v1/projects/${projectId}/events`, window.location.origin);
+    const url = new URL(
+      `/api/v1/projects/${projectId}/events`,
+      window.location.origin,
+    );
     if (latestSequence.value !== null) {
       url.searchParams.set('after', String(latestSequence.value));
     }
@@ -269,7 +272,9 @@ export function useProjectEvents(
   });
 
   return {
-    status: readonly(status) as Readonly<Ref<'connecting' | 'connected' | 'disconnected' | 'error'>>,
+    status: readonly(status) as Readonly<
+      Ref<'connecting' | 'connected' | 'disconnected' | 'error'>
+    >,
     events: readonly(events) as Readonly<Ref<ProjectEvent[]>>,
     latestSequence: readonly(latestSequence) as Readonly<Ref<number | null>>,
     isConnected: readonly(isConnected) as Readonly<Ref<boolean>>,

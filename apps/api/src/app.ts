@@ -7,7 +7,12 @@ import Fastify, {
 import swagger from '@fastify/swagger';
 import sensible from '@fastify/sensible';
 import cookie from '@fastify/cookie';
-import { env, logger, type createServices, ProjectPolicy } from '@exhibition/backend';
+import {
+  env,
+  logger,
+  type createServices,
+  ProjectPolicy,
+} from '@exhibition/backend';
 import { errorHandlerPlugin } from './plugins/error-handler.js';
 import healthPlugin from './health/health.plugin.js';
 import { authRoutes } from './modules/auth.js';
@@ -103,7 +108,9 @@ export async function buildApp(
 
   // Register SSE routes
   if (services) {
-    await app.register(realTimeRoutes, { eventsService: services.eventsService });
+    await app.register(realTimeRoutes, {
+      eventsService: services.eventsService,
+    });
   }
 
   if (services)

@@ -2,7 +2,10 @@ import { EventEmitter } from 'node:events';
 
 type Pool = {
   connect(): Promise<{
-    query: <T = unknown>(sql: string, params?: unknown[]) => Promise<{ rows: T[] }>;
+    query: <T = unknown>(
+      sql: string,
+      params?: unknown[],
+    ) => Promise<{ rows: T[] }>;
     release(): void;
   }>;
 };

@@ -16,30 +16,33 @@
 ## 架构设计
 
 ### 数据库层
+
 - `project_events` 表存储所有事件
 - `projects.next_event_sequence` 字段管理序列号
 - 复合索引 `(project_id, sequence)` 支持高效查询
 
 ### 服务层
+
 - `EventsService`: 事件发布与订阅管理
 - `ProjectPolicy`: 权限检查
 - EventEmitter: 内存订阅机制
 
 ### API 层
+
 - `GET /api/v1/projects/:id/events?after=<sequence>`: SSE 端点
 
 ## 支持的事件类型
 
-| 事件类型 | 说明 | 数据字段 |
-|---------|------|---------|
-| `project.created` | 项目创建 | `projectId`, `name`, `customerId`, `ownerId` |
-| `project.updated` | 项目更新 | `projectId`, `changes` |
-| `project.archived` | 项目归档 | `projectId`, `previousStatus`, `newStatus` |
-| `project.restored` | 项目恢复 | `projectId`, `previousStatus`, `newStatus` |
-| `brief.confirmed` | Brief 确认 | `revisionId`, `revisionNumber`, `confirmedBy` |
-| `task.updated` | 任务状态更新 | `taskId`, `status`, `progress` |
-| `version.created` | 版本创建 | `versionId`, `sequence`, `taskId` |
-| `asset.ready` | 资产就绪 | `assetId`, `url`, `metadata` |
+| 事件类型           | 说明         | 数据字段                                      |
+| ------------------ | ------------ | --------------------------------------------- |
+| `project.created`  | 项目创建     | `projectId`, `name`, `customerId`, `ownerId`  |
+| `project.updated`  | 项目更新     | `projectId`, `changes`                        |
+| `project.archived` | 项目归档     | `projectId`, `previousStatus`, `newStatus`    |
+| `project.restored` | 项目恢复     | `projectId`, `previousStatus`, `newStatus`    |
+| `brief.confirmed`  | Brief 确认   | `revisionId`, `revisionNumber`, `confirmedBy` |
+| `task.updated`     | 任务状态更新 | `taskId`, `status`, `progress`                |
+| `version.created`  | 版本创建     | `versionId`, `sequence`, `taskId`             |
+| `asset.ready`      | 资产就绪     | `assetId`, `url`, `metadata`                  |
 
 ## 使用示例
 
@@ -48,7 +51,7 @@
 ```typescript
 const eventSource = new EventSource(
   `/api/v1/projects/${projectId}/events?after=${lastSequence}`,
-  { withCredentials: true }
+  { withCredentials: true },
 );
 
 // 监听特定事件
@@ -98,7 +101,7 @@ export function useProjectEvents(projectId: string) {
 
     eventSource.onmessage = (event) => {
       const data = JSON.parse(event.data) as ProjectEvent;
-      setEvents(prev => [...prev, data]);
+      setEvents((prev) => [...prev, data]);
       setLastSequence(data.sequence);
     };
 
@@ -159,11 +162,13 @@ export function useProjectEvents(projectId: string) {
 ### 前置条件
 
 1. 安装依赖:
+
 ```bash
 pnpm add -D eventsource
 ```
 
 2. 设置环境变量:
+
 ```bash
 export PROJECT_ID="<your-project-id>"
 export AUTH_TOKEN="<your-session-token>"
@@ -172,11 +177,13 @@ export AUTH_TOKEN="<your-session-token>"
 ### 运行测试
 
 1. 启动 SSE 监听器:
+
 ```bash
 node scripts/test-sse.mjs
 ```
 
 2. 在另一个终端触发事件:
+
 ```bash
 node scripts/trigger-test-event.mjs
 ```
@@ -188,6 +195,7 @@ node scripts/trigger-test-event.mjs
 ### 连接失败
 
 检查：
+
 - API 服务是否正常运行
 - 认证 token 是否有效
 - 用户是否有项目访问权限
@@ -195,6 +203,7 @@ node scripts/trigger-test-event.mjs
 ### 收不到事件
 
 检查：
+
 - EventsService 是否正确传递给业务服务
 - 业务逻辑是否调用 `eventsService.appendEvent()`
 - 数据库事务是否成功提交
@@ -202,6 +211,7 @@ node scripts/trigger-test-event.mjs
 ### 性能问题
 
 优化建议：
+
 - 限制单个项目的并发连接数
 - 定期清理旧事件（保留最近 N 条）
 - 考虑使用 Redis Pub/Sub 支持多实例部署

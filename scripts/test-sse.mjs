@@ -23,7 +23,7 @@ console.log(`连接到 SSE 端点: ${url}`);
 
 const eventSource = new EventSource(url, {
   headers: {
-    'Cookie': `session=${AUTH_TOKEN}`,
+    Cookie: `session=${AUTH_TOKEN}`,
   },
 });
 
@@ -49,7 +49,7 @@ const eventTypes = [
   'asset.ready',
 ];
 
-eventTypes.forEach(type => {
+eventTypes.forEach((type) => {
   eventSource.addEventListener(type, (event) => {
     console.log(`\n[${new Date().toISOString()}] 收到事件: ${type}`);
     console.log('事件 ID:', event.lastEventId);

@@ -2,7 +2,10 @@ import type { ActorContext } from '../../shared/ActorContext.js';
 
 type Pool = {
   connect(): Promise<{
-    query: <T = unknown>(sql: string, params?: unknown[]) => Promise<{ rows: T[] }>;
+    query: <T = unknown>(
+      sql: string,
+      params?: unknown[],
+    ) => Promise<{ rows: T[] }>;
     release(): void;
   }>;
 };
@@ -13,7 +16,10 @@ type Pool = {
 export class ProjectPolicy {
   constructor(private pool: Pool) {}
 
-  async canViewProject(actorContext: ActorContext, projectId: string): Promise<boolean> {
+  async canViewProject(
+    actorContext: ActorContext,
+    projectId: string,
+  ): Promise<boolean> {
     const client = await this.pool.connect();
     try {
       // Admin 可以查看所有项目

@@ -11,6 +11,7 @@
 **文件**: `packages/db/migrations/0013_handy_mercury.sql`
 
 创建了 `project_events` 表用于事件持久化：
+
 - `id`: UUID 主键
 - `project_id`: 项目外键（级联删除）
 - `sequence`: 事件序列号（递增）
@@ -21,6 +22,7 @@
 - `created_at`: 创建时间戳
 
 索引：
+
 - `(project_id, sequence)`: 支持高效查询
 - `created_at`: 支持时间范围查询
 
@@ -29,6 +31,7 @@
 #### EventsService (`packages/backend/src/modules/events/events.service.ts`)
 
 核心功能：
+
 - **appendEvent()**: 原子递增 sequence 并插入事件，发布到 EventEmitter
 - **getEvents()**: 分页查询历史事件
 - **getLatestSequence()**: 获取最新序列号
@@ -37,6 +40,7 @@
 - **subscribe()**: 订阅项目的实时事件
 
 技术亮点：
+
 - 使用数据库事务确保 sequence 原子递增
 - EventEmitter 实现内存订阅，避免轮询
 - 支持最多 1000 个并发连接
@@ -44,12 +48,14 @@
 #### ProjectPolicy (`packages/backend/src/modules/projects/project.policy.ts`)
 
 权限检查：
+
 - **canViewProject()**: 验证用户是否可以查看项目
 - 支持 admin 角色和项目成员检查
 
 #### ActorContext (`packages/backend/src/shared/ActorContext.ts`)
 
 定义认证用户上下文：
+
 ```typescript
 interface ActorContext {
   userId: string;
@@ -62,6 +68,7 @@ interface ActorContext {
 #### ProjectService 事件发布
 
 集成点：
+
 - **createProject()**: 发布 `project.created` 事件
 - **updateProject()**: 发布 `project.updated` 事件
 - **transitionArchive()**: 发布 `project.archived` / `project.restored` 事件
@@ -69,6 +76,7 @@ interface ActorContext {
 #### BriefService 事件发布
 
 集成点：
+
 - **confirmBrief()**: 发布 `brief.confirmed` 事件
 
 ### 4. API 层 ✅
@@ -78,6 +86,7 @@ interface ActorContext {
 路由：`GET /api/v1/projects/:id/events?after=<sequence>`
 
 功能：
+
 1. **权限验证**: 检查用户是否可以访问项目
 2. **历史事件**: 立即发送 `after` 之后的所有事件
 3. **实时订阅**: 通过 EventEmitter 接收新事件
@@ -86,6 +95,7 @@ interface ActorContext {
 6. **自动清理**: 连接关闭时释放所有资源
 
 响应格式（SSE 标准）：
+
 ```
 id: <sequence>
 event: <event-type>
@@ -96,11 +106,13 @@ data: <json-data>
 ### 5. 依赖注入更新 ✅
 
 更新 `packages/backend/src/index.ts`：
+
 - EventsService 在 ProjectService 和 BriefService 之前初始化
 - 传递 `pool` 给 EventsService（用于直接 SQL 查询）
 - 传递 EventsService 给 ProjectService 和 BriefService
 
 更新 `apps/api/src/app.ts`：
+
 - 导入 ProjectPolicy
 - 将 ProjectPolicy 实例装饰到 Fastify app
 - 将 EventsService 传递给 realTimeRoutes
@@ -110,11 +122,13 @@ data: <json-data>
 #### SSE 客户端测试 (`scripts/test-sse.mjs`)
 
 用于监听和调试 SSE 事件：
+
 ```bash
 PROJECT_ID=<id> AUTH_TOKEN=<token> node scripts/test-sse.mjs
 ```
 
 功能：
+
 - 连接到 SSE 端点
 - 监听所有事件类型
 - 显示事件详情（时间戳、类型、数据）
@@ -123,17 +137,20 @@ PROJECT_ID=<id> AUTH_TOKEN=<token> node scripts/test-sse.mjs
 #### 事件触发器 (`scripts/trigger-test-event.mjs`)
 
 用于生成测试事件：
+
 ```bash
 PROJECT_ID=<id> AUTH_TOKEN=<token> node scripts/trigger-test-event.mjs
 ```
 
 功能：
+
 - 更新项目触发 `project.updated` 事件
 - 验证事件是否正确发布
 
 ### 7. 文档 ✅
 
 创建了完整的实现文档 (`docs/SSE_IMPLEMENTATION.md`)：
+
 - 架构设计说明
 - 支持的事件类型列表
 - 客户端使用示例（原生 JS、React、Vue）
@@ -155,18 +172,21 @@ PROJECT_ID=<id> AUTH_TOKEN=<token> node scripts/trigger-test-event.mjs
 ### 为什么使用 EventEmitter 而不是 Redis Pub/Sub？
 
 当前阶段的考虑：
+
 - **单实例部署**: 目前只有一个 API 实例，内存订阅足够
 - **零依赖**: 不需要额外的 Redis 配置
 - **更低延迟**: 内存通信比网络通信快
 - **简化开发**: 减少基础设施复杂度
 
 未来扩展：
+
 - 多实例部署时可以迁移到 Redis Pub/Sub
 - 当前架构支持平滑升级
 
 ### 为什么使用数据库序列号而不是时间戳？
 
 优势：
+
 1. **严格顺序**: sequence 保证全局有序，时间戳可能重复
 2. **断点续传**: 客户端可以准确恢复（`after=123`）
 3. **原子递增**: 通过数据库事务保证无冲突
@@ -175,11 +195,13 @@ PROJECT_ID=<id> AUTH_TOKEN=<token> node scripts/trigger-test-event.mjs
 ## 性能指标
 
 ### 吞吐量
+
 - **事件插入**: ~1000 events/s（单线程）
 - **并发连接**: 支持 1000+ 同时连接
 - **事件延迟**: < 10ms（发布到推送）
 
 ### 资源消耗
+
 - **内存**: 每个连接 ~10KB
 - **CPU**: 事件发布几乎零开销（EventEmitter）
 - **数据库**: 每个事件 ~1KB 存储
@@ -196,12 +218,12 @@ PROJECT_ID=<id> AUTH_TOKEN=<token> node scripts/trigger-test-event.mjs
 
 ### 潜在风险和缓解
 
-| 风险 | 缓解措施 |
-|------|---------|
-| DDoS（大量连接） | 限制单用户并发连接数 |
-| 内存泄漏 | 连接关闭时清理 EventEmitter 监听器 |
-| 权限提升 | 定期复核，立即断开 |
-| 数据泄露 | 只推送用户有权限的事件 |
+| 风险             | 缓解措施                           |
+| ---------------- | ---------------------------------- |
+| DDoS（大量连接） | 限制单用户并发连接数               |
+| 内存泄漏         | 连接关闭时清理 EventEmitter 监听器 |
+| 权限提升         | 定期复核，立即断开                 |
+| 数据泄露         | 只推送用户有权限的事件             |
 
 ## 已知限制
 
@@ -213,18 +235,21 @@ PROJECT_ID=<id> AUTH_TOKEN=<token> node scripts/trigger-test-event.mjs
 ## 未来改进
 
 ### 短期（1-2 周）
+
 - [ ] 添加更多业务模块的事件集成（Task、Asset、Generation）
 - [ ] 实现事件过滤（按类型订阅）
 - [ ] 添加单元测试和集成测试
 - [ ] 添加监控指标（Prometheus）
 
 ### 中期（1-2 月）
+
 - [ ] 实现事件 TTL（保留最近 7 天或 10000 条）
 - [ ] 添加事件重放功能
 - [ ] 优化批量事件推送
 - [ ] 添加连接限流
 
 ### 长期（3-6 月）
+
 - [ ] 迁移到 Redis Pub/Sub（支持多实例）
 - [ ] 实现事件聚合和去重
 - [ ] 添加事件回溯查询 API

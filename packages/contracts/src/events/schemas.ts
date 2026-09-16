@@ -195,5 +195,7 @@ export type VersionCreatedEvent = Static<typeof VersionCreatedEventSchema>;
 export type AssetReadyEvent = Static<typeof AssetReadyEventSchema>;
 export type MessageDeltaEvent = Static<typeof MessageDeltaEventSchema>;
 export type MessageCompletedEvent = Static<typeof MessageCompletedEventSchema>;
-export type ConfirmationCreatedEvent = Static<typeof ConfirmationCreatedEventSchema>;
+export type ConfirmationCreatedEvent = Static<
+  typeof ConfirmationCreatedEventSchema
+>;
 export type StreamResetEvent = Static<typeof StreamResetEventSchema>;

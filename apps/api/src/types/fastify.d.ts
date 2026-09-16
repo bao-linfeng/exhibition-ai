@@ -1,5 +1,10 @@
 import 'fastify';
-import type { createServices, DashboardService, ActorContext, ProjectPolicy } from '@exhibition/backend';
+import type {
+  createServices,
+  DashboardService,
+  ActorContext,
+  ProjectPolicy,
+} from '@exhibition/backend';
 
 declare module 'fastify' {
   interface FastifyInstance {

@@ -34,10 +34,7 @@
     </div>
 
     <div class="space-y-2 max-h-96 overflow-y-auto">
-      <div
-        v-if="events.length === 0"
-        class="text-center py-8 text-gray-500"
-      >
+      <div v-if="events.length === 0" class="text-center py-8 text-gray-500">
         暂无动态
       </div>
 
@@ -55,9 +52,7 @@
               >
                 {{ getEventTypeLabel(event.type) }}
               </span>
-              <span class="text-xs text-gray-500">
-                #{{ event.sequence }}
-              </span>
+              <span class="text-xs text-gray-500"> #{{ event.sequence }} </span>
             </div>
             <p class="mt-1 text-sm text-gray-700">
               {{ getEventDescription(event) }}

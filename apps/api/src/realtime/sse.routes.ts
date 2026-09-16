@@ -69,7 +69,7 @@ export async function realTimeRoutes(
       const afterSequence =
         typeof lastEventId === 'string'
           ? parseInt(lastEventId, 10)
-          : after ?? 0;
+          : (after ?? 0);
 
       // 检查 cursor 是否过期（保留最近 10000 条事件）
       const minSequence = await eventsService.getMinSequence(projectId);

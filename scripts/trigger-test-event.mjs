@@ -21,31 +21,39 @@ async function triggerTestEvent() {
 
   try {
     // 获取项目信息
-    const getResponse = await fetch(`${API_URL}/api/v1/projects/${PROJECT_ID}`, {
-      headers: {
-        'Cookie': `session=${AUTH_TOKEN}`,
+    const getResponse = await fetch(
+      `${API_URL}/api/v1/projects/${PROJECT_ID}`,
+      {
+        headers: {
+          Cookie: `session=${AUTH_TOKEN}`,
+        },
       },
-    });
+    );
 
     if (!getResponse.ok) {
-      throw new Error(`获取项目失败: ${getResponse.status} ${getResponse.statusText}`);
+      throw new Error(
+        `获取项目失败: ${getResponse.status} ${getResponse.statusText}`,
+      );
     }
 
     const project = await getResponse.json();
     console.log('当前项目:', project.name, '(revision:', project.revision, ')');
 
     // 更新项目（触发事件）
-    const updateResponse = await fetch(`${API_URL}/api/v1/projects/${PROJECT_ID}`, {
-      method: 'PATCH',
-      headers: {
-        'Content-Type': 'application/json',
-        'Cookie': `session=${AUTH_TOKEN}`,
+    const updateResponse = await fetch(
+      `${API_URL}/api/v1/projects/${PROJECT_ID}`,
+      {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Cookie: `session=${AUTH_TOKEN}`,
+        },
+        body: JSON.stringify({
+          notes: `测试更新 ${new Date().toISOString()}`,
+          expectedRevision: project.revision,
+        }),
       },
-      body: JSON.stringify({
-        notes: `测试更新 ${new Date().toISOString()}`,
-        expectedRevision: project.revision,
-      }),
-    });
+    );
 
     if (!updateResponse.ok) {
       const error = await updateResponse.text();
