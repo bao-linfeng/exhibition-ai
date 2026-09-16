@@ -7498,40 +7498,6 @@
         }
       }
     },
-    "/api/v1/projects/{projectId}/events": {
-      "get": {
-        "operationId": "subscribeProjectEvents",
-        "tags": ["events"],
-        "description": "Subscribe to project SSE events.",
-        "parameters": [
-          {
-            "schema": { "minimum": 1, "type": "integer" },
-            "in": "query",
-            "name": "after",
-            "required": false
-          },
-          {
-            "schema": { "format": "uuid", "type": "string" },
-            "in": "path",
-            "name": "id",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Server-Sent Events stream",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "string",
-                  "description": "Server-Sent Events stream"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/api/v1/dashboard/summary": {
       "get": {
         "operationId": "getDashboardSummary",
