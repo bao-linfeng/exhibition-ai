@@ -229,9 +229,9 @@ async function startParse() {
               >
                 <CheckCircle class="w-3 h-3 mr-1" /> 已确认
               </Badge>
-              <Badge v-else variant="outline" class="text-muted-foreground"
-                >未确认</Badge
-              >
+              <Badge v-else variant="outline" class="text-muted-foreground">
+                未确认
+              </Badge>
             </h2>
           </div>
           <p class="text-sm text-muted-foreground mt-1">
@@ -290,9 +290,9 @@ async function startParse() {
                 </p>
                 <div class="flex flex-wrap gap-1">
                   <Badge
-                    variant="secondary"
                     v-for="side in brief.content.booth.openSides"
                     :key="side"
+                    variant="secondary"
                   >
                     {{ openSideMap[side] }}
                   </Badge>
@@ -342,7 +342,7 @@ async function startParse() {
                     :style="{
                       backgroundColor: brief.content.brand.primaryColor,
                     }"
-                  ></div>
+                  />
                   <span class="text-sm uppercase">{{
                     brief.content.brand.primaryColor
                   }}</span>
@@ -358,7 +358,7 @@ async function startParse() {
                     :style="{
                       backgroundColor: brief.content.brand.secondaryColor,
                     }"
-                  ></div>
+                  />
                   <span class="text-sm uppercase">{{
                     brief.content.brand.secondaryColor
                   }}</span>
@@ -378,9 +378,9 @@ async function startParse() {
               </p>
               <div class="flex flex-wrap gap-2">
                 <Badge
-                  variant="outline"
                   v-for="kw in brief.content.brand.visualKeywords"
                   :key="kw"
+                  variant="outline"
                 >
                   {{ kw }}
                 </Badge>
@@ -414,8 +414,9 @@ async function startParse() {
                     <Badge
                       v-if="area.required"
                       class="bg-red-100 text-red-700 hover:bg-red-100 border-red-200"
-                      >必选</Badge
                     >
+                      必选
+                    </Badge>
                     <Badge v-else variant="secondary">可选</Badge>
                   </div>
                   <p
@@ -449,9 +450,9 @@ async function startParse() {
                   设计风格
                 </p>
                 <div class="flex flex-wrap gap-2">
-                  <Badge v-for="kw in brief.content.style.keywords" :key="kw">{{
-                    kw
-                  }}</Badge>
+                  <Badge v-for="kw in brief.content.style.keywords" :key="kw">
+                    {{ kw }}
+                  </Badge>
                 </div>
               </div>
               <div
@@ -465,11 +466,12 @@ async function startParse() {
                 </p>
                 <div class="flex flex-wrap gap-2">
                   <Badge
-                    variant="outline"
                     v-for="m in brief.content.style.materials"
                     :key="m"
-                    >{{ m }}</Badge
+                    variant="outline"
                   >
+                    {{ m }}
+                  </Badge>
                 </div>
               </div>
               <div
@@ -483,11 +485,12 @@ async function startParse() {
                 </p>
                 <div class="flex flex-wrap gap-2">
                   <Badge
-                    variant="destructive"
                     v-for="f in brief.content.style.forbiddenElements"
                     :key="f"
-                    >{{ f }}</Badge
+                    variant="destructive"
                   >
+                    {{ f }}
+                  </Badge>
                 </div>
               </div>
             </div>
@@ -559,9 +562,9 @@ async function startParse() {
           </DialogDescription>
         </DialogHeader>
         <DialogFooter class="mt-4">
-          <Button variant="outline" @click="showConfirmDialog = false"
-            >取消</Button
-          >
+          <Button variant="outline" @click="showConfirmDialog = false">
+            取消
+          </Button>
           <Button
             :disabled="confirmMutation.isPending.value"
             class="bg-green-600 hover:bg-green-700 text-white"
@@ -587,15 +590,15 @@ async function startParse() {
             class="w-full h-48 p-3 border rounded-md resize-none focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
             placeholder="请输入客户描述，例如：我们是一家做汽车零部件的企业，参加上海车展，展台面积约36平米，预算80万，希望设计现代科技感的展台..."
             maxlength="50000"
-          ></textarea>
+          />
           <p class="text-xs text-muted-foreground mt-2">
             解析结果不会直接覆盖当前 Brief，请在任务完成后查看并采纳
           </p>
         </div>
         <DialogFooter>
-          <Button variant="outline" @click="showParseDialog = false"
-            >取消</Button
-          >
+          <Button variant="outline" @click="showParseDialog = false">
+            取消
+          </Button>
           <Button
             :disabled="parseMutation.isPending.value || !parseText.trim()"
             @click="startParse"

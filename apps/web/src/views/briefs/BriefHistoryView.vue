@@ -100,7 +100,7 @@ function goBack() {
         <div
           class="absolute left-0 top-0 bottom-0 w-1.5"
           :class="currentBrief?.id === rev.id ? 'bg-primary' : 'bg-transparent'"
-        ></div>
+        />
 
         <div class="p-6 flex-1 flex flex-col justify-center">
           <div class="flex items-center gap-3 mb-2">
@@ -110,8 +110,9 @@ function goBack() {
             <Badge
               v-if="currentBrief?.id === rev.id"
               class="bg-primary/10 text-primary hover:bg-primary/10"
-              >当前版本</Badge
             >
+              当前版本
+            </Badge>
             <Badge
               v-if="rev.confirmedAt"
               class="bg-green-100 text-green-700 hover:bg-green-100 border-green-200"

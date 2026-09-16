@@ -1,20 +1,20 @@
 <script setup lang="ts">
-import { AlertCircle } from '@lucide/vue';
-defineProps<{ message?: string }>();
-defineEmits<{ retry: [] }>();
+interface Props {
+  error: Error | unknown;
+}
+
+const props = defineProps<Props>();
+
+const errorMessage =
+  props.error instanceof Error ? props.error.message : '未知错误';
 </script>
+
 <template>
-  <div
-    class="flex h-full min-h-[200px] flex-col items-center justify-center gap-3 text-destructive"
-    role="alert"
-  >
-    <AlertCircle class="h-8 w-8" aria-hidden="true" />
-    <p class="text-sm font-medium">{{ message || '加载失败，请重试' }}</p>
-    <button
-      class="text-sm underline text-muted-foreground hover:text-foreground focus:outline-none focus:ring-2 focus:ring-ring rounded"
-      @click="$emit('retry')"
-    >
-      重试
-    </button>
+  <div class="flex h-full items-center justify-center bg-slate-950">
+    <div class="text-center">
+      <div class="mb-4 text-6xl text-slate-600">⚠️</div>
+      <h2 class="mb-2 text-xl font-semibold text-slate-100">加载失败</h2>
+      <p class="text-sm text-slate-400">{{ errorMessage }}</p>
+    </div>
   </div>
 </template>

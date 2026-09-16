@@ -55,7 +55,7 @@ watchEffect(async () => {
       <div class="flex flex-col items-center text-muted-foreground">
         <div
           class="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent mb-2"
-        ></div>
+        />
         <span class="text-xs">处理中...</span>
       </div>
     </template>
@@ -75,7 +75,7 @@ watchEffect(async () => {
       />
       <div
         class="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors"
-      ></div>
+      />
     </template>
     <template v-else>
       <ImageIcon class="h-8 w-8 text-muted-foreground opacity-20" />
