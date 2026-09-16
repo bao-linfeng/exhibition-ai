@@ -46,6 +46,7 @@ import {
   ImageVersionService,
   ImageVersionRepository,
 } from './modules/image-versions/index.js';
+import { EventsService } from './modules/events/index.js';
 import { S3StorageProvider } from './infrastructure/storage.js';
 import {
   createAssetValidationQueue,
@@ -83,7 +84,10 @@ export {
   GenerationRepository,
   ImageVersionService,
   ImageVersionRepository,
+  EventsService,
 };
+export type { ActorContext } from './shared/ActorContext.js';
+export { ProjectPolicy } from './modules/projects/project.policy.js';
 export {
   ModelConfigRepository,
   QuotaRepository,
@@ -168,6 +172,7 @@ export interface Services {
   settingsService: SettingsService;
   quotaService: QuotaService;
   imageVersionService: ImageVersionService;
+  eventsService: EventsService;
   connectRedis(): Promise<void>;
   readiness(): Promise<{ postgres: boolean; redis: boolean; storage: boolean }>;
   close(): Promise<void>;
@@ -181,8 +186,6 @@ export function createServices(): Services {
   const customerService = new CustomerService(
     new CustomerRepository(drizzleDb),
   );
-  const projectService = new ProjectService(new ProjectRepository(drizzleDb));
-  const briefService = new BriefService(new BriefRepository(drizzleDb));
   const userService = new UserService(new UserRepository(drizzleDb));
   const dashboardService = new DashboardService(drizzleDb);
   const auditService = new AuditService(drizzleDb);
@@ -190,6 +193,17 @@ export function createServices(): Services {
   const quotaRepo = new QuotaRepository(drizzleDb);
   const settingsService = new SettingsService(modelConfigRepo);
   const quotaService = new QuotaService(drizzleDb, quotaRepo, auditService);
+
+  // EventsService 需要在 ProjectService 和 BriefService 之前初始化
+  const eventsService = new EventsService(pool);
+  const projectService = new ProjectService(
+    new ProjectRepository(drizzleDb),
+    eventsService,
+  );
+  const briefService = new BriefService(
+    new BriefRepository(drizzleDb),
+    eventsService,
+  );
 
   const connection = redisConnection();
   const queueConnection = createQueueConnection();
@@ -342,6 +356,7 @@ export function createServices(): Services {
     settingsService,
     quotaService,
     imageVersionService,
+    eventsService,
     redis,
     s3,
     bucket,

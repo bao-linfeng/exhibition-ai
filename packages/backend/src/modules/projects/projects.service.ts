@@ -11,9 +11,13 @@ import {
   type ProjectMemberWithUser,
   type ProjectWithNames,
 } from './projects.repository.js';
+import type { EventsService } from '../events/events.service.js';
 
 export class ProjectService {
-  constructor(private repo: ProjectRepository) {}
+  constructor(
+    private repo: ProjectRepository,
+    private eventsService: EventsService,
+  ) {}
 
   async listProjects(
     query: {
@@ -57,6 +61,22 @@ export class ProjectService {
 
     const project = await this.repo.create(data);
     await this.repo.addMember(project.id, data.ownerId, requestedBy);
+
+    // 发布项目创建事件
+    await this.eventsService.appendEvent(
+      project.id,
+      {
+        type: 'project.created',
+        data: {
+          projectId: project.id,
+          name: project.name,
+          customerId: project.customerId,
+          ownerId: project.ownerId,
+        },
+      },
+      { userId: requestedBy, role: requestingUser.role },
+    );
+
     return this.toProject(project);
   }
 
@@ -118,7 +138,24 @@ export class ProjectService {
       expectedRevision,
     );
 
-    if (project) return this.toProject(project);
+    if (project) {
+      // 发布项目更新事件
+      await this.eventsService.appendEvent(
+        id,
+        {
+          type: 'project.updated',
+          data: {
+            projectId: id,
+            changes: data,
+          },
+          resourceId: id,
+          resourceRevision: project.revision,
+        },
+        { userId: requestingUser.id, role: requestingUser.role },
+      );
+
+      return this.toProject(project);
+    }
     return (await this.repo.findById(id)) ? 'conflict' : null;
   }
 
@@ -220,7 +257,29 @@ export class ProjectService {
           };
 
     const project = await this.repo.update(projectId, update, expectedRevision);
-    return project ? this.toProject(project) : 'conflict';
+
+    if (project) {
+      // 发布归档/恢复事件
+      await this.eventsService.appendEvent(
+        projectId,
+        {
+          type: action === 'archive' ? 'project.archived' : 'project.restored',
+          data: {
+            projectId,
+            action,
+            previousStatus: existing.status,
+            newStatus: project.status,
+          },
+          resourceId: projectId,
+          resourceRevision: project.revision,
+        },
+        { userId: requestingUser.id, role: requestingUser.role },
+      );
+
+      return this.toProject(project);
+    }
+
+    return 'conflict';
   }
 
   private toSummary(project: ProjectWithNames): ProjectSummary {

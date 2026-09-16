@@ -912,23 +912,6 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  '/api/v1/projects/{projectId}/events': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    /** @description Subscribe to project SSE events. */
-    get: operations['subscribeProjectEvents'];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
   '/api/v1/dashboard/summary': {
     parameters: {
       query?: never;
@@ -4395,30 +4378,6 @@ export interface operations {
               updatedAt: string;
             };
           };
-        };
-      };
-    };
-  };
-  subscribeProjectEvents: {
-    parameters: {
-      query?: {
-        after?: number;
-      };
-      header?: never;
-      path: {
-        id: string;
-      };
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description Server-Sent Events stream */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': string;
         };
       };
     };

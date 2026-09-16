@@ -1,5 +1,6 @@
 import type { BriefContent, BriefRevision } from '@exhibition/contracts';
 import { BriefRepository } from './briefs.repository.js';
+import type { EventsService } from '../events/events.service.js';
 
 type RequestingUser = { id: string; role: string };
 
@@ -26,7 +27,10 @@ function toRevision(row: {
 }
 
 export class BriefService {
-  constructor(private repo: BriefRepository) {}
+  constructor(
+    private repo: BriefRepository,
+    private eventsService: EventsService,
+  ) {}
 
   async getBrief(
     projectId: string,
@@ -110,6 +114,23 @@ export class BriefService {
     });
 
     if (typeof result === 'string') return result;
+
+    // 发布 Brief 确认事件
+    await this.eventsService.appendEvent(
+      projectId,
+      {
+        type: 'brief.confirmed',
+        data: {
+          revisionId,
+          revisionNumber: result.number,
+          confirmedBy: requestingUser.id,
+        },
+        resourceId: revisionId,
+        resourceRevision: result.number,
+      },
+      { userId: requestingUser.id, role: requestingUser.role },
+    );
+
     return toRevision(result);
   }
 }

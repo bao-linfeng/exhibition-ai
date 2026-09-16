@@ -9,6 +9,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 export * from './schema/index.js';
+export { schema };
 
 export function createDatabase() {
   const connectionString = process.env.DATABASE_URL;
