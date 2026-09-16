@@ -2,6 +2,7 @@ import type { FastifyInstance } from 'fastify';
 import { Type } from '@sinclair/typebox';
 import {
   GetQuotaResponseSchema,
+  ListModelConfigsResponseSchema,
   TopupQuotaRequestSchema,
   TopupQuotaResponseSchema,
   UpdateModelConfigRequestSchema,
@@ -51,6 +52,26 @@ export async function settingsRoutes(app: FastifyInstance) {
       ? app.services!.authService.validateSession(sessionId)
       : null;
   }
+
+  app.get(
+    '/api/v1/settings/model-configs',
+    {
+      schema: {
+        operationId: 'listAdminModelConfigs',
+        tags: ['settings'],
+        response: { 200: ListModelConfigsResponseSchema },
+      },
+    },
+    async (request) => {
+      const user = await currentUser(request.cookies.sessionId);
+      if (!user) throw app.httpErrors.unauthorized('Not authenticated');
+      if (user.role !== 'admin') throw app.httpErrors.forbidden();
+
+      const configs =
+        await app.services!.settingsService.listModelConfigs(false);
+      return { data: configs.map(toModelConfigDto) };
+    },
+  );
 
   // PATCH /api/v1/settings/model-configs/:id — admin only
   app.patch(

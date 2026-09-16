@@ -946,6 +946,22 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/api/v1/settings/model-configs': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations['listAdminModelConfigs'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/api/v1/settings/model-configs/{id}': {
     parameters: {
       query?: never;
@@ -4475,6 +4491,44 @@ export interface operations {
                 | 'approved'
                 | 'archived';
               customerName: string;
+              /** Format: date-time */
+              updatedAt: string;
+            }[];
+          };
+        };
+      };
+    };
+  };
+  listAdminModelConfigs: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Default Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': {
+            data: {
+              /** Format: uuid */
+              id: string;
+              providerId: string;
+              modelId: string;
+              displayName: string;
+              description?: string;
+              capabilities: string[];
+              costPerImageMinor: number;
+              currency: string;
+              isActive: boolean;
+              maxConcurrent: number;
+              /** Format: date-time */
+              createdAt: string;
               /** Format: date-time */
               updatedAt: string;
             }[];

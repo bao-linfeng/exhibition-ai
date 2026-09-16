@@ -121,6 +121,11 @@ const routes: RouteRecordRaw[] = [
         name: 'tasks',
         component: () => import('../views/tasks/TasksView.vue'),
       },
+      {
+        path: 'settings',
+        name: 'settings',
+        component: () => import('../views/settings/SettingsView.vue'),
+      },
     ],
   },
   {

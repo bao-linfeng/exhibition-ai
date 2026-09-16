@@ -7707,6 +7707,89 @@
         }
       }
     },
+    "/api/v1/settings/model-configs": {
+      "get": {
+        "operationId": "listAdminModelConfigs",
+        "tags": ["settings"],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "type": "object",
+                  "required": ["data"],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "additionalProperties": false,
+                        "type": "object",
+                        "required": [
+                          "id",
+                          "providerId",
+                          "modelId",
+                          "displayName",
+                          "capabilities",
+                          "costPerImageMinor",
+                          "currency",
+                          "isActive",
+                          "maxConcurrent",
+                          "createdAt",
+                          "updatedAt"
+                        ],
+                        "properties": {
+                          "id": { "format": "uuid", "type": "string" },
+                          "providerId": {
+                            "minLength": 1,
+                            "maxLength": 100,
+                            "type": "string"
+                          },
+                          "modelId": {
+                            "minLength": 1,
+                            "maxLength": 100,
+                            "type": "string"
+                          },
+                          "displayName": {
+                            "minLength": 1,
+                            "maxLength": 200,
+                            "type": "string"
+                          },
+                          "description": {
+                            "maxLength": 1000,
+                            "type": "string"
+                          },
+                          "capabilities": {
+                            "type": "array",
+                            "items": { "type": "string" }
+                          },
+                          "costPerImageMinor": {
+                            "minimum": 0,
+                            "type": "integer"
+                          },
+                          "currency": { "maxLength": 3, "type": "string" },
+                          "isActive": { "type": "boolean" },
+                          "maxConcurrent": { "minimum": 1, "type": "integer" },
+                          "createdAt": {
+                            "format": "date-time",
+                            "type": "string"
+                          },
+                          "updatedAt": {
+                            "format": "date-time",
+                            "type": "string"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/settings/model-configs/{id}": {
       "patch": {
         "operationId": "updateModelConfig",
