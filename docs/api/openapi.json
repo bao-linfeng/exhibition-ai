@@ -7211,6 +7211,52 @@
         }
       }
     },
+    "/api/v1/projects/{projectId}/exports/{exportId}/download": {
+      "get": {
+        "operationId": "getExportDownloadUrl",
+        "tags": ["exports"],
+        "description": "Get a signed URL for a completed export.",
+        "parameters": [
+          {
+            "schema": { "format": "uuid", "type": "string" },
+            "in": "path",
+            "name": "projectId",
+            "required": true
+          },
+          {
+            "schema": { "format": "uuid", "type": "string" },
+            "in": "path",
+            "name": "exportId",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "type": "object",
+                  "required": ["data"],
+                  "properties": {
+                    "data": {
+                      "additionalProperties": false,
+                      "type": "object",
+                      "required": ["url", "expiresAt"],
+                      "properties": {
+                        "url": { "type": "string" },
+                        "expiresAt": { "type": "string" }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/audit-logs": {
       "get": {
         "operationId": "listAuditLogs",

@@ -34,6 +34,9 @@ import {
   AgentRunRepository,
   ConfirmationRepository,
   EventsService,
+  ExportRepository,
+  createExportQueue,
+  QUEUE_EXPORT,
 } from '@exhibition/backend';
 import { bootstrapProviders } from './bootstrap.js';
 import { processAssetValidation } from './processors/asset-validation.processor.js';
@@ -53,6 +56,10 @@ import {
   processAgentRun,
   type AgentRunJobData,
 } from './processors/agent-run.processor.js';
+import {
+  processExport,
+  type ExportJobData,
+} from './processors/export.processor.js';
 import { runConfirmationExpiry } from './schedulers/confirmation-expiry.js';
 import { runTimeoutReconciler } from './schedulers/timeout-reconciler.js';
 
@@ -93,6 +100,7 @@ const convRepo = new ConversationRepository(db);
 const msgRepo = new MessageRepository(db);
 const runRepo = new AgentRunRepository(db);
 const confirmRepo = new ConfirmationRepository(db);
+const exportRepo = new ExportRepository(db);
 const eventsService = new EventsService(pool);
 const bucket = env.S3_BUCKET;
 
@@ -113,12 +121,14 @@ const designDirectionQueue = createDesignDirectionQueue({
   connection: workerConnection,
 });
 const agentRunQueue = createAgentRunQueue({ connection: workerConnection });
+const exportQueue = createExportQueue({ connection: workerConnection });
 const queues = new Map<string, Queue>([
   [QUEUE_ASSET_VALIDATION, assetValidationQueue],
   [QUEUE_IMAGE_GENERATION, imageGenerationQueue],
   [QUEUE_BRIEF_PARSE, briefParseQueue],
   [QUEUE_DESIGN_DIRECTION, designDirectionQueue],
   [QUEUE_AGENT_RUN, agentRunQueue],
+  [QUEUE_EXPORT, exportQueue],
 ]);
 const taskService = new TaskService(taskRepo, queues);
 
@@ -281,6 +291,32 @@ agentRunWorker.on('failed', (job, err) => {
   logger.error({ jobId: job?.id, err }, 'Agent run job failed');
 });
 
+const exportWorker = new Worker(
+  QUEUE_EXPORT,
+  async (job) => {
+    const data = job.data as ExportJobData;
+    logger.info(
+      { taskId: data.taskId, exportId: data.exportId, jobId: job.id },
+      'Processing export task',
+    );
+    await processExport(data, {
+      taskRepo,
+      exportRepo,
+      imageVersionRepo,
+      assetRepo,
+      storage: s3,
+      bucket,
+    });
+  },
+  { connection: createQueueConnection(), concurrency: 2 },
+);
+exportWorker.on('error', (err) => {
+  logger.error({ err }, 'Export worker error');
+});
+exportWorker.on('failed', (job, err) => {
+  logger.error({ jobId: job?.id, err }, 'Export job failed');
+});
+
 // Heartbeat
 let stopping = false;
 let pulsing = false;
@@ -340,6 +376,7 @@ await Promise.all([
   briefParseWorker.waitUntilReady(),
   designDirectionWorker.waitUntilReady(),
   agentRunWorker.waitUntilReady(),
+  exportWorker.waitUntilReady(),
 ]);
 await pulse();
 
@@ -374,11 +411,13 @@ async function stop() {
     briefParseWorker.close(),
     designDirectionWorker.close(),
     agentRunWorker.close(),
+    exportWorker.close(),
     assetValidationQueue.close(),
     imageGenerationQueue.close(),
     briefParseQueue.close(),
     designDirectionQueue.close(),
     agentRunQueue.close(),
+    exportQueue.close(),
   ]);
   probeConnection.disconnect();
   workerConnection.disconnect();
@@ -394,5 +433,5 @@ process.once('SIGTERM', () => {
 });
 
 logger.info(
-  'Worker ready: probe + asset_validation + brief_parse + design_direction + image_generation + agent_run + outbox scanner + timeout reconciler + confirmation expiry',
+  'Worker ready: probe + asset_validation + brief_parse + design_direction + image_generation + agent_run + export + outbox scanner + timeout reconciler + confirmation expiry',
 );

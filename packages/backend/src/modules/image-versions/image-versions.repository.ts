@@ -70,11 +70,27 @@ export class ImageVersionRepository {
     return row ?? null;
   }
 
-  async findAssetLocation(
-    id: string,
-  ): Promise<{ bucket: string; objectKey: string } | null> {
+  async findAssetLocation(id: string): Promise<{
+    bucket: string;
+    objectKey: string;
+    originalFilename: string;
+    mimeType: string;
+    sizeBytes: number;
+    sha256: string | null;
+    sequence: number;
+    createdAt: Date;
+  } | null> {
     const [row] = await this.db
-      .select({ bucket: assets.bucket, objectKey: assets.objectKey })
+      .select({
+        bucket: assets.bucket,
+        objectKey: assets.objectKey,
+        originalFilename: assets.originalFilename,
+        mimeType: imageVersions.mimeType,
+        sizeBytes: imageVersions.sizeBytes,
+        sha256: assets.sha256,
+        sequence: imageVersions.sequence,
+        createdAt: imageVersions.createdAt,
+      })
       .from(imageVersions)
       .innerJoin(assets, eq(imageVersions.assetId, assets.id))
       .where(eq(imageVersions.id, id));
