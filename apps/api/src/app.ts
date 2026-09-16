@@ -7,7 +7,7 @@ import Fastify, {
 import swagger from '@fastify/swagger';
 import sensible from '@fastify/sensible';
 import cookie from '@fastify/cookie';
-import { env, logger, type createServices } from '@exhibition/backend';
+import { env, logger, type createServices, ProjectPolicy } from '@exhibition/backend';
 import { errorHandlerPlugin } from './plugins/error-handler.js';
 import healthPlugin from './health/health.plugin.js';
 import { authRoutes } from './modules/auth.js';
@@ -28,6 +28,7 @@ import { modelRoutes } from './modules/models.js';
 import { eventRoutes } from './modules/events.js';
 import { dashboardRoutes } from './modules/dashboard.js';
 import { settingsRoutes } from './modules/settings.js';
+import { realTimeRoutes } from './realtime/sse.routes.js';
 
 export async function buildApp(
   services?: ReturnType<typeof createServices>,
@@ -44,6 +45,7 @@ export async function buildApp(
   // 将 services 附加到 app 实例以便路由访问
   if (services) {
     app.decorate('services', services);
+    app.decorate('projectPolicy', new ProjectPolicy(services.pool));
   }
 
   // Register plugins
@@ -98,6 +100,11 @@ export async function buildApp(
   await app.register(eventRoutes);
   await app.register(dashboardRoutes);
   await app.register(settingsRoutes);
+
+  // Register SSE routes
+  if (services) {
+    await app.register(realTimeRoutes, { eventsService: services.eventsService });
+  }
 
   if (services)
     app.addHook('onClose', async () => {

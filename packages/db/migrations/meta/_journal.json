@@ -92,6 +92,13 @@
       "when": 1789500000008,
       "tag": "0012_add_generation_quota_reservation",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1789539249154,
+      "tag": "0013_handy_mercury",
+      "breakpoints": true
     }
   ]
 }
