@@ -488,7 +488,7 @@ docker compose --env-file .env -f infra/compose.dev.yaml down
 
 - [ ] **T034 实现 PDF 提案导出** — [Issue 正文](docs/issues/T034.md)
 
-  阶段：P1；前置：[T031 #31](https://github.com/bao-linfeng/exhibition-ai/issues/31)；状态：todo；GitHub Issue：[#34](https://github.com/bao-linfeng/exhibition-ai/issues/34)；PR：—。
+  阶段：P1；前置：[T031 #31](https://github.com/bao-linfeng/exhibition-ai/issues/31)；状态：in_review；GitHub Issue：[#34](https://github.com/bao-linfeng/exhibition-ai/issues/34)；PR：[#77](https://github.com/bao-linfeng/exhibition-ai/pull/77)。
 
   需求：§14、FR-10扩展。目录：packages/backend/src/modules/exports；apps/worker/src/processors；apps/web/src/modules/exports；infra/docker。
 
