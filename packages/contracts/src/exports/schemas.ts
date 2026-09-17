@@ -6,7 +6,10 @@ import {
 } from '../common/base.js';
 
 // 导出格式
-export const ExportFormatSchema = Type.Union([Type.Literal('zip')]);
+export const ExportFormatSchema = Type.Union([
+  Type.Literal('zip'),
+  Type.Literal('pdf'),
+]);
 
 // 导出任务
 export const ExportTaskSchema = Type.Object(

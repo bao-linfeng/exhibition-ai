@@ -140,10 +140,10 @@
       "bodyFile": "docs/issues/T006.md",
       "issueNumber": 6,
       "issueUrl": "https://github.com/bao-linfeng/exhibition-ai/issues/6",
-      "branch": null,
-      "prNumber": null,
-      "prUrl": null,
-      "status": "done"
+      "branch": "feat/issue-34-pdf-proposal-export",
+      "prNumber": 77,
+      "prUrl": "https://github.com/bao-linfeng/exhibition-ai/pull/77",
+      "status": "in_review"
     },
     {
       "id": "T007",

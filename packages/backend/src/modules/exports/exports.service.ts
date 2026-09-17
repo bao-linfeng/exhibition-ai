@@ -14,7 +14,7 @@ function toExportDto(row: ExportRecord): ExportTask {
   return {
     id: row.id,
     projectId: row.projectId,
-    format: row.format as 'zip',
+    format: row.format as 'zip' | 'pdf',
     versionIds: row.versionIds,
     status: row.status as ExportTask['status'],
     resultAssetId: row.resultAssetId,
@@ -39,7 +39,7 @@ export class ExportService {
     input: {
       projectId: string;
       versionIds: string[];
-      format: 'zip';
+      format: 'zip' | 'pdf';
       requestedBy: string;
     },
     isMemberFn: (projectId: string) => Promise<boolean>,

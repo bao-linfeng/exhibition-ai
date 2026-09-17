@@ -4030,7 +4030,8 @@
                 { "type": "string", "enum": ["brand_material"] },
                 { "type": "string", "enum": ["generated_image"] },
                 { "type": "string", "enum": ["thumbnail"] },
-                { "type": "string", "enum": ["export_zip"] }
+                { "type": "string", "enum": ["export_zip"] },
+                { "type": "string", "enum": ["export_pdf"] }
               ]
             },
             "in": "query",
@@ -4108,7 +4109,8 @@
                               { "type": "string", "enum": ["brand_material"] },
                               { "type": "string", "enum": ["generated_image"] },
                               { "type": "string", "enum": ["thumbnail"] },
-                              { "type": "string", "enum": ["export_zip"] }
+                              { "type": "string", "enum": ["export_zip"] },
+                              { "type": "string", "enum": ["export_pdf"] }
                             ]
                           },
                           "status": {
@@ -4409,7 +4411,8 @@
                             { "type": "string", "enum": ["brand_material"] },
                             { "type": "string", "enum": ["generated_image"] },
                             { "type": "string", "enum": ["thumbnail"] },
-                            { "type": "string", "enum": ["export_zip"] }
+                            { "type": "string", "enum": ["export_zip"] },
+                            { "type": "string", "enum": ["export_pdf"] }
                           ]
                         },
                         "status": {
@@ -6966,7 +6969,12 @@
                     "type": "array",
                     "items": { "format": "uuid", "type": "string" }
                   },
-                  "format": { "type": "string", "enum": ["zip"] }
+                  "format": {
+                    "anyOf": [
+                      { "type": "string", "enum": ["zip"] },
+                      { "type": "string", "enum": ["pdf"] }
+                    ]
+                  }
                 }
               }
             }
@@ -7060,7 +7068,12 @@
                         "properties": {
                           "id": { "format": "uuid", "type": "string" },
                           "projectId": { "format": "uuid", "type": "string" },
-                          "format": { "type": "string", "enum": ["zip"] },
+                          "format": {
+                            "anyOf": [
+                              { "type": "string", "enum": ["zip"] },
+                              { "type": "string", "enum": ["pdf"] }
+                            ]
+                          },
                           "versionIds": {
                             "minItems": 1,
                             "maxItems": 20,
@@ -7165,7 +7178,12 @@
                       "properties": {
                         "id": { "format": "uuid", "type": "string" },
                         "projectId": { "format": "uuid", "type": "string" },
-                        "format": { "type": "string", "enum": ["zip"] },
+                        "format": {
+                          "anyOf": [
+                            { "type": "string", "enum": ["zip"] },
+                            { "type": "string", "enum": ["pdf"] }
+                          ]
+                        },
                         "versionIds": {
                           "minItems": 1,
                           "maxItems": 20,

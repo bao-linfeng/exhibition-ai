@@ -14,6 +14,7 @@ export const AssetKindSchema = Type.Union([
   Type.Literal('generated_image'),
   Type.Literal('thumbnail'),
   Type.Literal('export_zip'),
+  Type.Literal('export_pdf'),
 ]);
 
 // 资产状态

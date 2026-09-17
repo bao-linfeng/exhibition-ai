@@ -53,7 +53,7 @@ export async function exportRoutes(app: FastifyInstance) {
         {
           projectId,
           versionIds: body.versionIds,
-          format: body.format ?? 'zip',
+          format: (body.format ?? 'zip') as 'zip' | 'pdf',
           requestedBy: user.id,
         },
         isMemberFn(user),
