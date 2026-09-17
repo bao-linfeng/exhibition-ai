@@ -777,10 +777,10 @@
       "bodyFile": "docs/issues/T031.md",
       "issueNumber": 31,
       "issueUrl": "https://github.com/bao-linfeng/exhibition-ai/issues/31",
-      "branch": null,
-      "prNumber": null,
-      "prUrl": null,
-      "status": "todo"
+      "branch": "chore/issue-31-e2e-acceptance",
+      "prNumber": 75,
+      "prUrl": "https://github.com/bao-linfeng/exhibition-ai/pull/75",
+      "status": "in_review"
     },
     {
       "id": "T032",

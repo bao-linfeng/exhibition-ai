@@ -450,7 +450,7 @@ docker compose --env-file .env -f infra/compose.dev.yaml down
 
 - [ ] **T031 完成端到端、性能与真实质量验收** — [Issue 正文](docs/issues/T031.md)
 
-  阶段：M5；前置：[T005 #5](https://github.com/bao-linfeng/exhibition-ai/issues/5)、[T019 #19](https://github.com/bao-linfeng/exhibition-ai/issues/19)、[T023 #23](https://github.com/bao-linfeng/exhibition-ai/issues/23)、[T025 #25](https://github.com/bao-linfeng/exhibition-ai/issues/25)、[T026 #26](https://github.com/bao-linfeng/exhibition-ai/issues/26)、[T027 #27](https://github.com/bao-linfeng/exhibition-ai/issues/27)、[T028 #28](https://github.com/bao-linfeng/exhibition-ai/issues/28)、[T029 #29](https://github.com/bao-linfeng/exhibition-ai/issues/29)、[T030 #30](https://github.com/bao-linfeng/exhibition-ai/issues/30)；状态：todo；GitHub Issue：[#31](https://github.com/bao-linfeng/exhibition-ai/issues/31)；PR：—。
+  阶段：M5；前置：[T005 #5](https://github.com/bao-linfeng/exhibition-ai/issues/5)、[T019 #19](https://github.com/bao-linfeng/exhibition-ai/issues/19)、[T023 #23](https://github.com/bao-linfeng/exhibition-ai/issues/23)、[T025 #25](https://github.com/bao-linfeng/exhibition-ai/issues/25)、[T026 #26](https://github.com/bao-linfeng/exhibition-ai/issues/26)、[T027 #27](https://github.com/bao-linfeng/exhibition-ai/issues/27)、[T028 #28](https://github.com/bao-linfeng/exhibition-ai/issues/28)、[T029 #29](https://github.com/bao-linfeng/exhibition-ai/issues/29)、[T030 #30](https://github.com/bao-linfeng/exhibition-ai/issues/30)；状态：in_review；GitHub Issue：[#31](https://github.com/bao-linfeng/exhibition-ai/issues/31)；PR：[#75](https://github.com/bao-linfeng/exhibition-ai/pull/75)。
 
   需求：AC-01～AC-18、NFR-01～NFR-09。目录：tests/e2e；tests/integration；tests/fixtures；docs/ACCEPTANCE_REPORT.md。
 
