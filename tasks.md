@@ -438,7 +438,7 @@ docker compose --env-file .env -f infra/compose.dev.yaml down
 
 - [ ] **T030 实现备份恢复、保留策略和安全清理** — [Issue 正文](docs/issues/T030.md)
 
-  阶段：M5；前置：[T018 #18](https://github.com/bao-linfeng/exhibition-ai/issues/18)、[T027 #27](https://github.com/bao-linfeng/exhibition-ai/issues/27)、[T029 #29](https://github.com/bao-linfeng/exhibition-ai/issues/29)；状态：in-progress；GitHub Issue：[#30](https://github.com/bao-linfeng/exhibition-ai/issues/30)；PR：待创建。
+  阶段：M5；前置：[T018 #18](https://github.com/bao-linfeng/exhibition-ai/issues/18)、[T027 #27](https://github.com/bao-linfeng/exhibition-ai/issues/27)、[T029 #29](https://github.com/bao-linfeng/exhibition-ai/issues/29)；状态：in-progress；GitHub Issue：[#30](https://github.com/bao-linfeng/exhibition-ai/issues/30)；PR：[#73](https://github.com/bao-linfeng/exhibition-ai/pull/73)。
 
   需求：§10、§11.4～§11.5、AC-16。目录：infra/scripts；apps/worker/src/schedulers/storage-cleanup.ts；packages/backend；docs/RUNBOOK.md；tests/integration。
 

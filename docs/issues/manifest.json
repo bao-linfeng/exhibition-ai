@@ -746,10 +746,10 @@
       "bodyFile": "docs/issues/T030.md",
       "issueNumber": 30,
       "issueUrl": "https://github.com/bao-linfeng/exhibition-ai/issues/30",
-      "branch": null,
-      "prNumber": null,
-      "prUrl": null,
-      "status": "todo"
+      "branch": "chore/issue-30-backup-retention-cleanup",
+      "prNumber": 73,
+      "prUrl": "https://github.com/bao-linfeng/exhibition-ai/pull/73",
+      "status": "in-progress"
     },
     {
       "id": "T031",

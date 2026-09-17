@@ -184,4 +184,23 @@ export class AssetRepository {
       .limit(1);
     return row ?? null;
   }
+
+  async findExpiredUploadSessions(olderThan: Date) {
+    return this.db
+      .select()
+      .from(uploadSessions)
+      .where(
+        and(
+          lt(uploadSessions.expiresAt, olderThan),
+          eq(uploadSessions.status, 'initiated'),
+        ),
+      );
+  }
+
+  async markUploadSessionExpired(id: string) {
+    await this.db
+      .update(uploadSessions)
+      .set({ status: 'expired' })
+      .where(eq(uploadSessions.id, id));
+  }
 }
