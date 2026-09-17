@@ -25,6 +25,7 @@ export interface Environment {
   // AI Provider 配置
   OPENAI_API_KEY?: string;
   OPENAI_BASE_URL?: string;
+  GOOGLE_API_KEY?: string;
   AI_PROVIDER_MODE?: 'mock' | 'real';
   AI_DEFAULT_TEXT_MODEL?: string;
   AI_DEFAULT_IMAGE_MODEL?: string;
@@ -141,6 +142,7 @@ function parseEnv(): Environment {
     SMTP_FROM: optional('SMTP_FROM'),
     OPENAI_API_KEY: optional('OPENAI_API_KEY'),
     OPENAI_BASE_URL: optional('OPENAI_BASE_URL'),
+    GOOGLE_API_KEY: optional('GOOGLE_API_KEY'),
     AI_PROVIDER_MODE: (() => {
       const v = optional('AI_PROVIDER_MODE');
       return v === 'real' ? 'real' : 'mock';

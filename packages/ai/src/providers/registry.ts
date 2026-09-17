@@ -8,31 +8,38 @@ import { ProviderError } from '../types.js';
 export class ImageProviderRegistry {
   private readonly providers = new Map<string, ImageProvider>();
   private readonly configs = new Map<string, ProviderModelConfig>();
+  private readonly key = (providerId: string, modelId: string) =>
+    `${providerId}:${modelId}`;
 
   register(config: ProviderModelConfig, provider: ImageProvider): this {
     if (!config.isActive) return this;
-    this.configs.set(config.providerId, config);
-    this.providers.set(config.providerId, provider);
+    const key = this.key(config.providerId, config.modelId);
+    this.configs.set(key, config);
+    this.providers.set(key, provider);
     return this;
   }
 
-  resolve(providerId: string): {
+  resolve(
+    providerId: string,
+    modelId: string,
+  ): {
     provider: ImageProvider;
     config: ProviderModelConfig;
   } {
-    const config = this.configs.get(providerId);
-    const provider = this.providers.get(providerId);
+    const key = this.key(providerId, modelId);
+    const config = this.configs.get(key);
+    const provider = this.providers.get(key);
     if (!config || !provider) {
       throw new ProviderError(
         'model_not_found',
-        `Image provider not found or not registered: ${providerId}`,
+        `Image provider not found or not registered: ${providerId}/${modelId}`,
         false,
       );
     }
     if (!config.isActive) {
       throw new ProviderError(
         'model_disabled',
-        `Image provider is disabled: ${providerId}`,
+        `Image provider is disabled: ${providerId}/${modelId}`,
         false,
       );
     }

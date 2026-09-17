@@ -108,6 +108,7 @@ export async function processImageGeneration(
     try {
       ({ provider, config: modelConfig } = imageProviderRegistry.resolve(
         modelSnapshot.providerId,
+        modelSnapshot.modelId,
       ));
     } catch (err) {
       if (err instanceof ProviderError) {

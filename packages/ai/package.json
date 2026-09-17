@@ -16,7 +16,8 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@exhibition/contracts": "workspace:*"
+    "@exhibition/contracts": "workspace:*",
+    "@google/generative-ai": "0.24.1"
   },
   "devDependencies": {
     "typescript": "catalog:"

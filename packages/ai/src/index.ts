@@ -38,6 +38,9 @@ export {
   OpenAIImageProvider,
 } from './providers/openai/index.js';
 
+export { GeminiImageProvider } from './providers/google/index.js';
+export type { GeminiImageProviderOptions } from './providers/google/index.js';
+
 export { BoothAgent } from './agents/booth-agent.js';
 export { createBoothTools } from './agents/tools.js';
 export type {

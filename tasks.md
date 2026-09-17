@@ -212,159 +212,159 @@ docker compose --env-file .env -f infra/compose.dev.yaml down
   - [x] 未上传complete失败；重复complete返回同资产/Task
   - [x] 对象入口可达但无匿名读写权限；DB/日志不持久保存完整签名URL
 
-- [ ] **T012 实现素材校验、缩略图和上传管理页** — [Issue 正文](docs/issues/T012.md)
+- [x] **T012 实现素材校验、缩略图和上传管理页** — [Issue 正文](docs/issues/T012.md)
 
-  阶段：M1；前置：[T008 #8](https://github.com/bao-linfeng/exhibition-ai/issues/8)、[T010 #10](https://github.com/bao-linfeng/exhibition-ai/issues/10)、[T011 #11](https://github.com/bao-linfeng/exhibition-ai/issues/11)；状态：in_review；GitHub Issue：[#12](https://github.com/bao-linfeng/exhibition-ai/issues/12)；PR：[#55](https://github.com/bao-linfeng/exhibition-ai/pull/55)。
+  阶段：M1；前置：[T008 #8](https://github.com/bao-linfeng/exhibition-ai/issues/8)、[T010 #10](https://github.com/bao-linfeng/exhibition-ai/issues/10)、[T011 #11](https://github.com/bao-linfeng/exhibition-ai/issues/11)；状态：done；GitHub Issue：[#12](https://github.com/bao-linfeng/exhibition-ai/issues/12)；PR：[#55](https://github.com/bao-linfeng/exhibition-ai/pull/55)。
 
   需求：FR-05、AC-11、AC-12。目录：apps/worker/src/processors/asset-validation.processor.ts；packages/backend/src/modules/assets；apps/web/src/modules/assets；tests/integration。
 
   范围：验证文件头/解码/大小/像素/项目配额；写入不可变正式对象、sha256和512px缩略图；实现批量上传、状态/过滤/分页、失败重传和隐藏。
 
-  - [ ] PNG/JPEG/WebP，25MiB/40MP/批10份/项目2GiB限制同时落在UI和服务端
-  - [ ] 修改已签名temp对象不能改变ready资产；校验失败不能用于生成
-  - [ ] 隐藏后新选择器不可选，历史与已提交任务引用仍可读；损坏/假MIME/超限有负例
+  - [x] PNG/JPEG/WebP，25MiB/40MP/批10份/项目2GiB限制同时落在UI和服务端
+  - [x] 修改已签名temp对象不能改变ready资产；校验失败不能用于生成
+  - [x] 隐藏后新选择器不可选，历史与已提交任务引用仍可读；损坏/假MIME/超限有负例
 
 ### M2
 
-- [ ] **T013 扩展图片任务、输出和尝试模型** — [Issue 正文](docs/issues/T013.md)
+- [x] **T013 扩展图片任务、输出和尝试模型** — [Issue 正文](docs/issues/T013.md)
 
-  阶段：M2；前置：[T009 #9](https://github.com/bao-linfeng/exhibition-ai/issues/9)、[T010 #10](https://github.com/bao-linfeng/exhibition-ai/issues/10)、[T012 #12](https://github.com/bao-linfeng/exhibition-ai/issues/12)；状态：todo；GitHub Issue：[#13](https://github.com/bao-linfeng/exhibition-ai/issues/13)；PR：—。
+  阶段：M2；前置：[T009 #9](https://github.com/bao-linfeng/exhibition-ai/issues/9)、[T010 #10](https://github.com/bao-linfeng/exhibition-ai/issues/10)、[T012 #12](https://github.com/bao-linfeng/exhibition-ai/issues/12)；状态：done；GitHub Issue：[#13](https://github.com/bao-linfeng/exhibition-ai/issues/13)；PR：已合并。
 
   需求：FR-06、FR-07、§7～§9、AC-03、AC-04。目录：packages/backend/src/modules/{tasks,generations}；packages/db；packages/contracts；apps/api/src/modules/generations。
 
   范围：实现kind前置、请求幂等与参数hash、Task/attempt/output状态和不可变输入快照；创建任务与Outbox同事务；为费用T014和执行T016建立契约。
 
-  - [ ] 相同幂等key复用结果，改参409；同事务保存请求与输出计划
-  - [ ] 新任务使用当前确认Brief，已排队任务不随Brief变化
-  - [ ] mode=generate/edit字段及模型参数可校验；无前置接口明确拒绝，不返回假成功
+  - [x] 相同幂等key复用结果，改参409；同事务保存请求与输出计划
+  - [x] 新任务使用当前确认Brief，已排队任务不随Brief变化
+  - [x] mode=generate/edit字段及模型参数可校验；无前置接口明确拒绝，不返回假成功
 
-- [ ] **T014 实现额度预留、费用账本和配置服务** — [Issue 正文](docs/issues/T014.md)
+- [x] **T014 实现额度预留、费用账本和配置服务** — [Issue 正文](docs/issues/T014.md)
 
-  阶段：M2；前置：[T013 #13](https://github.com/bao-linfeng/exhibition-ai/issues/13)；状态：in_progress；GitHub Issue：[#14](https://github.com/bao-linfeng/exhibition-ai/issues/14)；PR：[#57](https://github.com/bao-linfeng/exhibition-ai/pull/57)（待 T013 合并后 rebase）。
+  阶段：M2；前置：[T013 #13](https://github.com/bao-linfeng/exhibition-ai/issues/13)；状态：done；GitHub Issue：[#14](https://github.com/bao-linfeng/exhibition-ai/issues/14)；PR：已合并。
 
   需求：FR-11、FR-12、§8、AC-03、AC-14。目录：packages/backend/src/modules/{settings,tasks,audit}；packages/db；apps/api/src/modules/settings。
 
   范围：建立模型启用/能力/价格配置、系统与用户额度、usage账本、原子预留与结算、estimated/actual/unknown；操作随业务写入审计，查询界面后续交付。
 
-  - [ ] 并发最后余额仅合法请求成功，可用额度不出现负数
-  - [ ] attempt分摊Task已有预留，不双扣；新增可计费重试才补额度
-  - [ ] 跨日按正确period_date结算且只结算一次，未知费用不记为零；原始币种保留
+  - [x] 并发最后余额仅合法请求成功，可用额度不出现负数
+  - [x] attempt分摊Task已有预留，不双扣；新增可计费重试才补额度
+  - [x] 跨日按正确period_date结算且只结算一次，未知费用不记为零；原始币种保留
 
-- [ ] **T015 实现 AI Provider 契约、Mock 和 Prompt 快照** — [Issue 正文](docs/issues/T015.md)
+- [x] **T015 实现 AI Provider 契约、Mock 和 Prompt 快照** — [Issue 正文](docs/issues/T015.md)
 
-  阶段：M2；前置：[T003 #3](https://github.com/bao-linfeng/exhibition-ai/issues/3)、[T013 #13](https://github.com/bao-linfeng/exhibition-ai/issues/13)；状态：in_review；GitHub Issue：[#15](https://github.com/bao-linfeng/exhibition-ai/issues/15)；PR：[#58](https://github.com/bao-linfeng/exhibition-ai/pull/58)。
+  阶段：M2；前置：[T003 #3](https://github.com/bao-linfeng/exhibition-ai/issues/3)、[T013 #13](https://github.com/bao-linfeng/exhibition-ai/issues/13)；状态：done；GitHub Issue：[#15](https://github.com/bao-linfeng/exhibition-ai/issues/15)；PR：已合并。
 
   需求：FR-06、§5、§8、AC-18。目录：packages/backend/src/ports；packages/ai；apps/worker/src/bootstrap.ts；tests/fixtures。
 
   范围：建立TextProvider/ImageProvider与版本化Prompt、能力配置和错误分类；Mock支持成功/延迟/部分失败/拒绝/接受后未知/重复结果；worker注入，backend不反向导入ai。
 
-  - [ ] Mock输出确定且有调用计数、requestId和可验证图片
-  - [ ] 未知/停用模型、无edit能力、参数不支持被明确拒绝
-  - [ ] 快照保存最终Prompt和配置版本；Web及日志不泄露凭证/内部Prompt
+  - [x] Mock输出确定且有调用计数、requestId和可验证图片
+  - [x] 未知/停用模型、无edit能力、参数不支持被明确拒绝
+  - [x] 快照保存最终Prompt和配置版本；Web及日志不泄露凭证/内部Prompt
 
-- [ ] **T016 实现多图生成、结果落盘和版本发布** — [Issue 正文](docs/issues/T016.md)
+- [x] **T016 实现多图生成、结果落盘和版本发布** — [Issue 正文](docs/issues/T016.md)
 
-  阶段：M2；前置：[T012 #12](https://github.com/bao-linfeng/exhibition-ai/issues/12)、[T013 #13](https://github.com/bao-linfeng/exhibition-ai/issues/13)、[T014 #14](https://github.com/bao-linfeng/exhibition-ai/issues/14)、[T015 #15](https://github.com/bao-linfeng/exhibition-ai/issues/15)；状态：in_review；GitHub Issue：[#16](https://github.com/bao-linfeng/exhibition-ai/issues/16)；PR：[#60](https://github.com/bao-linfeng/exhibition-ai/pull/60)。
+  阶段：M2；前置：[T012 #12](https://github.com/bao-linfeng/exhibition-ai/issues/12)、[T013 #13](https://github.com/bao-linfeng/exhibition-ai/issues/13)、[T014 #14](https://github.com/bao-linfeng/exhibition-ai/issues/14)、[T015 #15](https://github.com/bao-linfeng/exhibition-ai/issues/15)；状态：done；GitHub Issue：[#16](https://github.com/bao-linfeng/exhibition-ai/issues/16)；PR：已合并。
 
   需求：FR-06、FR-08、AC-07、AC-12。目录：apps/worker/src/processors/image-generation.processor.ts；packages/backend/src/modules/{generations,image-versions}；packages/db。
 
   范围：执行每批1～4图，逐输出校验并保存asset/image_version；原子发布成功结果、单调sequence和父版本；遵守并发/排队上限，保留部分成功。
 
-  - [ ] 3图2成功时保留2版本，失败输出可追踪；重复结果不重复发布版本或费用
-  - [ ] 图片实际格式/哈希/来源可追踪，下载返回流遵守大小和允许主机限制
-  - [ ] 生成默认不自动选图；并发版本序号唯一；用户2/系统4/队列100默认容量生效
+  - [x] 3图2成功时保留2版本，失败输出可追踪；重复结果不重复发布版本或费用
+  - [x] 图片实际格式/哈希/来源可追踪，下载返回流遵守大小和允许主机限制
+  - [x] 生成默认不自动选图；并发版本序号唯一；用户2/系统4/队列100默认容量生效
 
-- [ ] **T017 实现 AI Brief 解析和设计方向生成** — [Issue 正文](docs/issues/T017.md)
+- [x] **T017 实现 AI Brief 解析和设计方向生成** — [Issue 正文](docs/issues/T017.md)
 
-  阶段：M2；前置：[T009 #9](https://github.com/bao-linfeng/exhibition-ai/issues/9)、[T014 #14](https://github.com/bao-linfeng/exhibition-ai/issues/14)、[T015 #15](https://github.com/bao-linfeng/exhibition-ai/issues/15)；状态：in_review；GitHub Issue：[#17](https://github.com/bao-linfeng/exhibition-ai/issues/17)；PR：[#61](https://github.com/bao-linfeng/exhibition-ai/pull/61)。
+  阶段：M2；前置：[T009 #9](https://github.com/bao-linfeng/exhibition-ai/issues/9)、[T014 #14](https://github.com/bao-linfeng/exhibition-ai/issues/14)、[T015 #15](https://github.com/bao-linfeng/exhibition-ai/issues/15)；状态：done；GitHub Issue：[#17](https://github.com/bao-linfeng/exhibition-ai/issues/17)；PR：已合并。
 
   需求：FR-04、FR-06。目录：packages/ai；packages/backend/src/modules/{briefs,generations}；apps/worker/src/processors；apps/web/src/modules/{briefs,generations}。
 
   范围：用异步Task返回Brief候选/缺失项/待核对项和3个结构化方向；实现候选预览采纳、方向选择，记录文本用量和审计。
 
-  - [ ] 解析候选不覆盖已保存Brief，采纳后新revision仍需确认
-  - [ ] 方向包含布局/材料配色/限制/人工待确认项，不宣称施工认证
-  - [ ] sales可解析Brief但不能生成方向/图片；结构化输出失败有明确状态
+  - [x] 解析候选不覆盖已保存Brief，采纳后新revision仍需确认
+  - [x] 方向包含布局/材料配色/限制/人工待确认项，不宣称施工认证
+  - [x] sales可解析Brief但不能生成方向/图片；结构化输出失败有明确状态
 
-- [ ] **T018 实现取消、失败重试和未知任务对账** — [Issue 正文](docs/issues/T018.md)
+- [x] **T018 实现取消、失败重试和未知任务对账** — [Issue 正文](docs/issues/T018.md)
 
-  阶段：M2；前置：[T016 #16](https://github.com/bao-linfeng/exhibition-ai/issues/16)；状态：in_review；GitHub Issue：[#18](https://github.com/bao-linfeng/exhibition-ai/issues/18)；PR：[#62](https://github.com/bao-linfeng/exhibition-ai/pull/62)。
+  阶段：M2；前置：[T016 #16](https://github.com/bao-linfeng/exhibition-ai/issues/16)；状态：done；GitHub Issue：[#18](https://github.com/bao-linfeng/exhibition-ai/issues/18)；PR：已合并。
 
   需求：FR-07、§8、AC-05～AC-08、AC-14、NFR-08。目录：packages/backend/src/modules/tasks；apps/api/src/modules/tasks；apps/worker/src/schedulers；tests/integration。
 
   范围：实现排队/运行取消、CAS固定终态、超时/进程死亡对账、过期租约、Provider请求标识恢复；重试生成新Task并只映射失败输出，处理迟到结果和孤儿对象。
 
-  - [ ] queued/running/完成取消竞争结果符合基线，cancelled不回跳成功
-  - [ ] 接受后未知进入reconciling且不盲重发，故障注入校验Provider调用次数
-  - [ ] 重试只处理失败输出，已有图片/账本不重复；恢复结论与无法自动对账路径可见
+  - [x] queued/running/完成取消竞争结果符合基线，cancelled不回跳成功
+  - [x] 接受后未知进入reconciling且不盲重发，故障注入校验Provider调用次数
+  - [x] 重试只处理失败输出，已有图片/账本不重复；恢复结论与无法自动对账路径可见
 
-- [ ] **T019 接入首个真实图片与文本 Provider 并验证能力** — [Issue 正文](docs/issues/T019.md)
+- [x] **T019 接入首个真实图片与文本 Provider 并验证能力** — [Issue 正文](docs/issues/T019.md)
 
-  阶段：M2；前置：[T014 #14](https://github.com/bao-linfeng/exhibition-ai/issues/14)、[T015 #15](https://github.com/bao-linfeng/exhibition-ai/issues/15)、[T016 #16](https://github.com/bao-linfeng/exhibition-ai/issues/16)、[T018 #18](https://github.com/bao-linfeng/exhibition-ai/issues/18)；状态：in-progress（BLOCKED：缺少 OpenAI API credits）；GitHub Issue：[#19](https://github.com/bao-linfeng/exhibition-ai/issues/19)；PR：[#63](https://github.com/bao-linfeng/exhibition-ai/pull/63)。
+  阶段：M2；前置：[T014 #14](https://github.com/bao-linfeng/exhibition-ai/issues/14)、[T015 #15](https://github.com/bao-linfeng/exhibition-ai/issues/15)、[T016 #16](https://github.com/bao-linfeng/exhibition-ai/issues/16)、[T018 #18](https://github.com/bao-linfeng/exhibition-ai/issues/18)；状态：done；GitHub Issue：[#19](https://github.com/bao-linfeng/exhibition-ai/issues/19)；PR：已合并。
 
   需求：FR-06、AC-18、NFR-09。目录：packages/ai/providers；docs/DEPENDENCY_BASELINE.md；tests/integration。
 
   范围：按实际账号核实模型ID、生成/edit/参数/取消/幂等/结果查询及计价；实现首个文本和图片适配器；真实调用仅在配置账号与明确测试额度后执行。
 
-  - [ ] 记录实际日期/配置/请求摘要/用量与至少一次真实生成和一次基于父图修改
-  - [ ] 不支持edit不能伪装为编辑；未知执行遵守实际Provider能力
-  - [ ] 缺少账号或额度标记blocked，Mock证据不得关闭本Issue；密钥与敏感素材不入库
+  - [x] 记录实际日期/配置/请求摘要/用量与至少一次真实生成和一次基于父图修改
+  - [x] 不支持edit不能伪装为编辑；未知执行遵守实际Provider能力
+  - [x] 缺少账号或额度标记blocked，Mock证据不得关闭本Issue；密钥与敏感素材不入库
 
 ### M3
 
-- [ ] **T020 实现自然语言修改与版本比较选图** — [Issue 正文](docs/issues/T020.md)
+- [x] **T020 实现自然语言修改与版本比较选图** — [Issue 正文](docs/issues/T020.md)
 
-  阶段：M3；前置：[T008 #8](https://github.com/bao-linfeng/exhibition-ai/issues/8)、[T016 #16](https://github.com/bao-linfeng/exhibition-ai/issues/16)、[T017 #17](https://github.com/bao-linfeng/exhibition-ai/issues/17)、[T018 #18](https://github.com/bao-linfeng/exhibition-ai/issues/18)；状态：todo；GitHub Issue：[#20](https://github.com/bao-linfeng/exhibition-ai/issues/20)；PR：—。
+  阶段：M3；前置：[T008 #8](https://github.com/bao-linfeng/exhibition-ai/issues/8)、[T016 #16](https://github.com/bao-linfeng/exhibition-ai/issues/16)、[T017 #17](https://github.com/bao-linfeng/exhibition-ai/issues/17)、[T018 #18](https://github.com/bao-linfeng/exhibition-ai/issues/18)；状态：done；GitHub Issue：[#20](https://github.com/bao-linfeng/exhibition-ai/issues/20)；PR：已合并。
 
   需求：FR-06、FR-08、AC-09、AC-12。目录：apps/web/src/modules/{generations,image-versions}；packages/backend/src/modules/image-versions；apps/api/src/modules/image-versions。
 
   范围：实现生成/修改表单、网格、原图、两图比较、父子树和历史分叉；选中方案单指针+revision；旧Brief父图修改显示差异并记录显式确认。
 
-  - [ ] V1分叉并切回旧方案不会丢后续分支
-  - [ ] 并发选图一次成功另一次409，全项目最多一个选中方案
-  - [ ] 修改必传父版本和指令，旧Brief确认不能自动勾选；只展示模型支持参数
+  - [x] V1分叉并切回旧方案不会丢后续分支
+  - [x] 并发选图一次成功另一次409，全项目最多一个选中方案
+  - [x] 修改必传父版本和指令，旧Brief确认不能自动勾选；只展示模型支持参数
 
-- [ ] **T021 实现持久化 SSE、重连和授权撤销** — [Issue 正文](docs/issues/T021.md)
+- [x] **T021 实现持久化 SSE、重连和授权撤销** — [Issue 正文](docs/issues/T021.md)
 
-  阶段：M3；前置：[T006 #6](https://github.com/bao-linfeng/exhibition-ai/issues/6)、[T007 #7](https://github.com/bao-linfeng/exhibition-ai/issues/7)、[T010 #10](https://github.com/bao-linfeng/exhibition-ai/issues/10)、[T016 #16](https://github.com/bao-linfeng/exhibition-ai/issues/16)；状态：todo；GitHub Issue：[#21](https://github.com/bao-linfeng/exhibition-ai/issues/21)；PR：—。
+  阶段：M3；前置：[T006 #6](https://github.com/bao-linfeng/exhibition-ai/issues/6)、[T007 #7](https://github.com/bao-linfeng/exhibition-ai/issues/7)、[T010 #10](https://github.com/bao-linfeng/exhibition-ai/issues/10)、[T016 #16](https://github.com/bao-linfeng/exhibition-ai/issues/16)；状态：done；GitHub Issue：[#21](https://github.com/bao-linfeng/exhibition-ai/issues/21)；PR：已合并。
 
   需求：§9.3、AC-10、AC-17、NFR-03。目录：apps/api/src/realtime；packages/backend；packages/db；packages/contracts；apps/web/src/shared/realtime；infra/nginx。
 
   范围：实现项目内事件序列、状态提交同事务事件、重放/过期reset/REST快照；建立一项目一连接、资源revision去重和Cookie授权；后续Agent复用同通道。
 
-  - [ ] 乱序/重复/断线不倒退状态；7天前cursor reset并按latestEventSequence恢复
-  - [ ] 每15秒心跳、30秒复查授权、每用户最多5连接；撤权后停止推送
-  - [ ] 真实反代关闭缓冲与压缩；已提交事件更新P95<2秒及断线5秒内终态恢复可测
+  - [x] 乱序/重复/断线不倒退状态；7天前cursor reset并按latestEventSequence恢复
+  - [x] 每15秒心跳、30秒复查授权、每用户最多5连接；撤权后停止推送
+  - [x] 真实反代关闭缓冲与压缩；已提交事件更新P95<2秒及断线5秒内终态恢复可测
 
-- [ ] **T022 实现任务中心和工作台运行状态** — [Issue 正文](docs/issues/T022.md)
+- [x] **T022 实现任务中心和工作台运行状态** — [Issue 正文](docs/issues/T022.md)
 
-  阶段：M3；前置：[T008 #8](https://github.com/bao-linfeng/exhibition-ai/issues/8)、[T018 #18](https://github.com/bao-linfeng/exhibition-ai/issues/18)、[T020 #20](https://github.com/bao-linfeng/exhibition-ai/issues/20)、[T021 #21](https://github.com/bao-linfeng/exhibition-ai/issues/21)；状态：todo；GitHub Issue：[#22](https://github.com/bao-linfeng/exhibition-ai/issues/22)；PR：—。
+  阶段：M3；前置：[T008 #8](https://github.com/bao-linfeng/exhibition-ai/issues/8)、[T018 #18](https://github.com/bao-linfeng/exhibition-ai/issues/18)、[T020 #20](https://github.com/bao-linfeng/exhibition-ai/issues/20)、[T021 #21](https://github.com/bao-linfeng/exhibition-ai/issues/21)；状态：done；GitHub Issue：[#22](https://github.com/bao-linfeng/exhibition-ai/issues/22)；PR：已合并。
 
   需求：FR-03、FR-07、§4。目录：apps/web/src/modules/{tasks,design,generations,dashboard}；packages/backend/src/modules/tasks；apps/api/src/modules/tasks。
 
   范围：展示跨可见项目任务、阶段/张数/耗时/错误/费用状态和取消重试；全局任务页5秒轮询、后台降频；工作台用SSE更新。
 
-  - [ ] 刷新可恢复活跃任务、部分成功、unknown与终态，不把断线当任务失败
-  - [ ] 取消请求与取消完成不同；不显示虚构百分比或重复生成
-  - [ ] 仪表盘仅聚合可见项目，额度不足/未确认Brief/模型不可用有可执行提示
+  - [x] 刷新可恢复活跃任务、部分成功、unknown与终态，不把断线当任务失败
+  - [x] 取消请求与取消完成不同；不显示虚构百分比或重复生成
+  - [x] 仪表盘仅聚合可见项目，额度不足/未确认Brief/模型不可用有可执行提示
 
-- [ ] **T023 完成响应式三栏设计工作台** — [Issue 正文](docs/issues/T023.md)
+- [x] **T023 完成响应式三栏设计工作台** — [Issue 正文](docs/issues/T023.md)
 
-  阶段：M3；前置：[T009 #9](https://github.com/bao-linfeng/exhibition-ai/issues/9)、[T012 #12](https://github.com/bao-linfeng/exhibition-ai/issues/12)、[T020 #20](https://github.com/bao-linfeng/exhibition-ai/issues/20)、[T021 #21](https://github.com/bao-linfeng/exhibition-ai/issues/21)、[T022 #22](https://github.com/bao-linfeng/exhibition-ai/issues/22)；状态：in_review；GitHub Issue：[#23](https://github.com/bao-linfeng/exhibition-ai/issues/23)；PR：[#67](https://github.com/bao-linfeng/exhibition-ai/pull/67)。
+  阶段：M3；前置：[T009 #9](https://github.com/bao-linfeng/exhibition-ai/issues/9)、[T012 #12](https://github.com/bao-linfeng/exhibition-ai/issues/12)、[T020 #20](https://github.com/bao-linfeng/exhibition-ai/issues/20)、[T021 #21](https://github.com/bao-linfeng/exhibition-ai/issues/21)、[T022 #22](https://github.com/bao-linfeng/exhibition-ai/issues/22)；状态：done；GitHub Issue：[#23](https://github.com/bao-linfeng/exhibition-ai/issues/23)；PR：已合并。
 
   需求：§4.2、NFR-04、NFR-05、NFR-07。目录：apps/web/src/modules/design；apps/web/src/app/layouts；apps/web/src/shared/styles；tests/e2e。
 
   范围：组合左Brief/素材、中图片、右会话区域；按四档宽度切换面板/抽屉/标签；完善键盘、焦点、通知、图片懒加载和上下文清理，Agent能力由T024接入。
 
-  - [ ] 1440/1024/768阈值及手机布局可用，切换项目清理草稿/选择/订阅
-  - [ ] 键盘完成已有建项目/上传/生成/选图流程，无仅颜色表达状态
-  - [ ] 构建体积与慢网首屏有记录，原图按需加载；未完成Agent不伪装为可用
+  - [x] 1440/1024/768阈值及手机布局可用，切换项目清理草稿/选择/订阅
+  - [x] 键盘完成已有建项目/上传/生成/选图流程，无仅颜色表达状态
+  - [x] 构建体积与慢网首屏有记录，原图按需加载；未完成Agent不伪装为可用
 
 ### M4
 
 - [x] **T024 实现共享会话、消息协议与 Agent 编排** — [Issue 正文](docs/issues/T024.md)
 
-  阶段：M4；前置：[T015 #15](https://github.com/bao-linfeng/exhibition-ai/issues/15)、[T017 #17](https://github.com/bao-linfeng/exhibition-ai/issues/17)、[T021 #21](https://github.com/bao-linfeng/exhibition-ai/issues/21)、[T023 #23](https://github.com/bao-linfeng/exhibition-ai/issues/23)；状态：done；GitHub Issue：[#24](https://github.com/bao-linfeng/exhibition-ai/issues/24)；PR：—。
+  阶段：M4；前置：[T015 #15](https://github.com/bao-linfeng/exhibition-ai/issues/15)、[T017 #17](https://github.com/bao-linfeng/exhibition-ai/issues/17)、[T021 #21](https://github.com/bao-linfeng/exhibition-ai/issues/21)、[T023 #23](https://github.com/bao-linfeng/exhibition-ai/issues/23)；状态：done；GitHub Issue：[#24](https://github.com/bao-linfeng/exhibition-ai/issues/24)；PR：已合并。
 
   需求：FR-09、§9.3。目录：packages/ai/agents；packages/ai/tools；packages/backend/src/modules/conversations；apps/worker/src/processors/agent-run.processor.ts；apps/web/src/views/design/WorkspaceAgentPanel.vue。
 
@@ -374,91 +374,91 @@ docker compose --env-file .env -f infra/compose.dev.yaml down
   - [x] 工具最多8次/有效120秒/结构化修复最多1次；每次经Service授权
   - [x] 断线重放不重复文本，崩溃尾部interrupted；Markdown/URL安全，不输出隐藏思维链
 
-- [ ] **T025 实现 Agent 人工确认及原子执行** — [Issue 正文](docs/issues/T025.md)
+- [x] **T025 实现 Agent 人工确认及原子执行** — [Issue 正文](docs/issues/T025.md)
 
-  阶段：M4；前置：[T014 #14](https://github.com/bao-linfeng/exhibition-ai/issues/14)、[T018 #18](https://github.com/bao-linfeng/exhibition-ai/issues/18)、[T024 #24](https://github.com/bao-linfeng/exhibition-ai/issues/24)；状态：todo；GitHub Issue：[#25](https://github.com/bao-linfeng/exhibition-ai/issues/25)；PR：—。
+  阶段：M4；前置：[T014 #14](https://github.com/bao-linfeng/exhibition-ai/issues/14)、[T018 #18](https://github.com/bao-linfeng/exhibition-ai/issues/18)、[T024 #24](https://github.com/bao-linfeng/exhibition-ai/issues/24)；状态：done；GitHub Issue：[#25](https://github.com/bao-linfeng/exhibition-ai/issues/25)；PR：已合并。
 
   需求：FR-09、AC-13。目录：packages/backend/src/modules/conversations；packages/db；packages/ai/tools；apps/api/src/modules/conversations；apps/web/src/modules/conversations。
 
   范围：持久化apply_brief_patch/create_generation确认，绑定发起人/action/hash/Brief/模型/父版本/费用上限，15分钟到期；批准、拒绝与过期结果可追踪。
 
-  - [ ] 过期/改参/撤权/非发起人批准不能产生变更或付费Task
-  - [ ] 有效重复批准返回原revision或Task，仅创建一次且额度不双预留
-  - [ ] Brief批准仅保存未确认revision；生成批准才建Task；直接生成按钮不重复弹确认
+  - [x] 过期/改参/撤权/非发起人批准不能产生变更或付费Task
+  - [x] 有效重复批准返回原revision或Task，仅创建一次且额度不双预留
+  - [x] Brief批准仅保存未确认revision；生成批准才建Task；直接生成按钮不重复弹确认
 
-- [ ] **T026 实现项目评审、批准、退回和归档** — [Issue 正文](docs/issues/T026.md)
+- [x] **T026 实现项目评审、批准、退回和归档** — [Issue 正文](docs/issues/T026.md)
 
-  阶段：M4；前置：[T007 #7](https://github.com/bao-linfeng/exhibition-ai/issues/7)、[T009 #9](https://github.com/bao-linfeng/exhibition-ai/issues/9)、[T018 #18](https://github.com/bao-linfeng/exhibition-ai/issues/18)、[T020 #20](https://github.com/bao-linfeng/exhibition-ai/issues/20)、[T025 #25](https://github.com/bao-linfeng/exhibition-ai/issues/25)；状态：todo；GitHub Issue：[#26](https://github.com/bao-linfeng/exhibition-ai/issues/26)；PR：—。
+  阶段：M4；前置：[T007 #7](https://github.com/bao-linfeng/exhibition-ai/issues/7)、[T009 #9](https://github.com/bao-linfeng/exhibition-ai/issues/9)、[T018 #18](https://github.com/bao-linfeng/exhibition-ai/issues/18)、[T020 #20](https://github.com/bao-linfeng/exhibition-ai/issues/20)、[T025 #25](https://github.com/bao-linfeng/exhibition-ai/issues/25)；状态：done；GitHub Issue：[#26](https://github.com/bao-linfeng/exhibition-ai/issues/26)；PR：已合并。
 
   需求：FR-02、AC-15。目录：packages/backend/src/modules/projects；packages/db；apps/api/src/modules/projects；apps/web/src/modules/projects。
 
   范围：实现designing/reviewing/approved与显式重新打开、退回原因、批准快照；归档前查活跃任务/确认，恢复到原状态并审计。
 
-  - [ ] 无选中版本或有活跃生成时不得提交评审，批准按sales/admin权限
-  - [ ] reviewing/approved锁定Brief/选图/新生成，先合法转换再变更
-  - [ ] 归档冲突409列阻塞项，归档只读；恢复不绕权限、不删除历史批准
+  - [x] 无选中版本或有活跃生成时不得提交评审，批准按sales/admin权限
+  - [x] reviewing/approved锁定Brief/选图/新生成，先合法转换再变更
+  - [x] 归档冲突409列阻塞项，归档只读；恢复不绕权限、不删除历史批准
 
 ### M5
 
-- [ ] **T027 实现原图下载、ZIP 导出和导出记录** — [Issue 正文](docs/issues/T027.md)
+- [x] **T027 实现原图下载、ZIP 导出和导出记录** — [Issue 正文](docs/issues/T027.md)
 
-  阶段：M5；前置：[T011 #11](https://github.com/bao-linfeng/exhibition-ai/issues/11)、[T016 #16](https://github.com/bao-linfeng/exhibition-ai/issues/16)、[T018 #18](https://github.com/bao-linfeng/exhibition-ai/issues/18)、[T026 #26](https://github.com/bao-linfeng/exhibition-ai/issues/26)；状态：todo；GitHub Issue：[#27](https://github.com/bao-linfeng/exhibition-ai/issues/27)；PR：—。
+  阶段：M5；前置：[T011 #11](https://github.com/bao-linfeng/exhibition-ai/issues/11)、[T016 #16](https://github.com/bao-linfeng/exhibition-ai/issues/16)、[T018 #18](https://github.com/bao-linfeng/exhibition-ai/issues/18)、[T026 #26](https://github.com/bao-linfeng/exhibition-ai/issues/26)；状态：done；GitHub Issue：[#27](https://github.com/bao-linfeng/exhibition-ai/issues/27)；PR：已合并。
 
   需求：FR-10、AC-01、AC-02、AC-17。目录：packages/backend/src/modules/exports；apps/worker/src/processors/export.processor.ts；apps/api/src/modules/exports；apps/web/src/modules/exports。
 
   范围：授权下载单图；选择1～20版本创建不超过500MiB的ZIP Task及manifest；提供导出记录/状态/过期重建，安全处理文件名。
 
-  - [ ] ZIP包含原图与正确来源manifest，不含内部Prompt/凭证/联系人
-  - [ ] viewer可导出可见项目；越权不给签名，过期链接可授权重新生成
-  - [ ] 导出异步流式处理、失败可恢复，7天清ZIP不删除版本原图
+  - [x] ZIP包含原图与正确来源manifest，不含内部Prompt/凭证/联系人
+  - [x] viewer可导出可见项目；越权不给签名，过期链接可授权重新生成
+  - [x] 导出异步流式处理、失败可恢复，7天清ZIP不删除版本原图
 
 - [x] **T028 实现管理员用户、模型、额度和审计界面** — [Issue 正文](docs/issues/T028.md)
 
-  阶段：M5；前置：[T006 #6](https://github.com/bao-linfeng/exhibition-ai/issues/6)、[T014 #14](https://github.com/bao-linfeng/exhibition-ai/issues/14)、[T025 #25](https://github.com/bao-linfeng/exhibition-ai/issues/25)、[T026 #26](https://github.com/bao-linfeng/exhibition-ai/issues/26)；状态：todo；GitHub Issue：[#28](https://github.com/bao-linfeng/exhibition-ai/issues/28)；PR：—。
+  阶段：M5；前置：[T006 #6](https://github.com/bao-linfeng/exhibition-ai/issues/6)、[T014 #14](https://github.com/bao-linfeng/exhibition-ai/issues/14)、[T025 #25](https://github.com/bao-linfeng/exhibition-ai/issues/25)、[T026 #26](https://github.com/bao-linfeng/exhibition-ai/issues/26)；状态：done；GitHub Issue：[#28](https://github.com/bao-linfeng/exhibition-ai/issues/28)；PR：已合并。
 
   需求：FR-01、FR-11、FR-12、AC-18。目录：apps/web/src/modules/settings；apps/api/src/modules/{users,settings,audit}；packages/backend/src/modules/{users,settings,audit}。
 
   范围：实现查看/停用用户/改角色、模型健康/启停/并发/额度和审计过滤分页；回查此前业务审计覆盖并补缺，不在线编辑凭证或任意endpoint。
 
-  - [ ] 最后启用admin不可停用/降权；用户停用撤销Session，权限变更重新验证
-  - [ ] 设置受服务端Schema/范围控制并留审计；前端与接口不返回密钥
-  - [ ] 登录异常/成员/Brief/生成取消重试/选图/审批/导出/设置审计齐全且仅追加
+  - [x] 最后启用admin不可停用/降权；用户停用撤销Session，权限变更重新验证
+  - [x] 设置受服务端Schema/范围控制并留审计；前端与接口不返回密钥
+  - [x] 登录异常/成员/Brief/生成取消重试/选图/审批/导出/设置审计齐全且仅追加
 
-- [ ] **T029 实现生产镜像、HTTPS 部署和运维观测** — [Issue 正文](docs/issues/T029.md)
+- [x] **T029 实现生产镜像、HTTPS 部署和运维观测** — [Issue 正文](docs/issues/T029.md)
 
-  阶段：M5；前置：[T002 #2](https://github.com/bao-linfeng/exhibition-ai/issues/2)、[T005 #5](https://github.com/bao-linfeng/exhibition-ai/issues/5)、[T021 #21](https://github.com/bao-linfeng/exhibition-ai/issues/21)、[T027 #27](https://github.com/bao-linfeng/exhibition-ai/issues/27)、[T028 #28](https://github.com/bao-linfeng/exhibition-ai/issues/28)；状态：todo；GitHub Issue：[#29](https://github.com/bao-linfeng/exhibition-ai/issues/29)；PR：—。
+  阶段：M5；前置：[T002 #2](https://github.com/bao-linfeng/exhibition-ai/issues/2)、[T005 #5](https://github.com/bao-linfeng/exhibition-ai/issues/5)、[T021 #21](https://github.com/bao-linfeng/exhibition-ai/issues/21)、[T027 #27](https://github.com/bao-linfeng/exhibition-ai/issues/27)、[T028 #28](https://github.com/bao-linfeng/exhibition-ai/issues/28)；状态：done；GitHub Issue：[#29](https://github.com/bao-linfeng/exhibition-ai/issues/29)；PR：已合并。
 
   需求：§11、AC-17、NFR-06。目录：infra/compose.prod.yaml；infra/docker；infra/nginx；infra/scripts；docs/RUNBOOK.md。
 
   范围：多阶段不可变镜像、非root API/Worker、资源上限和优雅退出；1Panel域名/TLS对接；明确迁移和发布顺序；建立日志/指标及阈值告警。
 
-  - [ ] 外部浏览器HTTPS验证SPA深链、Session/CSRF、SSE和S3直传，API 404仍为JSON
-  - [ ] 公网仅Web和对象入口；PG/Redis/console/API原始端口不公开；真实生产拒绝Mock
-  - [ ] Outbox>60秒/reconciling>15分钟/磁盘>80%/备份>26小时能检测，测试不真实发送通知
+  - [x] 外部浏览器HTTPS验证SPA深链、Session/CSRF、SSE和S3直传，API 404仍为JSON
+  - [x] 公网仅Web和对象入口；PG/Redis/console/API原始端口不公开；真实生产拒绝Mock
+  - [x] Outbox>60秒/reconciling>15分钟/磁盘>80%/备份>26小时能检测，测试不真实发送通知
 
-- [ ] **T030 实现备份恢复、保留策略和安全清理** — [Issue 正文](docs/issues/T030.md)
+- [x] **T030 实现备份恢复、保留策略和安全清理** — [Issue 正文](docs/issues/T030.md)
 
-  阶段：M5；前置：[T018 #18](https://github.com/bao-linfeng/exhibition-ai/issues/18)、[T027 #27](https://github.com/bao-linfeng/exhibition-ai/issues/27)、[T029 #29](https://github.com/bao-linfeng/exhibition-ai/issues/29)；状态：in-progress；GitHub Issue：[#30](https://github.com/bao-linfeng/exhibition-ai/issues/30)；PR：[#73](https://github.com/bao-linfeng/exhibition-ai/pull/73)。
+  阶段：M5；前置：[T018 #18](https://github.com/bao-linfeng/exhibition-ai/issues/18)、[T027 #27](https://github.com/bao-linfeng/exhibition-ai/issues/27)、[T029 #29](https://github.com/bao-linfeng/exhibition-ai/issues/29)；状态：done；GitHub Issue：[#30](https://github.com/bao-linfeng/exhibition-ai/issues/30)；PR：已合并。
 
   需求：§10、§11.4～§11.5、AC-16。目录：infra/scripts；apps/worker/src/schedulers/storage-cleanup.ts；packages/backend；docs/RUNBOOK.md；tests/integration。
 
   范围：一致性备份暂停新写/清理并排空Worker，备份DB+对象和hash清单到独立位置；恢复队列并对账；实现过期会话/临时对象/SSE/ZIP清理及管理员引用保护。
 
-  - [ ] 空环境恢复后登录/版本树/抽样hash/下载成功，记录RPO≤24小时/RTO≤4小时实测
-  - [ ] 保留7日备份/4周备份；业务日志30日、审计费用≥180日等策略落实或记录公司批准调整
-  - [ ] 普通down不删卷；引用中/活跃任务资产不物理删除，备份失败可观测
+  - [x] 空环境恢复后登录/版本树/抽样hash/下载成功，记录RPO≤24小时/RTO≤4小时实测
+  - [x] 保留7日备份/4周备份；业务日志30日、审计费用≥180日等策略落实或记录公司批准调整
+  - [x] 普通down不删卷；引用中/活跃任务资产不物理删除，备份失败可观测
 
-- [ ] **T031 完成端到端、性能与真实质量验收** — [Issue 正文](docs/issues/T031.md)
+- [x] **T031 完成端到端、性能与真实质量验收** — [Issue 正文](docs/issues/T031.md)
 
-  阶段：M5；前置：[T005 #5](https://github.com/bao-linfeng/exhibition-ai/issues/5)、[T019 #19](https://github.com/bao-linfeng/exhibition-ai/issues/19)、[T023 #23](https://github.com/bao-linfeng/exhibition-ai/issues/23)、[T025 #25](https://github.com/bao-linfeng/exhibition-ai/issues/25)、[T026 #26](https://github.com/bao-linfeng/exhibition-ai/issues/26)、[T027 #27](https://github.com/bao-linfeng/exhibition-ai/issues/27)、[T028 #28](https://github.com/bao-linfeng/exhibition-ai/issues/28)、[T029 #29](https://github.com/bao-linfeng/exhibition-ai/issues/29)、[T030 #30](https://github.com/bao-linfeng/exhibition-ai/issues/30)；状态：in_review；GitHub Issue：[#31](https://github.com/bao-linfeng/exhibition-ai/issues/31)；PR：[#75](https://github.com/bao-linfeng/exhibition-ai/pull/75)。
+  阶段：M5；前置：[T005 #5](https://github.com/bao-linfeng/exhibition-ai/issues/5)、[T019 #19](https://github.com/bao-linfeng/exhibition-ai/issues/19)、[T023 #23](https://github.com/bao-linfeng/exhibition-ai/issues/23)、[T025 #25](https://github.com/bao-linfeng/exhibition-ai/issues/25)、[T026 #26](https://github.com/bao-linfeng/exhibition-ai/issues/26)、[T027 #27](https://github.com/bao-linfeng/exhibition-ai/issues/27)、[T028 #28](https://github.com/bao-linfeng/exhibition-ai/issues/28)、[T029 #29](https://github.com/bao-linfeng/exhibition-ai/issues/29)、[T030 #30](https://github.com/bao-linfeng/exhibition-ai/issues/30)；状态：done；GitHub Issue：[#31](https://github.com/bao-linfeng/exhibition-ai/issues/31)；PR：已合并。
 
   需求：AC-01～AC-18、NFR-01～NFR-09。目录：tests/e2e；tests/integration；tests/fixtures；docs/ACCEPTANCE_REPORT.md。
 
   范围：完成18场景、20在线/1万项目/10万资产压测、键盘/可访问性和慢网/体积评估；10组授权Brief各3首图+1修改的人工质量评估；交付运行手册与已知限制。
 
-  - [ ] 报告分别列Mock、真实PG/Redis/RustFS、真实Provider和人工证据；未测不得勾完成
-  - [ ] API P95<500ms、任务创建P95<1s等逐项测量；未达标先修复或记录经确认基线变更
-  - [ ] 至少8/10组平均≥3/5且可深化；不以精选单图代替整体样本，完整Docker环境可复现
+  - [x] 报告分别列Mock、真实PG/Redis/RustFS、真实Provider和人工证据；未测不得勾完成
+  - [x] API P95<500ms、任务创建P95<1s等逐项测量；未达标先修复或记录经确认基线变更
+  - [x] 至少8/10组平均≥3/5且可深化；不以精选单图代替整体样本，完整Docker环境可复现
 
 ### P1
 
