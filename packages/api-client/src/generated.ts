@@ -2807,7 +2807,8 @@ export interface operations {
           | 'brand_material'
           | 'generated_image'
           | 'thumbnail'
-          | 'export_zip';
+          | 'export_zip'
+          | 'export_pdf';
         status?: 'pending' | 'validating' | 'ready' | 'rejected';
         includeHidden?: boolean;
       };
@@ -2838,7 +2839,8 @@ export interface operations {
                 | 'brand_material'
                 | 'generated_image'
                 | 'thumbnail'
-                | 'export_zip';
+                | 'export_zip'
+                | 'export_pdf';
               status: 'pending' | 'validating' | 'ready' | 'rejected';
               bucket: string;
               objectKey: string;
@@ -2974,7 +2976,8 @@ export interface operations {
                 | 'brand_material'
                 | 'generated_image'
                 | 'thumbnail'
-                | 'export_zip';
+                | 'export_zip'
+                | 'export_pdf';
               status: 'pending' | 'validating' | 'ready' | 'rejected';
               bucket: string;
               objectKey: string;
@@ -4162,8 +4165,7 @@ export interface operations {
               id: string;
               /** Format: uuid */
               projectId: string;
-              /** @enum {string} */
-              format: 'zip';
+              format: 'zip' | 'pdf';
               versionIds: string[];
               status: 'pending' | 'queued' | 'running' | 'succeeded' | 'failed';
               resultAssetId: string | null;
@@ -4196,8 +4198,7 @@ export interface operations {
       content: {
         'application/json': {
           versionIds: string[];
-          /** @enum {string} */
-          format?: 'zip';
+          format?: 'zip' | 'pdf';
         };
       };
     };
@@ -4244,8 +4245,7 @@ export interface operations {
               id: string;
               /** Format: uuid */
               projectId: string;
-              /** @enum {string} */
-              format: 'zip';
+              format: 'zip' | 'pdf';
               versionIds: string[];
               status: 'pending' | 'queued' | 'running' | 'succeeded' | 'failed';
               resultAssetId: string | null;

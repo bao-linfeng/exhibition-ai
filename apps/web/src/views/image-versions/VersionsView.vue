@@ -5,7 +5,7 @@ import { useQuery } from '@tanstack/vue-query';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/toast';
-import { Loader2, Download } from '@lucide/vue';
+import { Loader2, Download, FileText } from '@lucide/vue';
 import PageLoading from '@/components/PageLoading.vue';
 import PageError from '@/components/PageError.vue';
 import VersionGrid from './VersionGrid.vue';
@@ -49,16 +49,17 @@ const versions = computed(() => {
 const selectedVersionIds = ref<string[]>([]);
 
 const createExport = useCreateExport();
-const isExporting = ref(false);
+const exportingFormat = ref<'zip' | 'pdf' | null>(null);
 
-async function handleExport() {
+async function handleExport(format: 'zip' | 'pdf') {
   if (selectedVersionIds.value.length === 0) return;
 
-  isExporting.value = true;
+  exportingFormat.value = format;
   try {
     await createExport.mutateAsync({
       projectId: projectId.value,
       versionIds: selectedVersionIds.value,
+      format,
     });
     toast({
       title: '导出任务已创建',
@@ -72,7 +73,7 @@ async function handleExport() {
       description: err instanceof Error ? err.message : '未知错误',
     });
   } finally {
-    isExporting.value = false;
+    exportingFormat.value = null;
   }
 }
 
@@ -103,16 +104,33 @@ function handleSelectionChange(ids: string[]) {
             查看导出历史
           </Button>
 
-          <Button
-            v-if="selectedVersionIds.length > 0"
-            @click="handleExport"
-            :disabled="isExporting"
-            class="bg-cyan-600 hover:bg-cyan-700 text-white"
-          >
-            <Loader2 v-if="isExporting" class="mr-2 h-4 w-4 animate-spin" />
-            <Download v-else class="mr-2 h-4 w-4" />
-            导出 {{ selectedVersionIds.length }} 个版本
-          </Button>
+          <template v-if="selectedVersionIds.length > 0">
+            <Button
+              variant="outline"
+              @click="handleExport('zip')"
+              :disabled="exportingFormat !== null"
+              class="border-slate-600 text-slate-300 hover:bg-slate-800"
+            >
+              <Loader2
+                v-if="exportingFormat === 'zip'"
+                class="mr-2 h-4 w-4 animate-spin"
+              />
+              <Download v-else class="mr-2 h-4 w-4" />
+              导出 ZIP
+            </Button>
+            <Button
+              @click="handleExport('pdf')"
+              :disabled="exportingFormat !== null"
+              class="bg-cyan-600 hover:bg-cyan-700 text-white"
+            >
+              <Loader2
+                v-if="exportingFormat === 'pdf'"
+                class="mr-2 h-4 w-4 animate-spin"
+              />
+              <FileText v-else class="mr-2 h-4 w-4" />
+              导出 PDF
+            </Button>
+          </template>
         </div>
       </div>
 

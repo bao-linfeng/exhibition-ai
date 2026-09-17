@@ -60,6 +60,7 @@ import {
   processExport,
   type ExportJobData,
 } from './processors/export.processor.js';
+import { processPdfExport } from './processors/pdf-export.processor.js';
 import { runConfirmationExpiry } from './schedulers/confirmation-expiry.js';
 import { runTimeoutReconciler } from './schedulers/timeout-reconciler.js';
 import { runStorageCleanup } from './schedulers/storage-cleanup.js';
@@ -296,18 +297,25 @@ const exportWorker = new Worker(
   QUEUE_EXPORT,
   async (job) => {
     const data = job.data as ExportJobData;
+    const exportRecord = await exportRepo.findById(data.exportId);
+    const format = exportRecord?.format ?? 'zip';
     logger.info(
-      { taskId: data.taskId, exportId: data.exportId, jobId: job.id },
+      { taskId: data.taskId, exportId: data.exportId, format, jobId: job.id },
       'Processing export task',
     );
-    await processExport(data, {
+    const deps = {
       taskRepo,
       exportRepo,
       imageVersionRepo,
       assetRepo,
       storage: s3,
       bucket,
-    });
+    };
+    if (format === 'pdf') {
+      await processPdfExport(data, deps);
+    } else {
+      await processExport(data, deps);
+    }
   },
   { connection: createQueueConnection(), concurrency: 2 },
 );

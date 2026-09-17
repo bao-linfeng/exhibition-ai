@@ -19,6 +19,7 @@ export const assetKindEnum = pgEnum('asset_kind', [
   'generated_image',
   'thumbnail',
   'export_zip',
+  'export_pdf',
 ]);
 
 export const assetStatusEnum = pgEnum('asset_status', [

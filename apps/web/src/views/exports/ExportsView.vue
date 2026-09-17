@@ -230,7 +230,7 @@ function goBack() {
                     class="mr-2 h-3.5 w-3.5 animate-spin"
                   />
                   <Download v-else class="mr-2 h-3.5 w-3.5" />
-                  下载 ZIP
+                  下载 {{ record.format.toUpperCase() }}
                 </Button>
               </TableCell>
             </TableRow>

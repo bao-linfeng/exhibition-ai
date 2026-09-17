@@ -93,7 +93,7 @@ export function useCreateExport() {
     mutationFn: async (params: {
       projectId: string;
       versionIds: string[];
-      format?: 'zip';
+      format?: 'zip' | 'pdf';
     }) => {
       const { data, error } = await apiClient.POST(
         '/api/v1/projects/{projectId}/exports',
