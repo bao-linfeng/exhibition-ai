@@ -37,6 +37,13 @@ export const auditEventTypeEnum = pgEnum('audit_event_type', [
   'prompt_version.update_draft',
   'prompt_version.publish',
   'prompt_version.rollback',
+  'tag.create',
+  'tag.update',
+  'tag.delete',
+  'tag.assign',
+  'tag.unassign',
+  'favorite.set',
+  'favorite.unset',
 ]);
 
 // 追加式审计日志表

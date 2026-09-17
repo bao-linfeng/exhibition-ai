@@ -11,6 +11,7 @@ import {
   LogOut,
   ChevronLeft,
   ChevronRight,
+  Archive,
 } from '@lucide/vue';
 import { Avatar, AvatarFallback } from '../components/ui/avatar/index.js';
 import {
@@ -41,6 +42,7 @@ const navigation = [
   { name: '客户管理', href: '/customers', icon: Building2 },
   { name: '项目管理', href: '/projects', icon: FolderKanban },
   { name: '任务中心', href: '/tasks', icon: ClipboardList },
+  { name: '历史案例库', href: '/cases', icon: Archive },
 ];
 
 const currentRouteName = computed(() => {
@@ -48,6 +50,7 @@ const currentRouteName = computed(() => {
   if (route.path.startsWith('/customers')) return '客户管理';
   if (route.path.startsWith('/projects')) return '项目管理';
   if (route.path.startsWith('/tasks')) return '任务中心';
+  if (route.path.startsWith('/cases')) return '历史案例库';
   return '';
 });
 

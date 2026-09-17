@@ -512,7 +512,7 @@ docker compose --env-file .env -f infra/compose.dev.yaml down
 
 - [ ] **T036 实现收藏、标签和历史案例筛选** — [Issue 正文](docs/issues/T036.md)
 
-  阶段：P1；前置：[T031 #31](https://github.com/bao-linfeng/exhibition-ai/issues/31)；状态：todo；GitHub Issue：[#36](https://github.com/bao-linfeng/exhibition-ai/issues/36)；PR：—。
+  阶段：P1；前置：[T031 #31](https://github.com/bao-linfeng/exhibition-ai/issues/31)；状态：in_review；GitHub Issue：[#36](https://github.com/bao-linfeng/exhibition-ai/issues/36)；PR：[#79](https://github.com/bao-linfeng/exhibition-ai/pull/79)。
 
   需求：§1.2 P1。目录：packages/backend/src/modules/{projects,assets,image-versions}；packages/db；apps/web/src/modules/{projects,assets,image-versions}。
 

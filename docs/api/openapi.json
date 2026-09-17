@@ -9268,6 +9268,771 @@
           }
         }
       }
+    },
+    "/api/v1/projects/{projectId}/tags": {
+      "get": {
+        "operationId": "listTags",
+        "tags": ["tags"],
+        "description": "List project tags.",
+        "parameters": [
+          {
+            "schema": { "format": "uuid", "type": "string" },
+            "in": "path",
+            "name": "projectId",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "type": "object",
+                  "required": ["data"],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "additionalProperties": false,
+                        "type": "object",
+                        "required": [
+                          "id",
+                          "projectId",
+                          "name",
+                          "color",
+                          "createdBy",
+                          "createdAt",
+                          "updatedAt"
+                        ],
+                        "properties": {
+                          "id": { "format": "uuid", "type": "string" },
+                          "projectId": { "format": "uuid", "type": "string" },
+                          "name": {
+                            "minLength": 1,
+                            "maxLength": 50,
+                            "type": "string"
+                          },
+                          "color": {
+                            "anyOf": [
+                              {
+                                "pattern": "^#[0-9A-Fa-f]{6}$",
+                                "type": "string"
+                              },
+                              { "type": "null" }
+                            ]
+                          },
+                          "createdBy": { "format": "uuid", "type": "string" },
+                          "createdAt": {
+                            "format": "date-time",
+                            "type": "string"
+                          },
+                          "updatedAt": {
+                            "format": "date-time",
+                            "type": "string"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "createTag",
+        "tags": ["tags"],
+        "description": "Create a project tag.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "type": "object",
+                "required": ["name"],
+                "properties": {
+                  "name": { "minLength": 1, "maxLength": 50, "type": "string" },
+                  "color": { "pattern": "^#[0-9A-Fa-f]{6}$", "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "schema": { "format": "uuid", "type": "string" },
+            "in": "path",
+            "name": "projectId",
+            "required": true
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "type": "object",
+                  "required": ["data"],
+                  "properties": {
+                    "data": {
+                      "additionalProperties": false,
+                      "type": "object",
+                      "required": [
+                        "id",
+                        "projectId",
+                        "name",
+                        "color",
+                        "createdBy",
+                        "createdAt",
+                        "updatedAt"
+                      ],
+                      "properties": {
+                        "id": { "format": "uuid", "type": "string" },
+                        "projectId": { "format": "uuid", "type": "string" },
+                        "name": {
+                          "minLength": 1,
+                          "maxLength": 50,
+                          "type": "string"
+                        },
+                        "color": {
+                          "anyOf": [
+                            {
+                              "pattern": "^#[0-9A-Fa-f]{6}$",
+                              "type": "string"
+                            },
+                            { "type": "null" }
+                          ]
+                        },
+                        "createdBy": { "format": "uuid", "type": "string" },
+                        "createdAt": {
+                          "format": "date-time",
+                          "type": "string"
+                        },
+                        "updatedAt": { "format": "date-time", "type": "string" }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/projects/{projectId}/tags/{tagId}": {
+      "patch": {
+        "operationId": "updateTag",
+        "tags": ["tags"],
+        "description": "Update a project tag.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "type": "object",
+                "properties": {
+                  "name": { "minLength": 1, "maxLength": 50, "type": "string" },
+                  "color": {
+                    "anyOf": [
+                      { "pattern": "^#[0-9A-Fa-f]{6}$", "type": "string" },
+                      { "type": "null" }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "schema": { "format": "uuid", "type": "string" },
+            "in": "path",
+            "name": "projectId",
+            "required": true
+          },
+          {
+            "schema": { "format": "uuid", "type": "string" },
+            "in": "path",
+            "name": "tagId",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "type": "object",
+                  "required": ["data"],
+                  "properties": {
+                    "data": {
+                      "additionalProperties": false,
+                      "type": "object",
+                      "required": [
+                        "id",
+                        "projectId",
+                        "name",
+                        "color",
+                        "createdBy",
+                        "createdAt",
+                        "updatedAt"
+                      ],
+                      "properties": {
+                        "id": { "format": "uuid", "type": "string" },
+                        "projectId": { "format": "uuid", "type": "string" },
+                        "name": {
+                          "minLength": 1,
+                          "maxLength": 50,
+                          "type": "string"
+                        },
+                        "color": {
+                          "anyOf": [
+                            {
+                              "pattern": "^#[0-9A-Fa-f]{6}$",
+                              "type": "string"
+                            },
+                            { "type": "null" }
+                          ]
+                        },
+                        "createdBy": { "format": "uuid", "type": "string" },
+                        "createdAt": {
+                          "format": "date-time",
+                          "type": "string"
+                        },
+                        "updatedAt": { "format": "date-time", "type": "string" }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "deleteTag",
+        "tags": ["tags"],
+        "description": "Delete a project tag.",
+        "parameters": [
+          {
+            "schema": { "format": "uuid", "type": "string" },
+            "in": "path",
+            "name": "projectId",
+            "required": true
+          },
+          {
+            "schema": { "format": "uuid", "type": "string" },
+            "in": "path",
+            "name": "tagId",
+            "required": true
+          }
+        ],
+        "responses": { "204": { "description": "Default Response" } }
+      }
+    },
+    "/api/v1/projects/{projectId}/tags/{tagId}/assets/{assetId}": {
+      "put": {
+        "operationId": "assignTagToAsset",
+        "tags": ["tags"],
+        "description": "Assign tag to asset.",
+        "parameters": [
+          {
+            "schema": { "format": "uuid", "type": "string" },
+            "in": "path",
+            "name": "projectId",
+            "required": true
+          },
+          {
+            "schema": { "format": "uuid", "type": "string" },
+            "in": "path",
+            "name": "tagId",
+            "required": true
+          },
+          {
+            "schema": { "format": "uuid", "type": "string" },
+            "in": "path",
+            "name": "assetId",
+            "required": true
+          }
+        ],
+        "responses": { "204": { "description": "Default Response" } }
+      },
+      "delete": {
+        "operationId": "unassignTagFromAsset",
+        "tags": ["tags"],
+        "description": "Unassign tag from asset.",
+        "parameters": [
+          {
+            "schema": { "format": "uuid", "type": "string" },
+            "in": "path",
+            "name": "projectId",
+            "required": true
+          },
+          {
+            "schema": { "format": "uuid", "type": "string" },
+            "in": "path",
+            "name": "tagId",
+            "required": true
+          },
+          {
+            "schema": { "format": "uuid", "type": "string" },
+            "in": "path",
+            "name": "assetId",
+            "required": true
+          }
+        ],
+        "responses": { "204": { "description": "Default Response" } }
+      }
+    },
+    "/api/v1/projects/{projectId}/tags/{tagId}/versions/{versionId}": {
+      "put": {
+        "operationId": "assignTagToVersion",
+        "tags": ["tags"],
+        "description": "Assign tag to image version.",
+        "parameters": [
+          {
+            "schema": { "format": "uuid", "type": "string" },
+            "in": "path",
+            "name": "projectId",
+            "required": true
+          },
+          {
+            "schema": { "format": "uuid", "type": "string" },
+            "in": "path",
+            "name": "tagId",
+            "required": true
+          },
+          {
+            "schema": { "format": "uuid", "type": "string" },
+            "in": "path",
+            "name": "versionId",
+            "required": true
+          }
+        ],
+        "responses": { "204": { "description": "Default Response" } }
+      },
+      "delete": {
+        "operationId": "unassignTagFromVersion",
+        "tags": ["tags"],
+        "description": "Unassign tag from image version.",
+        "parameters": [
+          {
+            "schema": { "format": "uuid", "type": "string" },
+            "in": "path",
+            "name": "projectId",
+            "required": true
+          },
+          {
+            "schema": { "format": "uuid", "type": "string" },
+            "in": "path",
+            "name": "tagId",
+            "required": true
+          },
+          {
+            "schema": { "format": "uuid", "type": "string" },
+            "in": "path",
+            "name": "versionId",
+            "required": true
+          }
+        ],
+        "responses": { "204": { "description": "Default Response" } }
+      }
+    },
+    "/api/v1/projects/{projectId}/favorites/assets/{assetId}": {
+      "put": {
+        "operationId": "setAssetFavorite",
+        "tags": ["favorites"],
+        "description": "Add asset to favorites.",
+        "parameters": [
+          {
+            "schema": { "format": "uuid", "type": "string" },
+            "in": "path",
+            "name": "projectId",
+            "required": true
+          },
+          {
+            "schema": { "format": "uuid", "type": "string" },
+            "in": "path",
+            "name": "assetId",
+            "required": true
+          }
+        ],
+        "responses": { "204": { "description": "Default Response" } }
+      },
+      "delete": {
+        "operationId": "unsetAssetFavorite",
+        "tags": ["favorites"],
+        "description": "Remove asset from favorites.",
+        "parameters": [
+          {
+            "schema": { "format": "uuid", "type": "string" },
+            "in": "path",
+            "name": "projectId",
+            "required": true
+          },
+          {
+            "schema": { "format": "uuid", "type": "string" },
+            "in": "path",
+            "name": "assetId",
+            "required": true
+          }
+        ],
+        "responses": { "204": { "description": "Default Response" } }
+      }
+    },
+    "/api/v1/projects/{projectId}/favorites/assets": {
+      "get": {
+        "operationId": "listAssetFavorites",
+        "tags": ["favorites"],
+        "description": "List asset favorites for current user in project.",
+        "parameters": [
+          {
+            "schema": { "type": "string" },
+            "in": "query",
+            "name": "cursor",
+            "required": false
+          },
+          {
+            "schema": { "minimum": 1, "maximum": 100, "type": "integer" },
+            "in": "query",
+            "name": "limit",
+            "required": false
+          },
+          {
+            "schema": { "format": "uuid", "type": "string" },
+            "in": "path",
+            "name": "projectId",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "type": "object",
+                  "required": ["data", "page"],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "additionalProperties": false,
+                        "type": "object",
+                        "required": ["assetId", "projectId", "createdAt"],
+                        "properties": {
+                          "assetId": { "format": "uuid", "type": "string" },
+                          "projectId": { "format": "uuid", "type": "string" },
+                          "createdAt": {
+                            "format": "date-time",
+                            "type": "string"
+                          }
+                        }
+                      }
+                    },
+                    "page": {
+                      "additionalProperties": false,
+                      "type": "object",
+                      "required": ["nextCursor", "hasMore"],
+                      "properties": {
+                        "nextCursor": {
+                          "anyOf": [{ "type": "string" }, { "type": "null" }]
+                        },
+                        "hasMore": { "type": "boolean" }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/projects/{projectId}/favorites/versions/{versionId}": {
+      "put": {
+        "operationId": "setVersionFavorite",
+        "tags": ["favorites"],
+        "description": "Add version to favorites.",
+        "parameters": [
+          {
+            "schema": { "format": "uuid", "type": "string" },
+            "in": "path",
+            "name": "projectId",
+            "required": true
+          },
+          {
+            "schema": { "format": "uuid", "type": "string" },
+            "in": "path",
+            "name": "versionId",
+            "required": true
+          }
+        ],
+        "responses": { "204": { "description": "Default Response" } }
+      },
+      "delete": {
+        "operationId": "unsetVersionFavorite",
+        "tags": ["favorites"],
+        "description": "Remove version from favorites.",
+        "parameters": [
+          {
+            "schema": { "format": "uuid", "type": "string" },
+            "in": "path",
+            "name": "projectId",
+            "required": true
+          },
+          {
+            "schema": { "format": "uuid", "type": "string" },
+            "in": "path",
+            "name": "versionId",
+            "required": true
+          }
+        ],
+        "responses": { "204": { "description": "Default Response" } }
+      }
+    },
+    "/api/v1/projects/{projectId}/favorites/versions": {
+      "get": {
+        "operationId": "listVersionFavorites",
+        "tags": ["favorites"],
+        "description": "List version favorites for current user in project.",
+        "parameters": [
+          {
+            "schema": { "type": "string" },
+            "in": "query",
+            "name": "cursor",
+            "required": false
+          },
+          {
+            "schema": { "minimum": 1, "maximum": 100, "type": "integer" },
+            "in": "query",
+            "name": "limit",
+            "required": false
+          },
+          {
+            "schema": { "format": "uuid", "type": "string" },
+            "in": "path",
+            "name": "projectId",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "type": "object",
+                  "required": ["data", "page"],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "additionalProperties": false,
+                        "type": "object",
+                        "required": ["versionId", "projectId", "createdAt"],
+                        "properties": {
+                          "versionId": { "format": "uuid", "type": "string" },
+                          "projectId": { "format": "uuid", "type": "string" },
+                          "createdAt": {
+                            "format": "date-time",
+                            "type": "string"
+                          }
+                        }
+                      }
+                    },
+                    "page": {
+                      "additionalProperties": false,
+                      "type": "object",
+                      "required": ["nextCursor", "hasMore"],
+                      "properties": {
+                        "nextCursor": {
+                          "anyOf": [{ "type": "string" }, { "type": "null" }]
+                        },
+                        "hasMore": { "type": "boolean" }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/cases": {
+      "get": {
+        "operationId": "listCases",
+        "tags": ["cases"],
+        "description": "List historical cases (archived projects) with tag and favorite filters.",
+        "parameters": [
+          {
+            "schema": { "type": "string" },
+            "in": "query",
+            "name": "cursor",
+            "required": false
+          },
+          {
+            "schema": { "minimum": 1, "maximum": 100, "type": "integer" },
+            "in": "query",
+            "name": "limit",
+            "required": false
+          },
+          {
+            "schema": { "maxLength": 100, "type": "string" },
+            "in": "query",
+            "name": "search",
+            "required": false
+          },
+          {
+            "schema": { "format": "uuid", "type": "string" },
+            "in": "query",
+            "name": "customerId",
+            "required": false
+          },
+          {
+            "schema": { "format": "uuid", "type": "string" },
+            "in": "query",
+            "name": "tagId",
+            "required": false
+          },
+          {
+            "schema": { "type": "boolean" },
+            "in": "query",
+            "name": "favorited",
+            "required": false
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "type": "object",
+                  "required": ["data", "page"],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "additionalProperties": false,
+                        "type": "object",
+                        "required": [
+                          "id",
+                          "name",
+                          "customerId",
+                          "customerName",
+                          "status",
+                          "archivedFromStatus",
+                          "exhibitionName",
+                          "exhibitionVenue",
+                          "industry",
+                          "selectedVersionId",
+                          "approvedAt",
+                          "archivedAt",
+                          "createdAt",
+                          "tags",
+                          "favorited"
+                        ],
+                        "properties": {
+                          "id": { "format": "uuid", "type": "string" },
+                          "name": { "type": "string" },
+                          "customerId": { "format": "uuid", "type": "string" },
+                          "customerName": { "type": "string" },
+                          "status": { "type": "string", "enum": ["archived"] },
+                          "archivedFromStatus": {
+                            "anyOf": [
+                              { "type": "string", "enum": ["draft"] },
+                              { "type": "string", "enum": ["briefing"] },
+                              { "type": "string", "enum": ["designing"] },
+                              { "type": "string", "enum": ["reviewing"] },
+                              { "type": "string", "enum": ["approved"] },
+                              { "type": "null" }
+                            ]
+                          },
+                          "exhibitionName": {
+                            "anyOf": [{ "type": "string" }, { "type": "null" }]
+                          },
+                          "exhibitionVenue": {
+                            "anyOf": [{ "type": "string" }, { "type": "null" }]
+                          },
+                          "industry": {
+                            "anyOf": [{ "type": "string" }, { "type": "null" }]
+                          },
+                          "selectedVersionId": {
+                            "anyOf": [
+                              { "format": "uuid", "type": "string" },
+                              { "type": "null" }
+                            ]
+                          },
+                          "approvedAt": {
+                            "anyOf": [
+                              { "format": "date-time", "type": "string" },
+                              { "type": "null" }
+                            ]
+                          },
+                          "archivedAt": {
+                            "anyOf": [
+                              { "format": "date-time", "type": "string" },
+                              { "type": "null" }
+                            ]
+                          },
+                          "createdAt": {
+                            "format": "date-time",
+                            "type": "string"
+                          },
+                          "tags": {
+                            "type": "array",
+                            "items": {
+                              "additionalProperties": false,
+                              "type": "object",
+                              "required": ["id", "name", "color"],
+                              "properties": {
+                                "id": { "format": "uuid", "type": "string" },
+                                "name": { "type": "string" },
+                                "color": {
+                                  "anyOf": [
+                                    { "type": "string" },
+                                    { "type": "null" }
+                                  ]
+                                }
+                              }
+                            }
+                          },
+                          "favorited": { "type": "boolean" }
+                        }
+                      }
+                    },
+                    "page": {
+                      "additionalProperties": false,
+                      "type": "object",
+                      "required": ["nextCursor", "hasMore"],
+                      "properties": {
+                        "nextCursor": {
+                          "anyOf": [{ "type": "string" }, { "type": "null" }]
+                        },
+                        "hasMore": { "type": "boolean" }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "tags": [
@@ -9288,6 +10053,9 @@
     { "name": "models", "description": "AI model information" },
     { "name": "events", "description": "Real-time events" },
     { "name": "dashboard", "description": "Dashboard summary" },
-    { "name": "settings", "description": "Model configurations and quotas" }
+    { "name": "settings", "description": "Model configurations and quotas" },
+    { "name": "tags", "description": "Project tags management" },
+    { "name": "favorites", "description": "User favorites" },
+    { "name": "cases", "description": "Historical case library" }
   ]
 }

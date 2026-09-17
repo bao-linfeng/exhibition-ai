@@ -34,6 +34,9 @@ import { eventRoutes } from './modules/events.js';
 import { dashboardRoutes } from './modules/dashboard.js';
 import { settingsRoutes } from './modules/settings.js';
 import { realTimeRoutes } from './realtime/sse.routes.js';
+import { tagRoutes } from './modules/tags.js';
+import { favoriteRoutes } from './modules/favorites.js';
+import { caseRoutes } from './modules/cases.js';
 
 export async function buildApp(
   services?: ReturnType<typeof createServices>,
@@ -80,6 +83,9 @@ export async function buildApp(
         { name: 'events', description: 'Real-time events' },
         { name: 'dashboard', description: 'Dashboard summary' },
         { name: 'settings', description: 'Model configurations and quotas' },
+        { name: 'tags', description: 'Project tags management' },
+        { name: 'favorites', description: 'User favorites' },
+        { name: 'cases', description: 'Historical case library' },
       ],
     },
   });
@@ -105,6 +111,9 @@ export async function buildApp(
   await app.register(eventRoutes);
   await app.register(dashboardRoutes);
   await app.register(settingsRoutes);
+  await app.register(tagRoutes);
+  await app.register(favoriteRoutes);
+  await app.register(caseRoutes);
 
   // Register SSE routes
   if (services) {

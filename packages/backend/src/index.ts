@@ -50,6 +50,12 @@ import {
 } from './modules/image-versions/index.js';
 import { EventsService } from './modules/events/index.js';
 import { ExportService, ExportRepository } from './modules/exports/index.js';
+import { TagService, TagRepository } from './modules/tags/index.js';
+import {
+  FavoriteService,
+  FavoriteRepository,
+} from './modules/favorites/index.js';
+import { CasesService, CasesRepository } from './modules/cases/index.js';
 import {
   ConversationService,
   ConversationRepository,
@@ -101,6 +107,12 @@ export {
   EventsService,
   ExportService,
   ExportRepository,
+  TagService,
+  TagRepository,
+  FavoriteService,
+  FavoriteRepository,
+  CasesService,
+  CasesRepository,
 };
 export {
   ConversationService,
@@ -207,6 +219,9 @@ export interface Services {
   conversationService: ConversationService;
   eventsService: EventsService;
   exportService: ExportService;
+  tagService: TagService;
+  favoriteService: FavoriteService;
+  casesService: CasesService;
   connectRedis(): Promise<void>;
   readiness(): Promise<{ postgres: boolean; redis: boolean; storage: boolean }>;
   close(): Promise<void>;
@@ -364,6 +379,11 @@ export function createServices(): Services {
     bucket,
     queues,
   );
+  const favoriteRepo = new FavoriteRepository(drizzleDb);
+  const favoriteService = new FavoriteService(favoriteRepo, auditService);
+  const tagService = new TagService(new TagRepository(drizzleDb), auditService);
+  const casesRepo = new CasesRepository(drizzleDb);
+  const casesService = new CasesService(casesRepo, favoriteRepo);
   let connecting: Promise<unknown> | undefined;
   async function connectRedis() {
     if (redis.isReady) return;
@@ -430,6 +450,9 @@ export function createServices(): Services {
     conversationService,
     eventsService,
     exportService,
+    tagService,
+    favoriteService,
+    casesService,
     redis,
     s3,
     bucket,
