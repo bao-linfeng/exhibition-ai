@@ -44,3 +44,6 @@ export * from './models/schemas.js';
 export * from './audit/schemas.js';
 export * from './dashboard/schemas.js';
 export * from './prompts/schemas.js';
+export * from './tags/schemas.js';
+export * from './favorites/schemas.js';
+export * from './cases/schemas.js';

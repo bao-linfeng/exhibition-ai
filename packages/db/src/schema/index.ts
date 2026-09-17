@@ -15,3 +15,5 @@ export * from './design_directions.js';
 export * from './conversations.js';
 export * from './export_records.js';
 export * from './prompt_templates.js';
+export * from './favorites.js';
+export * from './tags.js';

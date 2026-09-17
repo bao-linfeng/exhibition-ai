@@ -1116,6 +1116,165 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/api/v1/projects/{projectId}/tags': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** @description List project tags. */
+    get: operations['listTags'];
+    put?: never;
+    /** @description Create a project tag. */
+    post: operations['createTag'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/projects/{projectId}/tags/{tagId}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post?: never;
+    /** @description Delete a project tag. */
+    delete: operations['deleteTag'];
+    options?: never;
+    head?: never;
+    /** @description Update a project tag. */
+    patch: operations['updateTag'];
+    trace?: never;
+  };
+  '/api/v1/projects/{projectId}/tags/{tagId}/assets/{assetId}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    /** @description Assign tag to asset. */
+    put: operations['assignTagToAsset'];
+    post?: never;
+    /** @description Unassign tag from asset. */
+    delete: operations['unassignTagFromAsset'];
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/projects/{projectId}/tags/{tagId}/versions/{versionId}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    /** @description Assign tag to image version. */
+    put: operations['assignTagToVersion'];
+    post?: never;
+    /** @description Unassign tag from image version. */
+    delete: operations['unassignTagFromVersion'];
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/projects/{projectId}/favorites/assets/{assetId}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    /** @description Add asset to favorites. */
+    put: operations['setAssetFavorite'];
+    post?: never;
+    /** @description Remove asset from favorites. */
+    delete: operations['unsetAssetFavorite'];
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/projects/{projectId}/favorites/assets': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** @description List asset favorites for current user in project. */
+    get: operations['listAssetFavorites'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/projects/{projectId}/favorites/versions/{versionId}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    /** @description Add version to favorites. */
+    put: operations['setVersionFavorite'];
+    post?: never;
+    /** @description Remove version from favorites. */
+    delete: operations['unsetVersionFavorite'];
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/projects/{projectId}/favorites/versions': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** @description List version favorites for current user in project. */
+    get: operations['listVersionFavorites'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/cases': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** @description List historical cases (archived projects) with tag and favorite filters. */
+    get: operations['listCases'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -5176,6 +5335,465 @@ export interface operations {
               /** Format: date-time */
               updatedAt: string;
             }[];
+          };
+        };
+      };
+    };
+  };
+  listTags: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        projectId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Default Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': {
+            data: {
+              /** Format: uuid */
+              id: string;
+              /** Format: uuid */
+              projectId: string;
+              name: string;
+              color: string | null;
+              /** Format: uuid */
+              createdBy: string;
+              /** Format: date-time */
+              createdAt: string;
+              /** Format: date-time */
+              updatedAt: string;
+            }[];
+          };
+        };
+      };
+    };
+  };
+  createTag: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        projectId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': {
+          name: string;
+          color?: string;
+        };
+      };
+    };
+    responses: {
+      /** @description Default Response */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': {
+            data: {
+              /** Format: uuid */
+              id: string;
+              /** Format: uuid */
+              projectId: string;
+              name: string;
+              color: string | null;
+              /** Format: uuid */
+              createdBy: string;
+              /** Format: date-time */
+              createdAt: string;
+              /** Format: date-time */
+              updatedAt: string;
+            };
+          };
+        };
+      };
+    };
+  };
+  deleteTag: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        projectId: string;
+        tagId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Default Response */
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  updateTag: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        projectId: string;
+        tagId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': {
+          name?: string;
+          color?: string | null;
+        };
+      };
+    };
+    responses: {
+      /** @description Default Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': {
+            data: {
+              /** Format: uuid */
+              id: string;
+              /** Format: uuid */
+              projectId: string;
+              name: string;
+              color: string | null;
+              /** Format: uuid */
+              createdBy: string;
+              /** Format: date-time */
+              createdAt: string;
+              /** Format: date-time */
+              updatedAt: string;
+            };
+          };
+        };
+      };
+    };
+  };
+  assignTagToAsset: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        projectId: string;
+        tagId: string;
+        assetId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Default Response */
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  unassignTagFromAsset: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        projectId: string;
+        tagId: string;
+        assetId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Default Response */
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  assignTagToVersion: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        projectId: string;
+        tagId: string;
+        versionId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Default Response */
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  unassignTagFromVersion: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        projectId: string;
+        tagId: string;
+        versionId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Default Response */
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  setAssetFavorite: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        projectId: string;
+        assetId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Default Response */
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  unsetAssetFavorite: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        projectId: string;
+        assetId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Default Response */
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  listAssetFavorites: {
+    parameters: {
+      query?: {
+        cursor?: string;
+        limit?: number;
+      };
+      header?: never;
+      path: {
+        projectId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Default Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': {
+            data: {
+              /** Format: uuid */
+              assetId: string;
+              /** Format: uuid */
+              projectId: string;
+              /** Format: date-time */
+              createdAt: string;
+            }[];
+            page: {
+              nextCursor: string | null;
+              hasMore: boolean;
+            };
+          };
+        };
+      };
+    };
+  };
+  setVersionFavorite: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        projectId: string;
+        versionId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Default Response */
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  unsetVersionFavorite: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        projectId: string;
+        versionId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Default Response */
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  listVersionFavorites: {
+    parameters: {
+      query?: {
+        cursor?: string;
+        limit?: number;
+      };
+      header?: never;
+      path: {
+        projectId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Default Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': {
+            data: {
+              /** Format: uuid */
+              versionId: string;
+              /** Format: uuid */
+              projectId: string;
+              /** Format: date-time */
+              createdAt: string;
+            }[];
+            page: {
+              nextCursor: string | null;
+              hasMore: boolean;
+            };
+          };
+        };
+      };
+    };
+  };
+  listCases: {
+    parameters: {
+      query?: {
+        cursor?: string;
+        limit?: number;
+        search?: string;
+        customerId?: string;
+        tagId?: string;
+        favorited?: boolean;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Default Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': {
+            data: {
+              /** Format: uuid */
+              id: string;
+              name: string;
+              /** Format: uuid */
+              customerId: string;
+              customerName: string;
+              /** @enum {string} */
+              status: 'archived';
+              archivedFromStatus:
+                | 'draft'
+                | 'briefing'
+                | 'designing'
+                | 'reviewing'
+                | 'approved'
+                | null;
+              exhibitionName: string | null;
+              exhibitionVenue: string | null;
+              industry: string | null;
+              selectedVersionId: string | null;
+              approvedAt: string | null;
+              archivedAt: string | null;
+              /** Format: date-time */
+              createdAt: string;
+              tags: {
+                /** Format: uuid */
+                id: string;
+                name: string;
+                color: string | null;
+              }[];
+              favorited: boolean;
+            }[];
+            page: {
+              nextCursor: string | null;
+              hasMore: boolean;
+            };
           };
         };
       };
