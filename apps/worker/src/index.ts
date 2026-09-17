@@ -62,6 +62,7 @@ import {
 } from './processors/export.processor.js';
 import { runConfirmationExpiry } from './schedulers/confirmation-expiry.js';
 import { runTimeoutReconciler } from './schedulers/timeout-reconciler.js';
+import { runStorageCleanup } from './schedulers/storage-cleanup.js';
 
 const heartbeat = env.WORKER_HEALTH_FILE;
 export const providers = bootstrapProviders();
@@ -369,6 +370,19 @@ async function scanExpiredConfirmations() {
   }
 }
 
+let cleaningStorage = false;
+async function cleanStorage() {
+  if (cleaningStorage || stopping) return;
+  cleaningStorage = true;
+  try {
+    await runStorageCleanup({ assetRepo, exportRepo, storage: s3, bucket });
+  } catch (err) {
+    logger.error({ err }, 'Storage cleanup error');
+  } finally {
+    cleaningStorage = false;
+  }
+}
+
 await Promise.all([
   probeWorker.waitUntilReady(),
   assetValidationWorker.waitUntilReady(),
@@ -395,6 +409,12 @@ const reconcilerTimer = setInterval(
 const confirmationExpiryTimer = setInterval(() => {
   void scanExpiredConfirmations();
 }, 60_000);
+const storageCleanupTimer = setInterval(
+  () => {
+    void cleanStorage();
+  },
+  60 * 60 * 1000, // 每小时执行一次
+);
 
 async function stop() {
   if (stopping) return;
@@ -403,6 +423,7 @@ async function stop() {
   clearInterval(outboxTimer);
   clearInterval(reconcilerTimer);
   clearInterval(confirmationExpiryTimer);
+  clearInterval(storageCleanupTimer);
   await unlink(heartbeat).catch(() => {});
   await Promise.all([
     probeWorker.close(),
@@ -433,5 +454,5 @@ process.once('SIGTERM', () => {
 });
 
 logger.info(
-  'Worker ready: probe + asset_validation + brief_parse + design_direction + image_generation + agent_run + export + outbox scanner + timeout reconciler + confirmation expiry',
+  'Worker ready: probe + asset_validation + brief_parse + design_direction + image_generation + agent_run + export + outbox scanner + timeout reconciler + confirmation expiry + storage cleanup',
 );

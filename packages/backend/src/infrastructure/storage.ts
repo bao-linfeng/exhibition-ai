@@ -1,4 +1,5 @@
 import {
+  DeleteObjectCommand,
   GetObjectCommand,
   HeadObjectCommand,
   PutObjectCommand,
@@ -40,6 +41,8 @@ export interface StorageProvider {
     contentType: string;
     contentLength?: number;
   }): Promise<void>;
+
+  deleteObject(opts: { bucket: string; key: string }): Promise<void>;
 }
 
 export class S3StorageProvider implements StorageProvider {
@@ -158,6 +161,12 @@ export class S3StorageProvider implements StorageProvider {
         ContentType: opts.contentType,
         ContentLength: opts.contentLength,
       }),
+    );
+  }
+
+  async deleteObject(opts: { bucket: string; key: string }): Promise<void> {
+    await this.internalClient.send(
+      new DeleteObjectCommand({ Bucket: opts.bucket, Key: opts.key }),
     );
   }
 }
