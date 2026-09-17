@@ -32,6 +32,11 @@ export const auditEventTypeEnum = pgEnum('audit_event_type', [
   'export.created',
   'settings.model_config.update',
   'quota.topup',
+  'prompt_template.create',
+  'prompt_version.create_draft',
+  'prompt_version.update_draft',
+  'prompt_version.publish',
+  'prompt_version.rollback',
 ]);
 
 // 追加式审计日志表
@@ -44,7 +49,7 @@ export const auditLogs = pgTable('audit_logs', {
   actorEmail: varchar('actor_email', { length: 255 }),
   projectId: uuid('project_id'),
   resourceType: varchar('resource_type', { length: 100 }),
-  resourceId: uuid('resource_id'),
+  resourceId: varchar('resource_id', { length: 255 }),
   metadata: jsonb('metadata').notNull().default({}),
   ipAddress: varchar('ip_address', { length: 45 }),
   userAgent: varchar('user_agent', { length: 500 }),

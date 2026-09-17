@@ -14,3 +14,4 @@ export * from './image_versions.js';
 export * from './design_directions.js';
 export * from './conversations.js';
 export * from './export_records.js';
+export * from './prompt_templates.js';

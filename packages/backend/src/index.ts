@@ -35,6 +35,8 @@ import {
   QuotaRepository,
   SettingsService,
   QuotaService,
+  PromptTemplateRepository,
+  PromptTemplateService,
 } from './modules/settings/index.js';
 import { TaskService, TaskRepository } from './modules/tasks/index.js';
 import { AssetService, AssetRepository } from './modules/assets/index.js';
@@ -114,6 +116,8 @@ export {
   QuotaRepository,
   SettingsService,
   QuotaService,
+  PromptTemplateRepository,
+  PromptTemplateService,
 } from './modules/settings/index.js';
 export type { ReserveResult, SettleInput } from './modules/settings/index.js';
 export { S3StorageProvider } from './infrastructure/storage.js';
@@ -198,6 +202,7 @@ export interface Services {
   generationService: GenerationService;
   settingsService: SettingsService;
   quotaService: QuotaService;
+  promptTemplateService: PromptTemplateService;
   imageVersionService: ImageVersionService;
   conversationService: ConversationService;
   eventsService: EventsService;
@@ -222,6 +227,12 @@ export function createServices(): Services {
   const quotaRepo = new QuotaRepository(drizzleDb);
   const settingsService = new SettingsService(modelConfigRepo);
   const quotaService = new QuotaService(drizzleDb, quotaRepo, auditService);
+  const promptTemplateRepo = new PromptTemplateRepository(drizzleDb);
+  const promptTemplateService = new PromptTemplateService(
+    drizzleDb,
+    promptTemplateRepo,
+    auditService,
+  );
 
   // EventsService 需要在 ProjectService 和 BriefService 之前初始化
   const eventsService = new EventsService(pool);
@@ -414,6 +425,7 @@ export function createServices(): Services {
     generationService,
     settingsService,
     quotaService,
+    promptTemplateService,
     imageVersionService,
     conversationService,
     eventsService,

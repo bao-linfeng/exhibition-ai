@@ -1013,6 +1013,109 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/api/v1/settings/prompt-templates': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** （管理员）列出 Prompt 模板 */
+    get: operations['listPromptTemplates'];
+    put?: never;
+    /** （管理员）创建 Prompt 模板 */
+    post: operations['createPromptTemplate'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/settings/prompt-templates/{id}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    /** （管理员）获取 Prompt 模板详情与版本历史 */
+    get: operations['getPromptTemplate'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/settings/prompt-templates/{id}/versions': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** （管理员）创建 Prompt 草稿版本 */
+    post: operations['createPromptVersion'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/settings/prompt-templates/{id}/versions/{versionId}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    /** （管理员）更新 Prompt 草稿版本 */
+    patch: operations['updatePromptVersion'];
+    trace?: never;
+  };
+  '/api/v1/settings/prompt-templates/{id}/versions/{versionId}/publish': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** （管理员）发布 Prompt 版本 */
+    post: operations['publishPromptVersion'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/api/v1/settings/prompt-templates/{id}/versions/{versionId}/rollback': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    /** （管理员）回滚到指定已发布版本 */
+    post: operations['rollbackPromptVersion'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -4655,6 +4758,424 @@ export interface operations {
               availableMinor: number;
               currency: string;
             };
+          };
+        };
+      };
+    };
+  };
+  listPromptTemplates: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Default Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': {
+            templates: ({
+              id: string;
+              name: string;
+              description: string | null;
+              templateKey: string;
+              currentVersionId: string | null;
+              /** Format: date-time */
+              createdAt: string;
+              /** Format: date-time */
+              updatedAt: string;
+            } & {
+              currentVersion: {
+                id: string;
+                templateId: string;
+                version: number;
+                status: 'draft' | 'published' | 'archived';
+                content: string;
+                variables: string[];
+                changeNote: string | null;
+                publishedAt: string | null;
+                publishedBy: string | null;
+                /** Format: date-time */
+                createdAt: string;
+                /** Format: date-time */
+                updatedAt: string;
+              } | null;
+            })[];
+          };
+        };
+      };
+    };
+  };
+  createPromptTemplate: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': {
+          name: string;
+          description?: string;
+          templateKey: string;
+          initialContent: string;
+          variables?: string[];
+          changeNote?: string;
+        };
+      };
+    };
+    responses: {
+      /** @description Default Response */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': {
+            template: {
+              id: string;
+              name: string;
+              description: string | null;
+              templateKey: string;
+              currentVersionId: string | null;
+              /** Format: date-time */
+              createdAt: string;
+              /** Format: date-time */
+              updatedAt: string;
+            } & {
+              currentVersion: {
+                id: string;
+                templateId: string;
+                version: number;
+                status: 'draft' | 'published' | 'archived';
+                content: string;
+                variables: string[];
+                changeNote: string | null;
+                publishedAt: string | null;
+                publishedBy: string | null;
+                /** Format: date-time */
+                createdAt: string;
+                /** Format: date-time */
+                updatedAt: string;
+              } | null;
+            };
+            version: {
+              id: string;
+              templateId: string;
+              version: number;
+              status: 'draft' | 'published' | 'archived';
+              content: string;
+              variables: string[];
+              changeNote: string | null;
+              publishedAt: string | null;
+              publishedBy: string | null;
+              /** Format: date-time */
+              createdAt: string;
+              /** Format: date-time */
+              updatedAt: string;
+            };
+          };
+        };
+      };
+    };
+  };
+  getPromptTemplate: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Default Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': {
+            template: {
+              id: string;
+              name: string;
+              description: string | null;
+              templateKey: string;
+              currentVersionId: string | null;
+              /** Format: date-time */
+              createdAt: string;
+              /** Format: date-time */
+              updatedAt: string;
+            } & {
+              currentVersion: {
+                id: string;
+                templateId: string;
+                version: number;
+                status: 'draft' | 'published' | 'archived';
+                content: string;
+                variables: string[];
+                changeNote: string | null;
+                publishedAt: string | null;
+                publishedBy: string | null;
+                /** Format: date-time */
+                createdAt: string;
+                /** Format: date-time */
+                updatedAt: string;
+              } | null;
+            };
+            versions: {
+              id: string;
+              templateId: string;
+              version: number;
+              status: 'draft' | 'published' | 'archived';
+              content: string;
+              variables: string[];
+              changeNote: string | null;
+              publishedAt: string | null;
+              publishedBy: string | null;
+              /** Format: date-time */
+              createdAt: string;
+              /** Format: date-time */
+              updatedAt: string;
+            }[];
+          };
+        };
+      };
+    };
+  };
+  createPromptVersion: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': {
+          content: string;
+          variables?: string[];
+          changeNote?: string;
+        };
+      };
+    };
+    responses: {
+      /** @description Default Response */
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': {
+            version: {
+              id: string;
+              templateId: string;
+              version: number;
+              status: 'draft' | 'published' | 'archived';
+              content: string;
+              variables: string[];
+              changeNote: string | null;
+              publishedAt: string | null;
+              publishedBy: string | null;
+              /** Format: date-time */
+              createdAt: string;
+              /** Format: date-time */
+              updatedAt: string;
+            };
+          };
+        };
+      };
+    };
+  };
+  updatePromptVersion: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+        versionId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': {
+          content?: string;
+          variables?: string[];
+          changeNote?: string;
+        };
+      };
+    };
+    responses: {
+      /** @description Default Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': {
+            version: {
+              id: string;
+              templateId: string;
+              version: number;
+              status: 'draft' | 'published' | 'archived';
+              content: string;
+              variables: string[];
+              changeNote: string | null;
+              publishedAt: string | null;
+              publishedBy: string | null;
+              /** Format: date-time */
+              createdAt: string;
+              /** Format: date-time */
+              updatedAt: string;
+            };
+          };
+        };
+      };
+    };
+  };
+  publishPromptVersion: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+        versionId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': {
+          changeNote?: string;
+        };
+      };
+    };
+    responses: {
+      /** @description Default Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': {
+            template: {
+              id: string;
+              name: string;
+              description: string | null;
+              templateKey: string;
+              currentVersionId: string | null;
+              /** Format: date-time */
+              createdAt: string;
+              /** Format: date-time */
+              updatedAt: string;
+            } & {
+              currentVersion: {
+                id: string;
+                templateId: string;
+                version: number;
+                status: 'draft' | 'published' | 'archived';
+                content: string;
+                variables: string[];
+                changeNote: string | null;
+                publishedAt: string | null;
+                publishedBy: string | null;
+                /** Format: date-time */
+                createdAt: string;
+                /** Format: date-time */
+                updatedAt: string;
+              } | null;
+            };
+            versions: {
+              id: string;
+              templateId: string;
+              version: number;
+              status: 'draft' | 'published' | 'archived';
+              content: string;
+              variables: string[];
+              changeNote: string | null;
+              publishedAt: string | null;
+              publishedBy: string | null;
+              /** Format: date-time */
+              createdAt: string;
+              /** Format: date-time */
+              updatedAt: string;
+            }[];
+          };
+        };
+      };
+    };
+  };
+  rollbackPromptVersion: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+        versionId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description Default Response */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': {
+            template: {
+              id: string;
+              name: string;
+              description: string | null;
+              templateKey: string;
+              currentVersionId: string | null;
+              /** Format: date-time */
+              createdAt: string;
+              /** Format: date-time */
+              updatedAt: string;
+            } & {
+              currentVersion: {
+                id: string;
+                templateId: string;
+                version: number;
+                status: 'draft' | 'published' | 'archived';
+                content: string;
+                variables: string[];
+                changeNote: string | null;
+                publishedAt: string | null;
+                publishedBy: string | null;
+                /** Format: date-time */
+                createdAt: string;
+                /** Format: date-time */
+                updatedAt: string;
+              } | null;
+            };
+            versions: {
+              id: string;
+              templateId: string;
+              version: number;
+              status: 'draft' | 'published' | 'archived';
+              content: string;
+              variables: string[];
+              changeNote: string | null;
+              publishedAt: string | null;
+              publishedBy: string | null;
+              /** Format: date-time */
+              createdAt: string;
+              /** Format: date-time */
+              updatedAt: string;
+            }[];
           };
         };
       };
