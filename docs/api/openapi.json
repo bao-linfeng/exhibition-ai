@@ -8055,6 +8055,1219 @@
           }
         }
       }
+    },
+    "/api/v1/settings/prompt-templates": {
+      "get": {
+        "operationId": "listPromptTemplates",
+        "summary": "（管理员）列出 Prompt 模板",
+        "tags": ["settings"],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["templates"],
+                  "properties": {
+                    "templates": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "allOf": [
+                          {
+                            "type": "object",
+                            "required": [
+                              "id",
+                              "name",
+                              "description",
+                              "templateKey",
+                              "currentVersionId",
+                              "createdAt",
+                              "updatedAt"
+                            ],
+                            "properties": {
+                              "id": { "type": "string" },
+                              "name": { "type": "string" },
+                              "description": {
+                                "anyOf": [
+                                  { "type": "string" },
+                                  { "type": "null" }
+                                ]
+                              },
+                              "templateKey": { "type": "string" },
+                              "currentVersionId": {
+                                "anyOf": [
+                                  { "type": "string" },
+                                  { "type": "null" }
+                                ]
+                              },
+                              "createdAt": {
+                                "format": "date-time",
+                                "type": "string"
+                              },
+                              "updatedAt": {
+                                "format": "date-time",
+                                "type": "string"
+                              }
+                            }
+                          },
+                          {
+                            "type": "object",
+                            "required": ["currentVersion"],
+                            "properties": {
+                              "currentVersion": {
+                                "anyOf": [
+                                  {
+                                    "type": "object",
+                                    "required": [
+                                      "id",
+                                      "templateId",
+                                      "version",
+                                      "status",
+                                      "content",
+                                      "variables",
+                                      "changeNote",
+                                      "publishedAt",
+                                      "publishedBy",
+                                      "createdAt",
+                                      "updatedAt"
+                                    ],
+                                    "properties": {
+                                      "id": { "type": "string" },
+                                      "templateId": { "type": "string" },
+                                      "version": { "type": "integer" },
+                                      "status": {
+                                        "anyOf": [
+                                          {
+                                            "type": "string",
+                                            "enum": ["draft"]
+                                          },
+                                          {
+                                            "type": "string",
+                                            "enum": ["published"]
+                                          },
+                                          {
+                                            "type": "string",
+                                            "enum": ["archived"]
+                                          }
+                                        ]
+                                      },
+                                      "content": { "type": "string" },
+                                      "variables": {
+                                        "type": "array",
+                                        "items": { "type": "string" }
+                                      },
+                                      "changeNote": {
+                                        "anyOf": [
+                                          { "type": "string" },
+                                          { "type": "null" }
+                                        ]
+                                      },
+                                      "publishedAt": {
+                                        "anyOf": [
+                                          {
+                                            "format": "date-time",
+                                            "type": "string"
+                                          },
+                                          { "type": "null" }
+                                        ]
+                                      },
+                                      "publishedBy": {
+                                        "anyOf": [
+                                          { "type": "string" },
+                                          { "type": "null" }
+                                        ]
+                                      },
+                                      "createdAt": {
+                                        "format": "date-time",
+                                        "type": "string"
+                                      },
+                                      "updatedAt": {
+                                        "format": "date-time",
+                                        "type": "string"
+                                      }
+                                    }
+                                  },
+                                  { "type": "null" }
+                                ]
+                              }
+                            }
+                          }
+                        ]
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "createPromptTemplate",
+        "summary": "（管理员）创建 Prompt 模板",
+        "tags": ["settings"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["name", "templateKey", "initialContent"],
+                "properties": {
+                  "name": { "minLength": 1, "type": "string" },
+                  "description": { "type": "string" },
+                  "templateKey": {
+                    "minLength": 1,
+                    "pattern": "^[a-z][a-z0-9_]*$",
+                    "type": "string"
+                  },
+                  "initialContent": { "minLength": 1, "type": "string" },
+                  "variables": {
+                    "type": "array",
+                    "items": { "type": "string" }
+                  },
+                  "changeNote": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["template", "version"],
+                  "properties": {
+                    "template": {
+                      "type": "object",
+                      "allOf": [
+                        {
+                          "type": "object",
+                          "required": [
+                            "id",
+                            "name",
+                            "description",
+                            "templateKey",
+                            "currentVersionId",
+                            "createdAt",
+                            "updatedAt"
+                          ],
+                          "properties": {
+                            "id": { "type": "string" },
+                            "name": { "type": "string" },
+                            "description": {
+                              "anyOf": [
+                                { "type": "string" },
+                                { "type": "null" }
+                              ]
+                            },
+                            "templateKey": { "type": "string" },
+                            "currentVersionId": {
+                              "anyOf": [
+                                { "type": "string" },
+                                { "type": "null" }
+                              ]
+                            },
+                            "createdAt": {
+                              "format": "date-time",
+                              "type": "string"
+                            },
+                            "updatedAt": {
+                              "format": "date-time",
+                              "type": "string"
+                            }
+                          }
+                        },
+                        {
+                          "type": "object",
+                          "required": ["currentVersion"],
+                          "properties": {
+                            "currentVersion": {
+                              "anyOf": [
+                                {
+                                  "type": "object",
+                                  "required": [
+                                    "id",
+                                    "templateId",
+                                    "version",
+                                    "status",
+                                    "content",
+                                    "variables",
+                                    "changeNote",
+                                    "publishedAt",
+                                    "publishedBy",
+                                    "createdAt",
+                                    "updatedAt"
+                                  ],
+                                  "properties": {
+                                    "id": { "type": "string" },
+                                    "templateId": { "type": "string" },
+                                    "version": { "type": "integer" },
+                                    "status": {
+                                      "anyOf": [
+                                        { "type": "string", "enum": ["draft"] },
+                                        {
+                                          "type": "string",
+                                          "enum": ["published"]
+                                        },
+                                        {
+                                          "type": "string",
+                                          "enum": ["archived"]
+                                        }
+                                      ]
+                                    },
+                                    "content": { "type": "string" },
+                                    "variables": {
+                                      "type": "array",
+                                      "items": { "type": "string" }
+                                    },
+                                    "changeNote": {
+                                      "anyOf": [
+                                        { "type": "string" },
+                                        { "type": "null" }
+                                      ]
+                                    },
+                                    "publishedAt": {
+                                      "anyOf": [
+                                        {
+                                          "format": "date-time",
+                                          "type": "string"
+                                        },
+                                        { "type": "null" }
+                                      ]
+                                    },
+                                    "publishedBy": {
+                                      "anyOf": [
+                                        { "type": "string" },
+                                        { "type": "null" }
+                                      ]
+                                    },
+                                    "createdAt": {
+                                      "format": "date-time",
+                                      "type": "string"
+                                    },
+                                    "updatedAt": {
+                                      "format": "date-time",
+                                      "type": "string"
+                                    }
+                                  }
+                                },
+                                { "type": "null" }
+                              ]
+                            }
+                          }
+                        }
+                      ]
+                    },
+                    "version": {
+                      "type": "object",
+                      "required": [
+                        "id",
+                        "templateId",
+                        "version",
+                        "status",
+                        "content",
+                        "variables",
+                        "changeNote",
+                        "publishedAt",
+                        "publishedBy",
+                        "createdAt",
+                        "updatedAt"
+                      ],
+                      "properties": {
+                        "id": { "type": "string" },
+                        "templateId": { "type": "string" },
+                        "version": { "type": "integer" },
+                        "status": {
+                          "anyOf": [
+                            { "type": "string", "enum": ["draft"] },
+                            { "type": "string", "enum": ["published"] },
+                            { "type": "string", "enum": ["archived"] }
+                          ]
+                        },
+                        "content": { "type": "string" },
+                        "variables": {
+                          "type": "array",
+                          "items": { "type": "string" }
+                        },
+                        "changeNote": {
+                          "anyOf": [{ "type": "string" }, { "type": "null" }]
+                        },
+                        "publishedAt": {
+                          "anyOf": [
+                            { "format": "date-time", "type": "string" },
+                            { "type": "null" }
+                          ]
+                        },
+                        "publishedBy": {
+                          "anyOf": [{ "type": "string" }, { "type": "null" }]
+                        },
+                        "createdAt": {
+                          "format": "date-time",
+                          "type": "string"
+                        },
+                        "updatedAt": { "format": "date-time", "type": "string" }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/settings/prompt-templates/{id}": {
+      "get": {
+        "operationId": "getPromptTemplate",
+        "summary": "（管理员）获取 Prompt 模板详情与版本历史",
+        "tags": ["settings"],
+        "parameters": [
+          {
+            "schema": { "type": "string" },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["template", "versions"],
+                  "properties": {
+                    "template": {
+                      "type": "object",
+                      "allOf": [
+                        {
+                          "type": "object",
+                          "required": [
+                            "id",
+                            "name",
+                            "description",
+                            "templateKey",
+                            "currentVersionId",
+                            "createdAt",
+                            "updatedAt"
+                          ],
+                          "properties": {
+                            "id": { "type": "string" },
+                            "name": { "type": "string" },
+                            "description": {
+                              "anyOf": [
+                                { "type": "string" },
+                                { "type": "null" }
+                              ]
+                            },
+                            "templateKey": { "type": "string" },
+                            "currentVersionId": {
+                              "anyOf": [
+                                { "type": "string" },
+                                { "type": "null" }
+                              ]
+                            },
+                            "createdAt": {
+                              "format": "date-time",
+                              "type": "string"
+                            },
+                            "updatedAt": {
+                              "format": "date-time",
+                              "type": "string"
+                            }
+                          }
+                        },
+                        {
+                          "type": "object",
+                          "required": ["currentVersion"],
+                          "properties": {
+                            "currentVersion": {
+                              "anyOf": [
+                                {
+                                  "type": "object",
+                                  "required": [
+                                    "id",
+                                    "templateId",
+                                    "version",
+                                    "status",
+                                    "content",
+                                    "variables",
+                                    "changeNote",
+                                    "publishedAt",
+                                    "publishedBy",
+                                    "createdAt",
+                                    "updatedAt"
+                                  ],
+                                  "properties": {
+                                    "id": { "type": "string" },
+                                    "templateId": { "type": "string" },
+                                    "version": { "type": "integer" },
+                                    "status": {
+                                      "anyOf": [
+                                        { "type": "string", "enum": ["draft"] },
+                                        {
+                                          "type": "string",
+                                          "enum": ["published"]
+                                        },
+                                        {
+                                          "type": "string",
+                                          "enum": ["archived"]
+                                        }
+                                      ]
+                                    },
+                                    "content": { "type": "string" },
+                                    "variables": {
+                                      "type": "array",
+                                      "items": { "type": "string" }
+                                    },
+                                    "changeNote": {
+                                      "anyOf": [
+                                        { "type": "string" },
+                                        { "type": "null" }
+                                      ]
+                                    },
+                                    "publishedAt": {
+                                      "anyOf": [
+                                        {
+                                          "format": "date-time",
+                                          "type": "string"
+                                        },
+                                        { "type": "null" }
+                                      ]
+                                    },
+                                    "publishedBy": {
+                                      "anyOf": [
+                                        { "type": "string" },
+                                        { "type": "null" }
+                                      ]
+                                    },
+                                    "createdAt": {
+                                      "format": "date-time",
+                                      "type": "string"
+                                    },
+                                    "updatedAt": {
+                                      "format": "date-time",
+                                      "type": "string"
+                                    }
+                                  }
+                                },
+                                { "type": "null" }
+                              ]
+                            }
+                          }
+                        }
+                      ]
+                    },
+                    "versions": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "required": [
+                          "id",
+                          "templateId",
+                          "version",
+                          "status",
+                          "content",
+                          "variables",
+                          "changeNote",
+                          "publishedAt",
+                          "publishedBy",
+                          "createdAt",
+                          "updatedAt"
+                        ],
+                        "properties": {
+                          "id": { "type": "string" },
+                          "templateId": { "type": "string" },
+                          "version": { "type": "integer" },
+                          "status": {
+                            "anyOf": [
+                              { "type": "string", "enum": ["draft"] },
+                              { "type": "string", "enum": ["published"] },
+                              { "type": "string", "enum": ["archived"] }
+                            ]
+                          },
+                          "content": { "type": "string" },
+                          "variables": {
+                            "type": "array",
+                            "items": { "type": "string" }
+                          },
+                          "changeNote": {
+                            "anyOf": [{ "type": "string" }, { "type": "null" }]
+                          },
+                          "publishedAt": {
+                            "anyOf": [
+                              { "format": "date-time", "type": "string" },
+                              { "type": "null" }
+                            ]
+                          },
+                          "publishedBy": {
+                            "anyOf": [{ "type": "string" }, { "type": "null" }]
+                          },
+                          "createdAt": {
+                            "format": "date-time",
+                            "type": "string"
+                          },
+                          "updatedAt": {
+                            "format": "date-time",
+                            "type": "string"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/settings/prompt-templates/{id}/versions": {
+      "post": {
+        "operationId": "createPromptVersion",
+        "summary": "（管理员）创建 Prompt 草稿版本",
+        "tags": ["settings"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["content"],
+                "properties": {
+                  "content": { "minLength": 1, "type": "string" },
+                  "variables": {
+                    "type": "array",
+                    "items": { "type": "string" }
+                  },
+                  "changeNote": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "schema": { "type": "string" },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["version"],
+                  "properties": {
+                    "version": {
+                      "type": "object",
+                      "required": [
+                        "id",
+                        "templateId",
+                        "version",
+                        "status",
+                        "content",
+                        "variables",
+                        "changeNote",
+                        "publishedAt",
+                        "publishedBy",
+                        "createdAt",
+                        "updatedAt"
+                      ],
+                      "properties": {
+                        "id": { "type": "string" },
+                        "templateId": { "type": "string" },
+                        "version": { "type": "integer" },
+                        "status": {
+                          "anyOf": [
+                            { "type": "string", "enum": ["draft"] },
+                            { "type": "string", "enum": ["published"] },
+                            { "type": "string", "enum": ["archived"] }
+                          ]
+                        },
+                        "content": { "type": "string" },
+                        "variables": {
+                          "type": "array",
+                          "items": { "type": "string" }
+                        },
+                        "changeNote": {
+                          "anyOf": [{ "type": "string" }, { "type": "null" }]
+                        },
+                        "publishedAt": {
+                          "anyOf": [
+                            { "format": "date-time", "type": "string" },
+                            { "type": "null" }
+                          ]
+                        },
+                        "publishedBy": {
+                          "anyOf": [{ "type": "string" }, { "type": "null" }]
+                        },
+                        "createdAt": {
+                          "format": "date-time",
+                          "type": "string"
+                        },
+                        "updatedAt": { "format": "date-time", "type": "string" }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/settings/prompt-templates/{id}/versions/{versionId}": {
+      "patch": {
+        "operationId": "updatePromptVersion",
+        "summary": "（管理员）更新 Prompt 草稿版本",
+        "tags": ["settings"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "content": { "minLength": 1, "type": "string" },
+                  "variables": {
+                    "type": "array",
+                    "items": { "type": "string" }
+                  },
+                  "changeNote": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "schema": { "type": "string" },
+            "in": "path",
+            "name": "id",
+            "required": true
+          },
+          {
+            "schema": { "type": "string" },
+            "in": "path",
+            "name": "versionId",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["version"],
+                  "properties": {
+                    "version": {
+                      "type": "object",
+                      "required": [
+                        "id",
+                        "templateId",
+                        "version",
+                        "status",
+                        "content",
+                        "variables",
+                        "changeNote",
+                        "publishedAt",
+                        "publishedBy",
+                        "createdAt",
+                        "updatedAt"
+                      ],
+                      "properties": {
+                        "id": { "type": "string" },
+                        "templateId": { "type": "string" },
+                        "version": { "type": "integer" },
+                        "status": {
+                          "anyOf": [
+                            { "type": "string", "enum": ["draft"] },
+                            { "type": "string", "enum": ["published"] },
+                            { "type": "string", "enum": ["archived"] }
+                          ]
+                        },
+                        "content": { "type": "string" },
+                        "variables": {
+                          "type": "array",
+                          "items": { "type": "string" }
+                        },
+                        "changeNote": {
+                          "anyOf": [{ "type": "string" }, { "type": "null" }]
+                        },
+                        "publishedAt": {
+                          "anyOf": [
+                            { "format": "date-time", "type": "string" },
+                            { "type": "null" }
+                          ]
+                        },
+                        "publishedBy": {
+                          "anyOf": [{ "type": "string" }, { "type": "null" }]
+                        },
+                        "createdAt": {
+                          "format": "date-time",
+                          "type": "string"
+                        },
+                        "updatedAt": { "format": "date-time", "type": "string" }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/settings/prompt-templates/{id}/versions/{versionId}/publish": {
+      "post": {
+        "operationId": "publishPromptVersion",
+        "summary": "（管理员）发布 Prompt 版本",
+        "tags": ["settings"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": { "changeNote": { "type": "string" } }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "schema": { "type": "string" },
+            "in": "path",
+            "name": "id",
+            "required": true
+          },
+          {
+            "schema": { "type": "string" },
+            "in": "path",
+            "name": "versionId",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["template", "versions"],
+                  "properties": {
+                    "template": {
+                      "type": "object",
+                      "allOf": [
+                        {
+                          "type": "object",
+                          "required": [
+                            "id",
+                            "name",
+                            "description",
+                            "templateKey",
+                            "currentVersionId",
+                            "createdAt",
+                            "updatedAt"
+                          ],
+                          "properties": {
+                            "id": { "type": "string" },
+                            "name": { "type": "string" },
+                            "description": {
+                              "anyOf": [
+                                { "type": "string" },
+                                { "type": "null" }
+                              ]
+                            },
+                            "templateKey": { "type": "string" },
+                            "currentVersionId": {
+                              "anyOf": [
+                                { "type": "string" },
+                                { "type": "null" }
+                              ]
+                            },
+                            "createdAt": {
+                              "format": "date-time",
+                              "type": "string"
+                            },
+                            "updatedAt": {
+                              "format": "date-time",
+                              "type": "string"
+                            }
+                          }
+                        },
+                        {
+                          "type": "object",
+                          "required": ["currentVersion"],
+                          "properties": {
+                            "currentVersion": {
+                              "anyOf": [
+                                {
+                                  "type": "object",
+                                  "required": [
+                                    "id",
+                                    "templateId",
+                                    "version",
+                                    "status",
+                                    "content",
+                                    "variables",
+                                    "changeNote",
+                                    "publishedAt",
+                                    "publishedBy",
+                                    "createdAt",
+                                    "updatedAt"
+                                  ],
+                                  "properties": {
+                                    "id": { "type": "string" },
+                                    "templateId": { "type": "string" },
+                                    "version": { "type": "integer" },
+                                    "status": {
+                                      "anyOf": [
+                                        { "type": "string", "enum": ["draft"] },
+                                        {
+                                          "type": "string",
+                                          "enum": ["published"]
+                                        },
+                                        {
+                                          "type": "string",
+                                          "enum": ["archived"]
+                                        }
+                                      ]
+                                    },
+                                    "content": { "type": "string" },
+                                    "variables": {
+                                      "type": "array",
+                                      "items": { "type": "string" }
+                                    },
+                                    "changeNote": {
+                                      "anyOf": [
+                                        { "type": "string" },
+                                        { "type": "null" }
+                                      ]
+                                    },
+                                    "publishedAt": {
+                                      "anyOf": [
+                                        {
+                                          "format": "date-time",
+                                          "type": "string"
+                                        },
+                                        { "type": "null" }
+                                      ]
+                                    },
+                                    "publishedBy": {
+                                      "anyOf": [
+                                        { "type": "string" },
+                                        { "type": "null" }
+                                      ]
+                                    },
+                                    "createdAt": {
+                                      "format": "date-time",
+                                      "type": "string"
+                                    },
+                                    "updatedAt": {
+                                      "format": "date-time",
+                                      "type": "string"
+                                    }
+                                  }
+                                },
+                                { "type": "null" }
+                              ]
+                            }
+                          }
+                        }
+                      ]
+                    },
+                    "versions": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "required": [
+                          "id",
+                          "templateId",
+                          "version",
+                          "status",
+                          "content",
+                          "variables",
+                          "changeNote",
+                          "publishedAt",
+                          "publishedBy",
+                          "createdAt",
+                          "updatedAt"
+                        ],
+                        "properties": {
+                          "id": { "type": "string" },
+                          "templateId": { "type": "string" },
+                          "version": { "type": "integer" },
+                          "status": {
+                            "anyOf": [
+                              { "type": "string", "enum": ["draft"] },
+                              { "type": "string", "enum": ["published"] },
+                              { "type": "string", "enum": ["archived"] }
+                            ]
+                          },
+                          "content": { "type": "string" },
+                          "variables": {
+                            "type": "array",
+                            "items": { "type": "string" }
+                          },
+                          "changeNote": {
+                            "anyOf": [{ "type": "string" }, { "type": "null" }]
+                          },
+                          "publishedAt": {
+                            "anyOf": [
+                              { "format": "date-time", "type": "string" },
+                              { "type": "null" }
+                            ]
+                          },
+                          "publishedBy": {
+                            "anyOf": [{ "type": "string" }, { "type": "null" }]
+                          },
+                          "createdAt": {
+                            "format": "date-time",
+                            "type": "string"
+                          },
+                          "updatedAt": {
+                            "format": "date-time",
+                            "type": "string"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/settings/prompt-templates/{id}/versions/{versionId}/rollback": {
+      "post": {
+        "operationId": "rollbackPromptVersion",
+        "summary": "（管理员）回滚到指定已发布版本",
+        "tags": ["settings"],
+        "parameters": [
+          {
+            "schema": { "type": "string" },
+            "in": "path",
+            "name": "id",
+            "required": true
+          },
+          {
+            "schema": { "type": "string" },
+            "in": "path",
+            "name": "versionId",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Default Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["template", "versions"],
+                  "properties": {
+                    "template": {
+                      "type": "object",
+                      "allOf": [
+                        {
+                          "type": "object",
+                          "required": [
+                            "id",
+                            "name",
+                            "description",
+                            "templateKey",
+                            "currentVersionId",
+                            "createdAt",
+                            "updatedAt"
+                          ],
+                          "properties": {
+                            "id": { "type": "string" },
+                            "name": { "type": "string" },
+                            "description": {
+                              "anyOf": [
+                                { "type": "string" },
+                                { "type": "null" }
+                              ]
+                            },
+                            "templateKey": { "type": "string" },
+                            "currentVersionId": {
+                              "anyOf": [
+                                { "type": "string" },
+                                { "type": "null" }
+                              ]
+                            },
+                            "createdAt": {
+                              "format": "date-time",
+                              "type": "string"
+                            },
+                            "updatedAt": {
+                              "format": "date-time",
+                              "type": "string"
+                            }
+                          }
+                        },
+                        {
+                          "type": "object",
+                          "required": ["currentVersion"],
+                          "properties": {
+                            "currentVersion": {
+                              "anyOf": [
+                                {
+                                  "type": "object",
+                                  "required": [
+                                    "id",
+                                    "templateId",
+                                    "version",
+                                    "status",
+                                    "content",
+                                    "variables",
+                                    "changeNote",
+                                    "publishedAt",
+                                    "publishedBy",
+                                    "createdAt",
+                                    "updatedAt"
+                                  ],
+                                  "properties": {
+                                    "id": { "type": "string" },
+                                    "templateId": { "type": "string" },
+                                    "version": { "type": "integer" },
+                                    "status": {
+                                      "anyOf": [
+                                        { "type": "string", "enum": ["draft"] },
+                                        {
+                                          "type": "string",
+                                          "enum": ["published"]
+                                        },
+                                        {
+                                          "type": "string",
+                                          "enum": ["archived"]
+                                        }
+                                      ]
+                                    },
+                                    "content": { "type": "string" },
+                                    "variables": {
+                                      "type": "array",
+                                      "items": { "type": "string" }
+                                    },
+                                    "changeNote": {
+                                      "anyOf": [
+                                        { "type": "string" },
+                                        { "type": "null" }
+                                      ]
+                                    },
+                                    "publishedAt": {
+                                      "anyOf": [
+                                        {
+                                          "format": "date-time",
+                                          "type": "string"
+                                        },
+                                        { "type": "null" }
+                                      ]
+                                    },
+                                    "publishedBy": {
+                                      "anyOf": [
+                                        { "type": "string" },
+                                        { "type": "null" }
+                                      ]
+                                    },
+                                    "createdAt": {
+                                      "format": "date-time",
+                                      "type": "string"
+                                    },
+                                    "updatedAt": {
+                                      "format": "date-time",
+                                      "type": "string"
+                                    }
+                                  }
+                                },
+                                { "type": "null" }
+                              ]
+                            }
+                          }
+                        }
+                      ]
+                    },
+                    "versions": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "required": [
+                          "id",
+                          "templateId",
+                          "version",
+                          "status",
+                          "content",
+                          "variables",
+                          "changeNote",
+                          "publishedAt",
+                          "publishedBy",
+                          "createdAt",
+                          "updatedAt"
+                        ],
+                        "properties": {
+                          "id": { "type": "string" },
+                          "templateId": { "type": "string" },
+                          "version": { "type": "integer" },
+                          "status": {
+                            "anyOf": [
+                              { "type": "string", "enum": ["draft"] },
+                              { "type": "string", "enum": ["published"] },
+                              { "type": "string", "enum": ["archived"] }
+                            ]
+                          },
+                          "content": { "type": "string" },
+                          "variables": {
+                            "type": "array",
+                            "items": { "type": "string" }
+                          },
+                          "changeNote": {
+                            "anyOf": [{ "type": "string" }, { "type": "null" }]
+                          },
+                          "publishedAt": {
+                            "anyOf": [
+                              { "format": "date-time", "type": "string" },
+                              { "type": "null" }
+                            ]
+                          },
+                          "publishedBy": {
+                            "anyOf": [{ "type": "string" }, { "type": "null" }]
+                          },
+                          "createdAt": {
+                            "format": "date-time",
+                            "type": "string"
+                          },
+                          "updatedAt": {
+                            "format": "date-time",
+                            "type": "string"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "tags": [

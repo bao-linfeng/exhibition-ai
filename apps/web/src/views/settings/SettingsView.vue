@@ -12,6 +12,7 @@ import {
 
 import UsersTab from './components/UsersTab.vue';
 import ModelsTab from './components/ModelsTab.vue';
+import PromptsTab from './components/PromptsTab.vue';
 import QuotaTab from './components/QuotaTab.vue';
 import AuditTab from './components/AuditTab.vue';
 
@@ -30,6 +31,7 @@ const userStore = useUserStore();
         <TabsList class="w-fit">
           <TabsTrigger value="users">用户管理</TabsTrigger>
           <TabsTrigger value="models">模型配置</TabsTrigger>
+          <TabsTrigger value="prompts">Prompt 模板</TabsTrigger>
           <TabsTrigger value="quota">系统额度</TabsTrigger>
           <TabsTrigger value="audit">审计日志</TabsTrigger>
         </TabsList>
@@ -39,6 +41,12 @@ const userStore = useUserStore();
           </TabsContent>
           <TabsContent value="models" class="absolute inset-0 m-0 outline-none">
             <ModelsTab />
+          </TabsContent>
+          <TabsContent
+            value="prompts"
+            class="absolute inset-0 m-0 outline-none"
+          >
+            <PromptsTab />
           </TabsContent>
           <TabsContent value="quota" class="absolute inset-0 m-0 outline-none">
             <QuotaTab />
