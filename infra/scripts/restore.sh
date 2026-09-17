@@ -152,38 +152,6 @@ if [ "$ATTEMPTS" -eq "$MAX_ATTEMPTS" ]; then
   echo "警告：API 在 120 秒内未响应，请手动检查服务状态"
 fi
 
-# ---------- 队列对账：查询非终态任务并输出报告 ----------
-echo ""
-echo "==> [restore] 队列对账：检查恢复后非终态任务..."
-NON_TERMINAL=$(
-  $COMPOSE exec -T postgres psql \
-    -U "${PGUSER:-exhibition}" \
-    -d "${PGDATABASE:-exhibition}" \
-    -t -c \
-    "SELECT id, kind, status, created_at
-     FROM tasks
-     WHERE status IN ('pending', 'queued', 'running', 'reconciling', 'awaiting_confirmation')
-     ORDER BY created_at DESC
-     LIMIT 50;" \
-    2>/dev/null || echo ""
-)
-
-if [ -z "$(echo "${NON_TERMINAL}" | tr -d '[:space:]')" ]; then
-  echo "    无非终态任务，队列干净"
-else
-  echo "    发现以下非终态任务（需人工确认是否重试或取消）："
-  echo "${NON_TERMINAL}"
-  echo ""
-  echo "    处理建议："
-  echo "      - pending/queued：Worker 重启后会自动重新消费（Outbox 扫描），通常无需干预"
-  echo "      - running/reconciling：超时后 Timeout Reconciler 会自动标记为 failed，可等待或手动取消"
-  echo "      - awaiting_confirmation：需通知用户重新确认"
-  echo ""
-  echo "    手动查询命令："
-  echo "      ${COMPOSE} exec -T postgres psql -U ${PGUSER:-exhibition} -d ${PGDATABASE:-exhibition}"
-  echo "      SELECT id, kind, status FROM tasks WHERE status NOT IN ('succeeded','failed','cancelled','partially_succeeded');"
-fi
-
 echo ""
 echo "==> [restore] 恢复完成"
 echo ""
@@ -192,7 +160,6 @@ echo "    1. 登录系统验证用户认证正常"
 echo "    2. 检查项目列表和版本树完整性"
 echo "    3. 抽样下载图片并比对 SHA-256 哈希"
 echo "    4. 确认 Worker 健康心跳正常"
-echo "    5. 确认上方队列对账报告，处理非终态任务"
-echo "    6. 记录本次 RTO 实测时间（恢复开始 → 验收完成）"
+echo "    5. 记录本次 RTO 实测时间"
 echo ""
 echo "    查看日志：${COMPOSE} logs --tail 100 api worker"
