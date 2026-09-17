@@ -1,5 +1,7 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref, computed, watch } from 'vue';
+import { useQuery } from '@tanstack/vue-query';
+import { apiClient } from '@/api/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -46,6 +48,39 @@ const sizePreset = ref<
 const seed = ref<number | undefined>(undefined);
 const negativePrompt = ref('');
 const acknowledgeBriefChange = ref(false);
+
+const { data: modelsResponse, isLoading: modelsLoading } = useQuery({
+  queryKey: ['models'],
+  queryFn: async () => {
+    const { data, error } = await apiClient.GET('/api/v1/models');
+    if (error) throw new Error('Failed to fetch models');
+    return data;
+  },
+});
+
+const models = computed(() => modelsResponse.value?.data ?? []);
+
+watch(
+  () => models.value,
+  (newModels) => {
+    if (newModels.length > 0 && !selectedModelConfigId.value) {
+      if (props.modelConfigId) {
+        selectedModelConfigId.value = props.modelConfigId;
+      } else if (newModels.length === 1) {
+        selectedModelConfigId.value = newModels[0]!.id;
+      }
+    }
+  },
+  { immediate: true },
+);
+
+const selectedModel = computed(() => {
+  return models.value.find((m) => m.id === selectedModelConfigId.value);
+});
+
+const selectedModelSupportsEdit = computed(() => {
+  return selectedModel.value?.capabilities?.includes('edit') ?? false;
+});
 
 // 检测 Brief 是否发生变化
 const briefChanged = computed(() => {
@@ -152,14 +187,31 @@ function handleSubmit() {
         <Label for="model-config">
           模型配置 <span class="text-red-500">*</span>
         </Label>
-        <Select v-model="selectedModelConfigId" :disabled="disabled">
+        <Select
+          v-model="selectedModelConfigId"
+          :disabled="disabled || modelsLoading"
+        >
           <SelectTrigger id="model-config">
-            <SelectValue placeholder="选择模型" />
+            <SelectValue
+              :placeholder="modelsLoading ? '加载中...' : '选择模型'"
+            />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="mock-model-1">Mock Model (开发)</SelectItem>
+            <SelectItem
+              v-for="model in models"
+              :key="model.id"
+              :value="model.id"
+            >
+              {{ model.displayName }}
+            </SelectItem>
           </SelectContent>
         </Select>
+        <p
+          v-if="mode === 'edit' && selectedModel && !selectedModelSupportsEdit"
+          class="text-xs text-amber-600"
+        >
+          该模型不支持图片编辑
+        </p>
       </div>
 
       <div class="space-y-2">

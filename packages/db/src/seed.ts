@@ -1,6 +1,6 @@
 import { randomBytes, scrypt } from 'node:crypto';
 import { promisify } from 'node:util';
-import { createDatabase, users } from './index.js';
+import { createDatabase, modelConfigs, users } from './index.js';
 
 const appEnv = process.env.APP_ENV ?? process.env.NODE_ENV;
 const allowed =
@@ -40,7 +40,53 @@ async function seed(): Promise<void> {
       })
       .onConflictDoNothing({ target: users.email });
 
-    console.log('[seed] Development admin user seeded');
+    await db
+      .insert(modelConfigs)
+      .values([
+        {
+          providerId: 'google',
+          modelId: 'gemini-3.1-flash-image',
+          displayName: 'Gemini 3.1 Flash Image',
+          description: 'Google Gemini 原生图片生成模型，支持文生图和图生图',
+          capabilities: ['generate', 'edit'],
+          costPerImageMinor: 0,
+          currency: 'CNY',
+          isActive: true,
+          maxConcurrent: 2,
+          parametersSchema: {},
+        },
+        {
+          providerId: 'google',
+          modelId: 'gemini-3.1-flash-lite-image',
+          displayName: 'Gemini 3.1 Flash Lite Image',
+          description: 'Google Gemini 轻量图片生成模型，支持文生图',
+          capabilities: ['generate'],
+          costPerImageMinor: 0,
+          currency: 'CNY',
+          isActive: true,
+          maxConcurrent: 2,
+          parametersSchema: {},
+        },
+        {
+          providerId: 'google',
+          modelId: 'gemini-3-pro-image',
+          displayName: 'Gemini 3 Pro Image',
+          description: 'Google Gemini 高质量图片生成模型，支持文生图和图生图',
+          capabilities: ['generate', 'edit'],
+          costPerImageMinor: 0,
+          currency: 'CNY',
+          isActive: true,
+          maxConcurrent: 2,
+          parametersSchema: {},
+        },
+      ])
+      .onConflictDoNothing({
+        target: [modelConfigs.providerId, modelConfigs.modelId],
+      });
+
+    console.log(
+      '[seed] Development admin user and Google Gemini models seeded',
+    );
   } finally {
     await pool.end();
   }
