@@ -174,8 +174,19 @@ export class ConversationService {
     await this.confirmRepo.updateStatus(id, 'rejected');
     const run = await this.runRepo.findById(confirmation.runId);
     if (run?.status === 'awaiting_confirmation') {
+      const assistantMessage = await this.msgRepo.findByRunId(run.id);
+      if (assistantMessage?.status === 'streaming') {
+        await this.msgRepo.updateStatus(assistantMessage.id, 'interrupted');
+      }
       await this.runRepo.updateStatus(run.id, 'cancelled', {
         finishedAt: new Date(),
+      });
+      await this.taskRepo.updateStatus(run.taskId, 'failed', {
+        finishedAt: new Date(),
+        errorCode: 'CONFIRMATION_REJECTED',
+        errorMessage: 'User rejected the confirmation',
+        canCancel: false,
+        canRetry: false,
       });
       await this.convRepo.setActiveRun(run.conversationId, null);
     }
@@ -247,6 +258,22 @@ export class ConversationService {
       await this.confirmRepo.updateStatus(id, 'approved', {
         resultBriefRevisionId: revision.id,
       });
+      const run = await this.runRepo.findById(confirmation.runId);
+      if (run?.status === 'awaiting_confirmation') {
+        const assistantMessage = await this.msgRepo.findByRunId(run.id);
+        if (assistantMessage?.status === 'streaming') {
+          await this.msgRepo.updateStatus(assistantMessage.id, 'completed');
+        }
+        await this.runRepo.updateStatus(run.id, 'completed', {
+          finishedAt: new Date(),
+        });
+        await this.taskRepo.updateStatus(run.taskId, 'succeeded', {
+          finishedAt: new Date(),
+          canCancel: false,
+          canRetry: false,
+        });
+        await this.convRepo.setActiveRun(run.conversationId, null);
+      }
       return {
         confirmationId: id,
         status: 'approved',
@@ -305,6 +332,22 @@ export class ConversationService {
       await this.confirmRepo.updateStatus(id, 'approved', {
         resultTaskId: result.taskId,
       });
+      const run = await this.runRepo.findById(confirmation.runId);
+      if (run?.status === 'awaiting_confirmation') {
+        const assistantMessage = await this.msgRepo.findByRunId(run.id);
+        if (assistantMessage?.status === 'streaming') {
+          await this.msgRepo.updateStatus(assistantMessage.id, 'completed');
+        }
+        await this.runRepo.updateStatus(run.id, 'completed', {
+          finishedAt: new Date(),
+        });
+        await this.taskRepo.updateStatus(run.taskId, 'succeeded', {
+          finishedAt: new Date(),
+          canCancel: false,
+          canRetry: false,
+        });
+        await this.convRepo.setActiveRun(run.conversationId, null);
+      }
       return {
         confirmationId: id,
         status: 'approved',
