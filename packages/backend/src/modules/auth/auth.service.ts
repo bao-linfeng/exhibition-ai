@@ -84,7 +84,7 @@ export class AuthService {
   async changePassword(
     userId: string,
     currentPassword: string,
-    _newPassword: string,
+    newPassword: string,
   ): Promise<boolean> {
     const user = await this.authRepo.findUserById(userId);
 
@@ -100,7 +100,8 @@ export class AuthService {
       return false;
     }
 
-    // 这里需要 UserRepository 来更新密码，暂时简化
+    const newHash = await this.hashPassword(newPassword);
+    await this.authRepo.updatePassword(userId, newHash);
 
     return true;
   }
