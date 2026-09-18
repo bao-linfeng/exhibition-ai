@@ -26,6 +26,7 @@ export const MOCK_MODEL_CONFIG_FULL: ProviderModelConfig = {
     maxOutputCount: 4,
     supportsSeed: true,
     supportsNegativePrompt: true,
+    supportsReferenceAssets: true,
   },
   providerConfig: {},
 };
@@ -42,6 +43,7 @@ export const MOCK_MODEL_CONFIG_NO_EDIT: ProviderModelConfig = {
     maxOutputCount: 2,
     supportsSeed: false,
     supportsNegativePrompt: false,
+    supportsReferenceAssets: false,
   },
   providerConfig: {},
 };
@@ -58,6 +60,7 @@ export const MOCK_MODEL_CONFIG_DISABLED: ProviderModelConfig = {
     maxOutputCount: 1,
     supportsSeed: false,
     supportsNegativePrompt: false,
+    supportsReferenceAssets: false,
   },
   providerConfig: {},
 };
@@ -91,6 +94,7 @@ export function createMockImageProviderRegistry(opts?: {
         maxOutputCount: 2,
         supportsSeed: false,
         supportsNegativePrompt: false,
+        supportsReferenceAssets: false,
       },
     ),
   );

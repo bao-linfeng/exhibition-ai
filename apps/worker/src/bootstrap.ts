@@ -32,6 +32,7 @@ const MOCK_FULL_CONFIG: ProviderModelConfig = {
     maxOutputCount: 4,
     supportsSeed: true,
     supportsNegativePrompt: true,
+    supportsReferenceAssets: true,
   },
   providerConfig: {},
 };
@@ -54,6 +55,7 @@ const OPENAI_IMAGE_CONFIG: ProviderModelConfig = {
     maxOutputCount: 4,
     supportsSeed: false,
     supportsNegativePrompt: false,
+    supportsReferenceAssets: false,
   },
   providerConfig: {
     outputFormat: 'png',
@@ -79,6 +81,7 @@ const GEMINI_FLASH_IMAGE_CONFIG: ProviderModelConfig = {
     maxOutputCount: 4,
     supportsSeed: false,
     supportsNegativePrompt: true,
+    supportsReferenceAssets: false,
   },
   providerConfig: {},
 };
@@ -101,6 +104,7 @@ const GEMINI_FLASH_LITE_IMAGE_CONFIG: ProviderModelConfig = {
     maxOutputCount: 4,
     supportsSeed: false,
     supportsNegativePrompt: true,
+    supportsReferenceAssets: false,
   },
   providerConfig: {},
 };
@@ -123,6 +127,7 @@ const GEMINI_PRO_IMAGE_CONFIG: ProviderModelConfig = {
     maxOutputCount: 4,
     supportsSeed: false,
     supportsNegativePrompt: true,
+    supportsReferenceAssets: false,
   },
   providerConfig: {},
 };

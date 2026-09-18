@@ -32,6 +32,7 @@ export interface ModelCapability {
   maxOutputCount: number;
   supportsSeed: boolean;
   supportsNegativePrompt: boolean;
+  supportsReferenceAssets: boolean;
 }
 
 export interface ProviderModelConfig {
@@ -76,6 +77,7 @@ export interface ImageGenerationRequest {
   parentImageBytes?: Buffer;
   parentImageMimeType?: string;
   maskBytes?: Buffer;
+  referenceAssets?: Array<{ bytes: Buffer; mimeType: string }>;
 }
 
 export interface ImageGenerationOutput {

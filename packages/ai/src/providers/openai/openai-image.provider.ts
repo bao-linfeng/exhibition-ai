@@ -77,6 +77,17 @@ export class OpenAIImageProvider implements ImageProvider {
         false,
       );
     }
+    if (
+      req.referenceAssets !== undefined &&
+      req.referenceAssets.length > 0 &&
+      !this.capability.supportsReferenceAssets
+    ) {
+      throw new ProviderError(
+        'capability_not_supported',
+        'This OpenAI model does not support reference assets',
+        false,
+      );
+    }
 
     const size = resolveSize(req);
     const quality = resolveQuality(req);

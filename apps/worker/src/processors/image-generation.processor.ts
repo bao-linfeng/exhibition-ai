@@ -115,6 +115,85 @@ export async function processImageGeneration(
       }
     }
 
+    const briefContent = briefRevision.content as {
+      booth?: {
+        widthM?: number;
+        depthM?: number;
+        heightLimitM?: number;
+        openSides?: string[];
+      };
+      brand?: {
+        name?: string;
+        primaryColor?: string;
+        secondaryColor?: string;
+        visualKeywords?: string[];
+      };
+      functionalAreas?: Array<{
+        type?: string;
+        required?: boolean;
+        quantity?: number;
+      }>;
+      style?: {
+        keywords?: string[];
+        materials?: string[];
+        forbiddenElements?: string[];
+      };
+      specialRequirements?: string;
+    };
+    const briefLines: string[] = [];
+    if (briefContent.booth) {
+      const { widthM, depthM, heightLimitM, openSides } = briefContent.booth;
+      const parts = [
+        widthM !== undefined && depthM !== undefined
+          ? `${widthM}m×${depthM}m`
+          : undefined,
+        heightLimitM !== undefined ? `限高${heightLimitM}m` : undefined,
+        openSides?.length ? `开放面：${openSides.join('、')}` : undefined,
+      ].filter(Boolean);
+      if (parts.length) briefLines.push(`展台尺寸：${parts.join('，')}`);
+    }
+    if (briefContent.brand) {
+      const { name, primaryColor, secondaryColor, visualKeywords } =
+        briefContent.brand;
+      const parts = [
+        name,
+        primaryColor,
+        secondaryColor,
+        visualKeywords?.join('、'),
+      ].filter(Boolean);
+      if (parts.length) briefLines.push(`品牌：${parts.join('，')}`);
+    }
+    if (briefContent.functionalAreas?.length) {
+      const areas = briefContent.functionalAreas
+        .map((area) =>
+          [
+            area.quantity && area.quantity > 1
+              ? `${area.type}×${area.quantity}`
+              : area.type,
+            area.required ? '(必须)' : '',
+          ]
+            .filter(Boolean)
+            .join(''),
+        )
+        .join('、');
+      briefLines.push(`功能区：${areas}`);
+    }
+    if (briefContent.style) {
+      const { keywords, materials, forbiddenElements } = briefContent.style;
+      const parts = [
+        keywords?.join('、'),
+        materials?.length ? `材料：${materials.join('、')}` : undefined,
+        forbiddenElements?.length
+          ? `禁用：${forbiddenElements.join('、')}`
+          : undefined,
+      ].filter(Boolean);
+      if (parts.length) briefLines.push(`风格：${parts.join('，')}`);
+    }
+    if (briefContent.specialRequirements) {
+      briefLines.push(`特殊要求：${briefContent.specialRequirements}`);
+    }
+    const briefContext = briefLines.length ? `${briefLines.join('\n')}\n` : '';
+
     const parameters = genRequest.parameters as Record<string, unknown>;
     const sizePreset = String(parameters.sizePreset ?? 'landscape_4_3');
     const negativePrompt =
@@ -125,6 +204,7 @@ export async function processImageGeneration(
       instruction: genRequest.instruction,
       direction: directionText,
       size_preset: sizePreset,
+      brief_context: briefContext,
       negative_prompt_suffix: negativePrompt
         ? `，负向提示词：${negativePrompt}`
         : '',
@@ -218,6 +298,50 @@ export async function processImageGeneration(
       }
     }
 
+    const referenceAssets: Array<{ bytes: Buffer; mimeType: string }> = [];
+    const inputAssetIds = Array.isArray(genRequest.inputAssetIds)
+      ? genRequest.inputAssetIds.filter(
+          (assetId): assetId is string => typeof assetId === 'string',
+        )
+      : [];
+    for (const assetId of inputAssetIds) {
+      const asset = await assetRepo.findById(assetId);
+      if (!asset || asset.status !== 'ready') {
+        logger.warn(
+          { taskId, assetId },
+          'Reference asset not found or not ready, skipping',
+        );
+        continue;
+      }
+      try {
+        const { body, contentType } = await storage.getObject({
+          bucket: asset.bucket,
+          key: asset.objectKey,
+        });
+        if (!contentType) {
+          logger.warn(
+            { taskId, assetId },
+            'Reference asset has no content type, skipping',
+          );
+          continue;
+        }
+        const stream = body instanceof Readable ? body : Readable.from(body);
+        const chunks: Buffer[] = [];
+        for await (const chunk of stream) {
+          chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
+        }
+        referenceAssets.push({
+          bytes: Buffer.concat(chunks),
+          mimeType: contentType,
+        });
+      } catch (err) {
+        logger.warn(
+          { taskId, assetId, err },
+          'Failed to load reference asset, skipping',
+        );
+      }
+    }
+
     let result: ImageGenerationResult;
     try {
       providerAttempted = true;
@@ -232,6 +356,8 @@ export async function processImageGeneration(
         negativePrompt,
         parentImageBytes,
         parentImageMimeType,
+        referenceAssets:
+          referenceAssets.length > 0 ? referenceAssets : undefined,
       });
     } catch (err) {
       if (err instanceof ProviderError) {
