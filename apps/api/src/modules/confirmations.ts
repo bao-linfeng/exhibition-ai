@@ -50,6 +50,12 @@ function toConfirmationDto(row: {
 }
 
 export async function confirmationRoutes(app: FastifyInstance) {
+  async function currentUser(sessionId: string | undefined) {
+    return sessionId
+      ? app.services!.authService.validateSession(sessionId)
+      : null;
+  }
+
   // GET /api/v1/confirmations/:id
   app.get(
     '/api/v1/confirmations/:id',
@@ -65,8 +71,9 @@ export async function confirmationRoutes(app: FastifyInstance) {
       },
     },
     async (request) => {
-      const actorContext = request.actorContext;
-      if (!actorContext) throw app.httpErrors.unauthorized('Not authenticated');
+      const user = await currentUser(request.cookies.sessionId);
+      if (!user) throw app.httpErrors.unauthorized('Not authenticated');
+      const actorContext = { userId: user.id, role: user.role };
 
       const { id } = request.params as { id: string };
       const confirmation =
@@ -108,8 +115,9 @@ export async function confirmationRoutes(app: FastifyInstance) {
       },
     },
     async (request) => {
-      const actorContext = request.actorContext;
-      if (!actorContext) throw app.httpErrors.unauthorized('Not authenticated');
+      const user = await currentUser(request.cookies.sessionId);
+      if (!user) throw app.httpErrors.unauthorized('Not authenticated');
+      const actorContext = { userId: user.id, role: user.role };
 
       const { id } = request.params as { id: string };
       const body = request.body as ApproveConfirmationRequest;
@@ -173,8 +181,9 @@ export async function confirmationRoutes(app: FastifyInstance) {
       },
     },
     async (request) => {
-      const actorContext = request.actorContext;
-      if (!actorContext) throw app.httpErrors.unauthorized('Not authenticated');
+      const user = await currentUser(request.cookies.sessionId);
+      if (!user) throw app.httpErrors.unauthorized('Not authenticated');
+      const actorContext = { userId: user.id, role: user.role };
 
       const { id } = request.params as { id: string };
       const body = request.body as RejectConfirmationRequest;

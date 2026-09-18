@@ -39,16 +39,23 @@ export async function realTimeRoutes(
       const { id: projectId } = request.params as { id: string };
       const { after } = request.query as { after?: number };
 
-      if (!request.actorContext) {
+      const user =
+        app.services && request.cookies.sessionId
+          ? await app.services.authService.validateSession(
+              request.cookies.sessionId,
+            )
+          : null;
+      if (!user) {
         return reply.unauthorized('Not authenticated');
       }
+      const actorContext = { userId: user.id, role: user.role };
 
       if (!app.projectPolicy) {
         return reply.internalServerError('Project policy not initialized');
       }
 
       const hasAccess = await app.projectPolicy.canViewProject(
-        request.actorContext,
+        actorContext,
         projectId,
       );
 
@@ -138,14 +145,14 @@ export async function realTimeRoutes(
       // 定期复核权限
       authCheckInterval = setInterval(async () => {
         try {
-          if (!request.actorContext || !app.projectPolicy) {
+          if (!actorContext || !app.projectPolicy) {
             reply.raw.end();
             cleanup();
             return;
           }
 
           const stillHasAccess = await app.projectPolicy.canViewProject(
-            request.actorContext,
+            actorContext,
             projectId,
           );
 

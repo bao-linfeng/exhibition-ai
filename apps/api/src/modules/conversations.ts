@@ -53,6 +53,12 @@ function toMessageDto(row: {
 }
 
 export async function conversationRoutes(app: FastifyInstance) {
+  async function currentUser(sessionId: string | undefined) {
+    return sessionId
+      ? app.services!.authService.validateSession(sessionId)
+      : null;
+  }
+
   // GET /api/v1/projects/:projectId/conversation
   app.get(
     '/api/v1/projects/:projectId/conversation',
@@ -68,8 +74,9 @@ export async function conversationRoutes(app: FastifyInstance) {
       },
     },
     async (request) => {
-      const actorContext = request.actorContext;
-      if (!actorContext) throw app.httpErrors.unauthorized('Not authenticated');
+      const user = await currentUser(request.cookies.sessionId);
+      if (!user) throw app.httpErrors.unauthorized('Not authenticated');
+      const actorContext = { userId: user.id, role: user.role };
 
       const { projectId } = request.params as { projectId: string };
       if (!app.projectPolicy) {
@@ -108,8 +115,9 @@ export async function conversationRoutes(app: FastifyInstance) {
       },
     },
     async (request) => {
-      const actorContext = request.actorContext;
-      if (!actorContext) throw app.httpErrors.unauthorized('Not authenticated');
+      const user = await currentUser(request.cookies.sessionId);
+      if (!user) throw app.httpErrors.unauthorized('Not authenticated');
+      const actorContext = { userId: user.id, role: user.role };
 
       const { projectId } = request.params as { projectId: string };
       const query = request.query as { before?: string; limit?: number };
@@ -159,8 +167,9 @@ export async function conversationRoutes(app: FastifyInstance) {
       },
     },
     async (request, reply) => {
-      const actorContext = request.actorContext;
-      if (!actorContext) throw app.httpErrors.unauthorized('Not authenticated');
+      const user = await currentUser(request.cookies.sessionId);
+      if (!user) throw app.httpErrors.unauthorized('Not authenticated');
+      const actorContext = { userId: user.id, role: user.role };
 
       const { projectId } = request.params as { projectId: string };
       const body = request.body as SendMessageRequest;
