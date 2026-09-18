@@ -254,8 +254,19 @@ export function createServices(): Services {
     auditService,
   );
 
+  const connection = redisConnection();
   // EventsService 需要在 ProjectService 和 BriefService 之前初始化
-  const eventsService = new EventsService(pool);
+  // 使用两个独立 ioredis 连接：publisher 用于 PUBLISH，subscriber 用于 SUBSCRIBE
+  // （redis 客户端进入 subscribe 模式后连接被占用，不能复用）
+  const eventsPubRedis = new Redis(connection);
+  eventsPubRedis.on('error', () => {
+    /* 事件发布连接错误由上层日志处理 */
+  });
+  const eventsSubRedis = new Redis(connection);
+  eventsSubRedis.on('error', () => {
+    /* 事件订阅连接错误由上层日志处理 */
+  });
+  const eventsService = new EventsService(pool, eventsPubRedis, eventsSubRedis);
   const projectService = new ProjectService(
     new ProjectRepository(drizzleDb),
     eventsService,
@@ -265,8 +276,6 @@ export function createServices(): Services {
     new BriefRepository(drizzleDb),
     eventsService,
   );
-
-  const connection = redisConnection();
   const queueConnection = createQueueConnection();
   const assetValidationQueue = createAssetValidationQueue({
     connection: queueConnection,
@@ -447,6 +456,8 @@ export function createServices(): Services {
   async function close() {
     if (redis.isOpen) redis.destroy();
     verificationRedis.disconnect();
+    eventsPubRedis.disconnect();
+    eventsSubRedis.disconnect();
     s3.destroy();
     await assetValidationQueue.close();
     await imageGenerationQueue.close();

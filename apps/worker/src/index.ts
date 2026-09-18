@@ -105,7 +105,9 @@ const msgRepo = new MessageRepository(db);
 const runRepo = new AgentRunRepository(db);
 const confirmRepo = new ConfirmationRepository(db);
 const exportRepo = new ExportRepository(db);
-const eventsService = new EventsService(pool);
+const eventsPubRedis = createQueueConnection();
+const eventsSubRedis = createQueueConnection();
+const eventsService = new EventsService(pool, eventsPubRedis, eventsSubRedis);
 const bucket = env.S3_BUCKET;
 
 // Redis connections

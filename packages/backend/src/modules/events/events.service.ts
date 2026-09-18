@@ -1,4 +1,7 @@
 import { EventEmitter } from 'node:events';
+import type { Redis } from 'ioredis';
+
+const REDIS_CHANNEL = 'project.events';
 
 type Pool = {
   connect(): Promise<{
@@ -31,8 +34,25 @@ export interface ProjectEvent {
 export class EventsService {
   private eventBus = new EventEmitter();
 
-  constructor(private pool: Pool) {
+  constructor(
+    private pool: Pool,
+    private publisher: Redis,
+    private subscriber: Redis,
+  ) {
     this.eventBus.setMaxListeners(1000); // 支持多个并发连接
+    this.subscriber.subscribe(REDIS_CHANNEL, (err) => {
+      if (err) {
+        // 订阅失败不影响历史事件回放，仅实时推送不可用
+      }
+    });
+    this.subscriber.on('message', (_channel: string, message: string) => {
+      try {
+        const event = JSON.parse(message) as ProjectEvent;
+        this.eventBus.emit('project.event', event);
+      } catch {
+        // 忽略无效消息
+      }
+    });
   }
 
   async appendEvent(
@@ -70,10 +90,13 @@ export class EventsService {
 
       await client.query('COMMIT');
 
-      // 发布事件到 EventEmitter，供 SSE 订阅者实时接收
+      // 通过 Redis Pub/Sub 广播事件，打通 Worker → API 跨进程通知
       const insertedEvent = result.rows[0];
       if (insertedEvent) {
-        this.eventBus.emit('project.event', insertedEvent);
+        await this.publisher.publish(
+          REDIS_CHANNEL,
+          JSON.stringify(insertedEvent),
+        );
       }
 
       return insertedEvent!;
