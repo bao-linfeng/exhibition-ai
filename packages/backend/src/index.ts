@@ -223,7 +223,12 @@ export interface Services {
   favoriteService: FavoriteService;
   casesService: CasesService;
   connectRedis(): Promise<void>;
-  readiness(): Promise<{ postgres: boolean; redis: boolean; storage: boolean }>;
+  readiness(): Promise<{
+    postgres: boolean;
+    redis: boolean;
+    storage: boolean;
+    model_config?: boolean;
+  }>;
   close(): Promise<void>;
 }
 
@@ -410,16 +415,33 @@ export function createServices(): Services {
     ]).finally(() => {
       clearTimeout(timeout);
     });
-    const results = await Promise.allSettled([
+    const checks: Promise<unknown>[] = [
       pool.query('SELECT 1'),
       ping,
       s3.send(new HeadBucketCommand({ Bucket: bucket })),
-    ]);
-    return {
+    ];
+
+    const isRealMode = env.AI_PROVIDER_MODE === 'real';
+    if (isRealMode) {
+      checks.push(
+        modelConfigRepo.findAll(true).then((rows) => {
+          const hasExecutable = rows.some((r) => r.providerId !== 'mock');
+          if (!hasExecutable)
+            throw new Error('No executable model config found for real mode');
+        }),
+      );
+    }
+
+    const results = await Promise.allSettled(checks);
+    const base = {
       postgres: results[0]?.status === 'fulfilled',
       redis: results[1]?.status === 'fulfilled',
       storage: results[2]?.status === 'fulfilled',
     };
+    if (isRealMode) {
+      return { ...base, model_config: results[3]?.status === 'fulfilled' };
+    }
+    return base;
   }
   async function close() {
     if (redis.isOpen) redis.destroy();

@@ -53,7 +53,8 @@
                       "properties": {
                         "postgres": { "type": "boolean" },
                         "redis": { "type": "boolean" },
-                        "storage": { "type": "boolean" }
+                        "storage": { "type": "boolean" },
+                        "model_config": { "type": "boolean" }
                       }
                     }
                   }
@@ -83,7 +84,8 @@
                       "properties": {
                         "postgres": { "type": "boolean" },
                         "redis": { "type": "boolean" },
-                        "storage": { "type": "boolean" }
+                        "storage": { "type": "boolean" },
+                        "model_config": { "type": "boolean" }
                       }
                     }
                   }

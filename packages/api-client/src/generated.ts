@@ -1331,6 +1331,7 @@ export interface operations {
               postgres: boolean;
               redis: boolean;
               storage: boolean;
+              model_config?: boolean;
             };
           };
         };
@@ -1347,6 +1348,7 @@ export interface operations {
               postgres: boolean;
               redis: boolean;
               storage: boolean;
+              model_config?: boolean;
             };
           };
         };

@@ -24,6 +24,7 @@
     "storage:init": "node --import tsx --conditions=development scripts/storage-init.mjs",
     "test:integration": "node --import tsx --conditions=development scripts/smoke.mjs",
     "user:bootstrap": "node --import tsx --conditions=development scripts/user-bootstrap.ts",
+    "model:bootstrap": "node --import tsx --conditions=development scripts/model-bootstrap.ts",
     "test:sse": "node scripts/test-sse-e2e.mjs"
   },
   "devDependencies": {
