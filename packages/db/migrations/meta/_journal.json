@@ -148,6 +148,13 @@
       "when": 1789730000000,
       "tag": "0020_session_token_hash_absolute_expiry",
       "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1758153600001,
+      "tag": "0021_confirmation_processing_failed_status",
+      "breakpoints": true
     }
   ]
 }

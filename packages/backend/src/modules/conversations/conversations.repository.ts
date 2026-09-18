@@ -318,6 +318,15 @@ export class ConfirmationRepository {
     return confirmation ?? null;
   }
 
+  async tryClaimPending(id: string): Promise<boolean> {
+    const rows = await this.db
+      .update(confirmations)
+      .set({ status: 'processing' })
+      .where(and(eq(confirmations.id, id), eq(confirmations.status, 'pending')))
+      .returning({ id: confirmations.id });
+    return rows.length > 0;
+  }
+
   async updateStatus(
     id: string,
     status: string,

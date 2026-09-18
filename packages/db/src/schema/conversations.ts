@@ -143,7 +143,7 @@ export const confirmations = pgTable(
     ),
     check(
       'confirmations_status_check',
-      sql`${table.status} IN ('pending', 'approved', 'rejected', 'expired')`,
+      sql`${table.status} IN ('pending', 'processing', 'approved', 'rejected', 'expired', 'failed')`,
     ),
   ],
 );

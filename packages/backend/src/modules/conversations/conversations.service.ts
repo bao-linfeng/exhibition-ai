@@ -235,23 +235,36 @@ export class ConversationService {
       return 'expired';
     }
 
+    // 原子占位：CAS pending → processing，防止并发重复执行副作用
+    const claimed = await this.confirmRepo.tryClaimPending(id);
+    if (!claimed) return 'not_pending';
+
     if (confirmation.action === 'apply_brief_patch') {
       const projectRevision =
         await this.briefRepo.findProjectRevision(projectId);
       if (projectRevision === null) {
+        await this.confirmRepo.updateStatus(id, 'failed');
         throw new Error('Project not found while applying brief patch');
       }
 
-      const revision = await this.briefRepo.createRevision({
-        projectId,
-        content: (confirmation.payload as { patch: BriefContent }).patch,
-        createdBy: requestedBy,
-        expectedRevision: projectRevision,
-      });
+      let revision: Awaited<ReturnType<typeof this.briefRepo.createRevision>>;
+      try {
+        revision = await this.briefRepo.createRevision({
+          projectId,
+          content: (confirmation.payload as { patch: BriefContent }).patch,
+          createdBy: requestedBy,
+          expectedRevision: projectRevision,
+        });
+      } catch (err) {
+        await this.confirmRepo.updateStatus(id, 'failed');
+        throw err;
+      }
       if (revision === 'conflict') {
+        await this.confirmRepo.updateStatus(id, 'failed');
         throw new Error('Project changed while applying brief patch');
       }
       if (revision === 'not_found') {
+        await this.confirmRepo.updateStatus(id, 'failed');
         throw new Error('Project not found while applying brief patch');
       }
 
@@ -286,6 +299,7 @@ export class ConversationService {
       const projectRevision =
         await this.briefRepo.findProjectRevision(projectId);
       if (projectRevision === null) {
+        await this.confirmRepo.updateStatus(id, 'failed');
         throw new Error('Project not found while creating generation');
       }
 
@@ -319,13 +333,23 @@ export class ConversationService {
         inputAssetIds: payload.inputAssetIds,
         expectedProjectRevision: projectRevision,
       } as CreateGenerationRequest;
-      const result = await this.generationService.createGeneration(
-        projectId,
-        generation,
-        requestedBy,
-        true,
-      );
+
+      let result: Awaited<
+        ReturnType<typeof this.generationService.createGeneration>
+      >;
+      try {
+        result = await this.generationService.createGeneration(
+          projectId,
+          generation,
+          requestedBy,
+          true,
+        );
+      } catch (err) {
+        await this.confirmRepo.updateStatus(id, 'failed');
+        throw err;
+      }
       if (typeof result === 'string') {
+        await this.confirmRepo.updateStatus(id, 'failed');
         throw new Error(`Failed to create generation: ${result}`);
       }
 
@@ -356,6 +380,7 @@ export class ConversationService {
       };
     }
 
+    await this.confirmRepo.updateStatus(id, 'failed');
     throw new Error(`Unsupported confirmation action: ${confirmation.action}`);
   }
 
