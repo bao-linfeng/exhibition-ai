@@ -1237,6 +1237,27 @@
         "apps/worker/src/processors/export.processor.ts",
         "apps/worker/src/processors/pdf-export.processor.ts"
       ]
+    },
+    {
+      "id": "BUG-97",
+      "title": "恢复脚本描述与真实行为不一致，reconciling 状态无终态转换",
+      "labels": [
+        "bug",
+        "deployment",
+        "P1"
+      ],
+      "issueNumber": 97,
+      "issueUrl": "https://github.com/bao-linfeng/exhibition-ai/issues/97",
+      "branch": "fix/issue-97-reconciling-stuck",
+      "prNumber": null,
+      "prUrl": null,
+      "status": "in_review",
+      "files": [
+        "apps/worker/src/schedulers/timeout-reconciler.ts",
+        "packages/backend/src/modules/tasks/tasks.repository.ts",
+        "packages/backend/src/modules/tasks/tasks.service.ts",
+        "infra/scripts/restore.sh"
+      ]
     }
   ],
   "documentationPr": {

@@ -307,16 +307,31 @@ export class TaskService {
   }
 
   async scanAndMarkStuckTasks(thresholdMs = 15 * 60 * 1000) {
-    const stuckTasks = await this.repo.findStuckRunning(thresholdMs);
-    if (stuckTasks.length === 0) return;
+    const stuckRunning = await this.repo.findStuckRunning(thresholdMs);
+    if (stuckRunning.length > 0) {
+      const marked = await this.repo.markReconciling(
+        stuckRunning.map((task) => task.id),
+      );
+      if (marked.length > 0) {
+        logger.warn(
+          { taskIds: marked.map((task) => task.id), thresholdMs },
+          'Marked stuck tasks for reconciliation',
+        );
+      }
+    }
+  }
 
-    const marked = await this.repo.markReconciling(
-      stuckTasks.map((task) => task.id),
+  async scanAndFailStuckReconciling(thresholdMs = 30 * 60 * 1000) {
+    const stuckReconciling = await this.repo.findStuckReconciling(thresholdMs);
+    if (stuckReconciling.length === 0) return;
+
+    const failed = await this.repo.markFailedFromReconciling(
+      stuckReconciling.map((task) => task.id),
     );
-    if (marked.length > 0) {
+    if (failed.length > 0) {
       logger.warn(
-        { taskIds: marked.map((task) => task.id), thresholdMs },
-        'Marked stuck tasks for reconciliation',
+        { taskIds: failed.map((task) => task.id), thresholdMs },
+        'Auto-failed tasks stuck in reconciling state',
       );
     }
   }
