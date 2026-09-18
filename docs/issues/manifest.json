@@ -1110,8 +1110,8 @@
       "issueNumber": 90,
       "issueUrl": "https://github.com/bao-linfeng/exhibition-ai/issues/90",
       "branch": "fix/issue-90-image-retry-quota",
-      "prNumber": null,
-      "prUrl": null,
+      "prNumber": 108,
+      "prUrl": "https://github.com/bao-linfeng/exhibition-ai/pull/108",
       "status": "in_review",
       "files": [
         "packages/backend/src/modules/tasks/tasks.repository.ts",
