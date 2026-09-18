@@ -2,6 +2,8 @@ import { createHash } from 'node:crypto';
 import { Readable } from 'node:stream';
 import type {
   AssetRepository,
+  BriefRepository,
+  DirectionRepository,
   GenerationRepository,
   ImageVersionRepository,
   QuotaService,
@@ -37,6 +39,8 @@ export async function processImageGeneration(
     generationRepo: GenerationRepository;
     assetRepo: AssetRepository;
     imageVersionRepo: ImageVersionRepository;
+    briefRepo: BriefRepository;
+    directionRepo: DirectionRepository;
     quotaService: QuotaService;
     storage: StorageProvider;
     bucket: string;
@@ -50,6 +54,8 @@ export async function processImageGeneration(
     generationRepo,
     assetRepo,
     imageVersionRepo,
+    briefRepo,
+    directionRepo,
     quotaService,
     storage,
     bucket,
@@ -80,10 +86,48 @@ export async function processImageGeneration(
       return;
     }
 
+    const briefRevision = await briefRepo.findById(genRequest.briefRevisionId);
+    if (!briefRevision) {
+      await failBeforeProvider(
+        taskRepo,
+        quotaService,
+        taskId,
+        'BRIEF_NOT_FOUND',
+      );
+      return;
+    }
+
+    let directionText = '';
+    if (genRequest.directionId) {
+      const direction = await directionRepo.findByIdAndProject(
+        genRequest.directionId,
+        genRequest.projectId,
+      );
+      if (direction) {
+        directionText = [
+          direction.title,
+          direction.concept,
+          direction.layoutDescription,
+          direction.materialsAndColors,
+        ]
+          .filter(Boolean)
+          .join('。');
+      }
+    }
+
+    const parameters = genRequest.parameters as Record<string, unknown>;
+    const sizePreset = String(parameters.sizePreset ?? 'landscape_4_3');
+    const negativePrompt =
+      parameters.negativePrompt !== undefined
+        ? String(parameters.negativePrompt)
+        : undefined;
     const promptSnapshot = promptRegistry.snapshot('image_generation_prompt', {
       instruction: genRequest.instruction,
-      mode: genRequest.mode,
-      briefRevisionId: genRequest.briefRevisionId,
+      direction: directionText,
+      size_preset: sizePreset,
+      negative_prompt_suffix: negativePrompt
+        ? `，负向提示词：${negativePrompt}`
+        : '',
     });
 
     const modelSnapshot = (
@@ -136,7 +180,6 @@ export async function processImageGeneration(
       return;
     }
 
-    const parameters = genRequest.parameters as Record<string, unknown>;
     const outputCount = (taskRow.outputs as Array<unknown> | null)?.length ?? 0;
     if (outputCount === 0) {
       await failBeforeProvider(
@@ -149,13 +192,8 @@ export async function processImageGeneration(
       );
       return;
     }
-    const sizePreset = String(parameters.sizePreset ?? 'landscape_4_3');
     const seed =
       parameters.seed !== undefined ? Number(parameters.seed) : undefined;
-    const negativePrompt =
-      parameters.negativePrompt !== undefined
-        ? String(parameters.negativePrompt)
-        : undefined;
 
     let parentImageBytes: Buffer | undefined;
     let parentImageMimeType: string | undefined;

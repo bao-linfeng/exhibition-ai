@@ -8,6 +8,10 @@ import type {
 import type { TaskRepository } from '../tasks/tasks.repository.js';
 import { env } from '../../infrastructure/index.js';
 import type { ModelConfigRepository } from '../settings/model-config.repository.js';
+import type { BriefRepository } from '../briefs/briefs.repository.js';
+import type { DirectionRepository } from '../directions/directions.repository.js';
+import type { AssetRepository } from '../assets/assets.repository.js';
+import type { ProjectRepository } from '../projects/projects.repository.js';
 import {
   GenerationRepository,
   InsufficientQuotaError,
@@ -69,6 +73,10 @@ export class GenerationService {
     private taskRepo: TaskRepository,
     private modelConfigRepo: ModelConfigRepository,
     private queues: Map<string, Queue>,
+    private briefRepo: BriefRepository,
+    private directionRepo: DirectionRepository,
+    private assetRepo: AssetRepository,
+    private projectRepo: ProjectRepository,
   ) {}
 
   async createGeneration(
@@ -112,6 +120,40 @@ export class GenerationService {
       const task = await this.taskRepo.findById(existing.taskId);
       if (!task) return 'conflict';
       return { taskId: task.id, status: 'pending' };
+    }
+
+    const project = await this.projectRepo.findById(projectId);
+    if (!project) return 'forbidden';
+    if (project.revision !== body.expectedProjectRevision) return 'conflict';
+    if (project.status === 'draft') return 'forbidden';
+
+    const brief = await this.briefRepo.findByProjectId(
+      body.briefRevisionId,
+      projectId,
+    );
+    if (!brief || !brief.confirmedAt) return 'forbidden';
+
+    if (directionId) {
+      const direction = await this.directionRepo.findByIdAndProject(
+        directionId,
+        projectId,
+      );
+      if (!direction || direction.briefRevisionId !== body.briefRevisionId) {
+        return 'forbidden';
+      }
+    }
+
+    if (body.inputAssetIds && body.inputAssetIds.length > 0) {
+      for (const assetId of body.inputAssetIds) {
+        const asset = await this.assetRepo.findById(assetId);
+        if (
+          !asset ||
+          asset.projectId !== projectId ||
+          asset.status !== 'ready'
+        ) {
+          return 'forbidden';
+        }
+      }
     }
 
     const modelConfig = await this.modelConfigRepo.findById(body.modelConfigId);

@@ -310,6 +310,10 @@ export function createServices(): Services {
     taskRepo,
     modelConfigRepo,
     queues,
+    new BriefRepository(drizzleDb),
+    new DirectionRepository(drizzleDb),
+    new AssetRepository(drizzleDb),
+    new ProjectRepository(drizzleDb),
   );
   const imageVersionService = new ImageVersionService(
     new ImageVersionRepository(drizzleDb),

@@ -198,6 +198,8 @@ const imageGenerationWorker = new Worker(
       generationRepo,
       assetRepo,
       imageVersionRepo,
+      briefRepo,
+      directionRepo,
       quotaService,
       storage: s3,
       bucket,
