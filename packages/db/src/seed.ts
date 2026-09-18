@@ -44,6 +44,18 @@ async function seed(): Promise<void> {
       .insert(modelConfigs)
       .values([
         {
+          providerId: 'mock',
+          modelId: 'mock-full',
+          displayName: 'Mock Image Model (Full)',
+          description: 'Mock 模型，支持文生图和图生图，供开发和测试使用',
+          capabilities: ['generate', 'edit'],
+          costPerImageMinor: 0,
+          currency: 'CNY',
+          isActive: true,
+          maxConcurrent: 4,
+          parametersSchema: {},
+        },
+        {
           providerId: 'google',
           modelId: 'gemini-3.1-flash-image',
           displayName: 'Gemini 3.1 Flash Image',
@@ -85,7 +97,7 @@ async function seed(): Promise<void> {
       });
 
     console.log(
-      '[seed] Development admin user and Google Gemini models seeded',
+      '[seed] Development admin user, mock model, and Google Gemini models seeded',
     );
   } finally {
     await pool.end();
