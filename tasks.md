@@ -648,6 +648,16 @@ docker compose --env-file .env -f infra/compose.dev.yaml down
 
   修复：ZIP 改为 `createStreamingZip` async generator，逐张从 S3 读取图片、计算 CRC32/SHA-256、立即 yield ZIP entry chunks 后释放 buffer，Central Directory 阶段仅保留轻量元数据（不含图片 data），`putObject` 不传 `contentLength`（chunked transfer），上传完成后通过 `headObject` 获取实际大小；PDF 改为先收集轻量 `ImageLocation` 元数据并排序，再逐张读取图片、立即渲染进 pdf-lib，不再持有原始大图 buffer 数组。峰值内存从「所有图片之和」降为「单张图片」。
 
+## P1 Bug 修复
+
+### 审查中
+
+- [ ] **[#127] 保持图片重试输出与原失败 ordinal 的稳定映射** — 状态：in_review；GitHub Issue：[#127](https://github.com/bao-linfeng/exhibition-ai/issues/127)；PR：待创建。
+
+  根因：`processImageGeneration` 在处理重试任务时，用 `taskRow.outputs.length` 作为 `outputCount` 并以 0-based 下标迭代，而重试任务的 `outputs` 数组保存的是**原始失败 ordinal**（如 `ordinal: 2`）。Provider 返回的结果也以 0-based ordinal 标记，导致重试结果被写入 `ordinal: 0`，覆盖了其他已成功输出，并破坏原任务输出与图片版本的关联。
+
+  修复：从 `taskRow.outputs` 中筛选 `state === 'pending'` 的输出并提取其 ordinal 列表（`pendingOrdinals`），以列表长度作为 `outputCount` 传给 Provider；结果处理循环改为以 Provider 返回的 0-based `providerIndex` 为键查找结果，再映射回 `pendingOrdinals[providerIndex]`（即 `actualOrdinal`）记录到数据库，确保重试结果始终落在正确的原始 ordinal 位置。
+
 ## P0 Bug 修复
 
 ### 审查中

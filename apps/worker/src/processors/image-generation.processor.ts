@@ -260,7 +260,14 @@ export async function processImageGeneration(
       return;
     }
 
-    const outputCount = (taskRow.outputs as Array<unknown> | null)?.length ?? 0;
+    const taskOutputs =
+      (taskRow.outputs as Array<{ ordinal: number; state: string }> | null) ??
+      [];
+    const pendingOrdinals = taskOutputs
+      .filter((o) => o.state === 'pending')
+      .map((o) => o.ordinal)
+      .sort((a, b) => a - b);
+    const outputCount = pendingOrdinals.length;
     if (outputCount === 0) {
       await failBeforeProvider(
         taskRepo,
@@ -421,20 +428,26 @@ export async function processImageGeneration(
       createdBy: string;
     }> = [];
     const successfulAssets = new Map<number, string>();
-    const outputsByOrdinal = new Map(
+    // Provider returns outputs with 0-based ordinals (index into its own request).
+    // Map provider index → actual task ordinal so retry tasks preserve the
+    // original failed ordinal rather than overwriting ordinal 0.
+    const outputsByProviderIndex = new Map(
       result.outputs.map((output) => [output.ordinal, output]),
     );
 
-    for (let ordinal = 0; ordinal < outputCount; ordinal++) {
-      const output = outputsByOrdinal.get(ordinal);
+    for (let providerIndex = 0; providerIndex < outputCount; providerIndex++) {
+      const actualOrdinal = pendingOrdinals[providerIndex]!;
+      const output = outputsByProviderIndex.get(providerIndex);
       if (!output) {
-        finalOutputs.push(failedOutput(ordinal, 'PROVIDER_OUTPUT_MISSING'));
+        finalOutputs.push(
+          failedOutput(actualOrdinal, 'PROVIDER_OUTPUT_MISSING'),
+        );
         continue;
       }
       if (output.state === 'failed') {
         finalOutputs.push(
           failedOutput(
-            ordinal,
+            actualOrdinal,
             output.errorCode ?? 'PROVIDER_OUTPUT_FAILED',
             output.errorMessage,
           ),
@@ -442,14 +455,16 @@ export async function processImageGeneration(
         continue;
       }
       if (!output.imageBytes) {
-        finalOutputs.push(failedOutput(ordinal, 'IMAGE_BYTES_MISSING'));
+        finalOutputs.push(failedOutput(actualOrdinal, 'IMAGE_BYTES_MISSING'));
         continue;
       }
 
       const mimeType = output.mimeType ?? 'image/png';
       const ext = mimeToExtension(mimeType);
       if (!ext) {
-        finalOutputs.push(failedOutput(ordinal, 'UNSUPPORTED_IMAGE_MIME'));
+        finalOutputs.push(
+          failedOutput(actualOrdinal, 'UNSUPPORTED_IMAGE_MIME'),
+        );
         continue;
       }
 
@@ -475,11 +490,11 @@ export async function processImageGeneration(
           sizeBytes: output.imageBytes.length,
           createdBy: genRequest.requestedBy,
         });
-        successfulAssets.set(ordinal, asset.id);
+        successfulAssets.set(actualOrdinal, asset.id);
         publishInputs.push({
           projectId: genRequest.projectId,
           taskId,
-          outputOrdinal: ordinal,
+          outputOrdinal: actualOrdinal,
           assetId: asset.id,
           parentVersionId: genRequest.parentVersionId,
           briefRevisionId: genRequest.briefRevisionId,
@@ -491,10 +506,10 @@ export async function processImageGeneration(
         });
       } catch (err) {
         logger.error(
-          { taskId, ordinal, err },
+          { taskId, providerIndex, actualOrdinal, err },
           'Failed to persist generated image',
         );
-        finalOutputs.push(failedOutput(ordinal, 'IMAGE_PERSIST_FAILED'));
+        finalOutputs.push(failedOutput(actualOrdinal, 'IMAGE_PERSIST_FAILED'));
       }
     }
 
