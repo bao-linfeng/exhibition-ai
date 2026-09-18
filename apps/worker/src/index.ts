@@ -136,7 +136,7 @@ const queues = new Map<string, Queue>([
   [QUEUE_AGENT_RUN, agentRunQueue],
   [QUEUE_EXPORT, exportQueue],
 ]);
-const taskService = new TaskService(taskRepo, queues);
+const taskService = new TaskService(taskRepo, queues, quotaService);
 
 // Probe worker (existing)
 const probeWorker = new Worker(

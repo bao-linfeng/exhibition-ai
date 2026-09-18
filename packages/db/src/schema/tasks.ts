@@ -64,6 +64,7 @@ export const tasks = pgTable(
       .notNull()
       .defaultNow(),
     startedAt: timestamp('started_at', { withTimezone: true }),
+    reconcilingAt: timestamp('reconciling_at', { withTimezone: true }),
     finishedAt: timestamp('finished_at', { withTimezone: true }),
   },
   (table) => [

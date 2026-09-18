@@ -355,13 +355,14 @@ export class TaskRepository {
   }
 
   async findStuckReconciling(thresholdMs: number) {
+    const cutoff = new Date(Date.now() - thresholdMs);
     return this.db
       .select({ id: tasks.id, kind: tasks.kind })
       .from(tasks)
       .where(
         and(
           eq(tasks.status, 'reconciling'),
-          lt(tasks.startedAt, new Date(Date.now() - thresholdMs)),
+          sql`(${tasks.reconcilingAt} IS NULL OR ${tasks.reconcilingAt} < ${cutoff})`,
         ),
       );
   }
@@ -389,7 +390,7 @@ export class TaskRepository {
 
     return this.db
       .update(tasks)
-      .set({ status: 'reconciling' })
+      .set({ status: 'reconciling', reconcilingAt: new Date() })
       .where(and(inArray(tasks.id, ids), eq(tasks.status, 'running')))
       .returning({ id: tasks.id });
   }
@@ -397,7 +398,12 @@ export class TaskRepository {
   async markTaskReconciling(id: string) {
     const [task] = await this.db
       .update(tasks)
-      .set({ status: 'reconciling', canCancel: false, canRetry: false })
+      .set({
+        status: 'reconciling',
+        reconcilingAt: new Date(),
+        canCancel: false,
+        canRetry: false,
+      })
       .where(and(eq(tasks.id, id), eq(tasks.status, 'running')))
       .returning();
     return task ?? null;
