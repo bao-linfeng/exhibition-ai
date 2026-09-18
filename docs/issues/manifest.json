@@ -1016,6 +1016,23 @@
   ],
   "bugFixes": [
     {
+      "id": "BUG-88",
+      "title": "CSRF 为固定占位符，无真实防护",
+      "labels": ["bug", "P1", "security"],
+      "issueNumber": 88,
+      "issueUrl": "https://github.com/bao-linfeng/exhibition-ai/issues/88",
+      "branch": "fix/issue-88-csrf-protection",
+      "prNumber": 106,
+      "prUrl": "https://github.com/bao-linfeng/exhibition-ai/pull/106",
+      "status": "in_review",
+      "files": [
+        "apps/api/src/plugins/csrf.ts",
+        "apps/api/src/modules/auth.ts",
+        "apps/api/src/app.ts",
+        "apps/web/src/api/client.ts"
+      ]
+    },
+    {
       "id": "BUG-86",
       "title": "Agent、Confirmation 和 SSE 路由固定返回 401",
       "labels": ["bug", "P0", "agent", "auth"],
