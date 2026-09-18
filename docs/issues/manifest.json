@@ -1249,8 +1249,8 @@
       "issueNumber": 97,
       "issueUrl": "https://github.com/bao-linfeng/exhibition-ai/issues/97",
       "branch": "fix/issue-97-reconciling-stuck",
-      "prNumber": null,
-      "prUrl": null,
+      "prNumber": 115,
+      "prUrl": "https://github.com/bao-linfeng/exhibition-ai/pull/115",
       "status": "in_review",
       "files": [
         "apps/worker/src/schedulers/timeout-reconciler.ts",
