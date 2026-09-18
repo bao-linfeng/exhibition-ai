@@ -585,3 +585,13 @@ docker compose --env-file .env -f infra/compose.dev.yaml down
   - [ ] 明确数据来源、单位、版本、精度和人工审核责任
   - [ ] 列实施子Issue、依赖、成本及验证方法，缺信息明确待定
   - [ ] 评审结论区分继续/暂缓；本Issue完成仅指评估交付，不代表BOM/报价功能实现
+
+## P0 Bug 修复
+
+### 已修复
+
+- [x] **[#86] Agent、Confirmation 和 SSE 路由固定返回 401** — 状态：done；GitHub Issue：[#86](https://github.com/bao-linfeng/exhibition-ai/issues/86)；PR：[#104](https://github.com/bao-linfeng/exhibition-ai/pull/104)。
+
+  根因：`request.actorContext` 只有类型声明，从未赋值；前端 SSE `message` 监听器无法捕获命名事件。
+
+  修复：`conversations.ts`、`confirmations.ts`、`sse.routes.ts` 各添加 `currentUser` helper 并在每个 handler 开头验证 session cookie；前端提取统一 `handleEvent` 并为所有命名事件类型（含 `message.delta`、`message.completed`、`confirmation.created`）注册独立监听器。
