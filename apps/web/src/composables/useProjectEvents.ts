@@ -154,8 +154,8 @@ export function useProjectEvents(
       onOpen?.();
     });
 
-    // 通用事件监听器（捕获所有事件类型）
-    eventSource.addEventListener('message', (e: MessageEvent) => {
+    // 统一事件处理函数
+    const handleEvent = (e: MessageEvent) => {
       try {
         const event = JSON.parse(e.data) as ProjectEvent;
 
@@ -175,9 +175,12 @@ export function useProjectEvents(
       } catch (err) {
         console.error('[useProjectEvents] 解析事件失败:', err, e.data);
       }
-    });
+    };
 
-    // 监听特定事件类型（可选，用于类型化处理）
+    // 默认事件监听器（无命名事件的 fallback）
+    eventSource.addEventListener('message', handleEvent);
+
+    // 命名事件监听器（服务端通过 event: <type> 发送的事件）
     const eventTypes = [
       'project.created',
       'project.updated',
@@ -187,12 +190,13 @@ export function useProjectEvents(
       'task.updated',
       'version.created',
       'asset.ready',
+      'message.delta',
+      'message.completed',
+      'confirmation.created',
     ];
 
     eventTypes.forEach((type) => {
-      eventSource!.addEventListener(type, () => {
-        // 已在 message 处理器中统一处理，这里可以添加特定逻辑
-      });
+      eventSource!.addEventListener(type, handleEvent);
     });
 
     // 连接关闭

@@ -1014,6 +1014,25 @@
       "status": "todo"
     }
   ],
+  "bugFixes": [
+    {
+      "id": "BUG-86",
+      "title": "Agent、Confirmation 和 SSE 路由固定返回 401",
+      "labels": ["bug", "P0", "agent", "auth"],
+      "issueNumber": 86,
+      "issueUrl": "https://github.com/bao-linfeng/exhibition-ai/issues/86",
+      "branch": "fix/issue-86-auth-sse-routing",
+      "prNumber": 104,
+      "prUrl": "https://github.com/bao-linfeng/exhibition-ai/pull/104",
+      "status": "in_review",
+      "files": [
+        "apps/api/src/modules/conversations.ts",
+        "apps/api/src/modules/confirmations.ts",
+        "apps/api/src/realtime/sse.routes.ts",
+        "apps/web/src/composables/useProjectEvents.ts"
+      ]
+    }
+  ],
   "documentationPr": {
     "number": 42,
     "url": "https://github.com/bao-linfeng/exhibition-ai/pull/42",
