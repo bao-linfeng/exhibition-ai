@@ -15,6 +15,11 @@ let contents = template;
 for (const [key, value] of Object.entries(secrets)) {
   contents = contents.replace(new RegExp(`^${key}=$`, 'm'), `${key}=${value}`);
 }
+// 将 DATABASE_URL 更新为容器内地址，并嵌入生成的密码
+contents = contents.replace(
+  /^DATABASE_URL=.*$/m,
+  `DATABASE_URL=postgresql://exhibition:${secrets.PGPASSWORD}@postgres:5432/exhibition`,
+);
 try {
   await writeFile(resolve(root, '.env'), contents, { flag: 'wx', mode: 0o600 });
   console.log('Created .env with random local credentials.');
