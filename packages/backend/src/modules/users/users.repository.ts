@@ -1,4 +1,4 @@
-import { and, desc, eq, ilike, lt, or, sql } from 'drizzle-orm';
+import { and, count, desc, eq, ilike, lt, or, sql } from 'drizzle-orm';
 import type { Database, User } from '@exhibition/db';
 import { users } from '@exhibition/db';
 
@@ -75,6 +75,14 @@ export class UserRepository {
       .returning();
     if (user) return user;
     return (await this.findById(id)) ? 'conflict' : null;
+  }
+
+  async countActiveAdmins(): Promise<number> {
+    const [row] = await this.db
+      .select({ cnt: count() })
+      .from(users)
+      .where(and(eq(users.role, 'admin'), eq(users.status, 'enabled')));
+    return row?.cnt ?? 0;
   }
 
   async findOptions(

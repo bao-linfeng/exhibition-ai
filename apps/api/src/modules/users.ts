@@ -98,6 +98,10 @@ export async function userRoutes(app: FastifyInstance) {
       );
       if (result === 'forbidden')
         throw app.httpErrors.forbidden('Administrator access required');
+      if (result === 'last_admin')
+        throw app.httpErrors.unprocessableEntity(
+          'Cannot disable or demote the last enabled administrator',
+        );
       if (result === 'conflict')
         throw app.httpErrors.conflict('User revision conflict');
       if (!result) throw app.httpErrors.notFound('User not found');
