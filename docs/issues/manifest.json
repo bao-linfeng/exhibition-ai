@@ -1121,6 +1121,24 @@
         "apps/api/src/modules/tasks.ts",
         "apps/worker/src/index.ts"
       ]
+    },
+    {
+      "id": "BUG-91",
+      "title": "Google Provider 注册后仍不可执行（GenerationService 可执行模型判断硬编码）",
+      "labels": [
+        "bug",
+        "P1",
+        "ai-generation"
+      ],
+      "issueNumber": 91,
+      "issueUrl": "https://github.com/bao-linfeng/exhibition-ai/issues/91",
+      "branch": "fix/issue-91-google-provider-executable",
+      "prNumber": 109,
+      "prUrl": "https://github.com/bao-linfeng/exhibition-ai/pull/109",
+      "status": "in_review",
+      "files": [
+        "packages/backend/src/modules/generations/generations.service.ts"
+      ]
     }
   ],
   "documentationPr": {

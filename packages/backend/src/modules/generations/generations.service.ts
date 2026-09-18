@@ -168,16 +168,9 @@ export class GenerationService {
       return 'pricing_not_configured';
     }
 
-    const executableModelId =
-      env.AI_PROVIDER_MODE === 'real' &&
-      env.OPENAI_API_KEY &&
-      modelConfig.providerId === 'openai'
-        ? env.AI_DEFAULT_IMAGE_MODEL
-        : env.AI_PROVIDER_MODE !== 'real' && modelConfig.providerId === 'mock'
-          ? 'mock-full'
-          : null;
-    if (modelConfig.modelId !== executableModelId)
-      return 'model_not_executable';
+    const isRealMode = env.AI_PROVIDER_MODE === 'real';
+    const isMockProvider = modelConfig.providerId === 'mock';
+    if (isRealMode === isMockProvider) return 'model_not_executable';
     const outputCount = body.parameters.count ?? 1;
     const estimatedFee = {
       status: 'estimated' as const,
