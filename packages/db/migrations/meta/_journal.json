@@ -141,6 +141,13 @@
       "when": 1789643638000,
       "tag": "0019_add_favorites_and_tags",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1789730000000,
+      "tag": "0020_session_token_hash_absolute_expiry",
+      "breakpoints": true
     }
   ]
 }
