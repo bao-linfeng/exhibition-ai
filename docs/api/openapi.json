@@ -2323,6 +2323,8 @@
                 "properties": {
                   "action": {
                     "anyOf": [
+                      { "type": "string", "enum": ["start_briefing"] },
+                      { "type": "string", "enum": ["start_designing"] },
                       { "type": "string", "enum": ["submit_review"] },
                       { "type": "string", "enum": ["approve"] },
                       { "type": "string", "enum": ["request_changes"] },

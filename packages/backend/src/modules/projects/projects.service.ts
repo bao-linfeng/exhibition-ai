@@ -116,6 +116,11 @@ export class ProjectService {
 
     if (requestingUser.role === 'viewer') return 'forbidden';
 
+    // 写锁：reviewing/approved/archived 状态禁止元数据修改
+    if (['reviewing', 'approved', 'archived'].includes(existing.status)) {
+      return 'forbidden';
+    }
+
     if (requestingUser.role !== 'admin') {
       if (!(await this.repo.isMember(id, requestingUser.id))) return null;
 
@@ -240,6 +245,77 @@ export class ProjectService {
     );
 
     if (project) return this.toProject(project);
+    return (await this.repo.findById(projectId)) ? 'conflict' : null;
+  }
+
+  async transitionLifecycle(
+    projectId: string,
+    action: 'start_briefing' | 'start_designing',
+    expectedRevision: number,
+    requestingUser: { id: string; role: string },
+  ): Promise<
+    ProjectContract | null | 'conflict' | 'forbidden' | 'invalid_transition'
+  > {
+    if (!['admin', 'sales', 'designer'].includes(requestingUser.role))
+      return 'forbidden';
+
+    const existing = await this.repo.findById(projectId);
+    if (!existing) return null;
+
+    if (
+      requestingUser.role !== 'admin' &&
+      !(await this.repo.isMember(projectId, requestingUser.id))
+    ) {
+      return null;
+    }
+
+    if (action === 'start_briefing') {
+      if (existing.status !== 'draft') return 'invalid_transition';
+    } else {
+      // start_designing
+      if (existing.status !== 'briefing') return 'invalid_transition';
+    }
+
+    const newStatus = action === 'start_briefing' ? 'briefing' : 'designing';
+    const project = await this.repo.update(
+      projectId,
+      { status: newStatus },
+      expectedRevision,
+    );
+
+    if (project) {
+      await this.eventsService.appendEvent(
+        projectId,
+        {
+          type: 'project.transitioned',
+          data: {
+            projectId,
+            action,
+            previousStatus: existing.status,
+            newStatus: project.status,
+          },
+          resourceId: projectId,
+          resourceRevision: project.revision,
+        },
+        { userId: requestingUser.id, role: requestingUser.role },
+      );
+
+      await this.auditService.log({
+        eventType: 'project.transitioned',
+        actorId: requestingUser.id,
+        projectId,
+        resourceType: 'project',
+        resourceId: projectId,
+        metadata: {
+          action,
+          previousStatus: existing.status,
+          newStatus: project.status,
+        },
+      });
+
+      return this.toProject(project);
+    }
+
     return (await this.repo.findById(projectId)) ? 'conflict' : null;
   }
 

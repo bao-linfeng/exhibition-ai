@@ -2501,6 +2501,8 @@ export interface operations {
       content: {
         'application/json': {
           action:
+            | 'start_briefing'
+            | 'start_designing'
             | 'submit_review'
             | 'approve'
             | 'request_changes'

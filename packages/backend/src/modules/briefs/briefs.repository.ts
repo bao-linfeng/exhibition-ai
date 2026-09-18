@@ -178,6 +178,7 @@ export class BriefRepository {
         .select({
           revision: projects.revision,
           currentBriefRevisionId: projects.currentBriefRevisionId,
+          status: projects.status,
         })
         .from(projects)
         .where(eq(projects.id, params.projectId))
@@ -213,9 +214,18 @@ export class BriefRepository {
         throw new Error('Failed to confirm brief revision');
       }
 
+      // 确认 Brief 时自动将项目从 draft 推进到 briefing
+      const projectUpdate: Record<string, unknown> = {
+        updatedAt: now,
+        revision: sql`${projects.revision} + 1`,
+      };
+      if (project.status === 'draft') {
+        projectUpdate.status = 'briefing';
+      }
+
       await tx
         .update(projects)
-        .set({ updatedAt: now, revision: sql`${projects.revision} + 1` })
+        .set(projectUpdate)
         .where(
           and(
             eq(projects.id, params.projectId),

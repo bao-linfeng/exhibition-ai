@@ -37,6 +37,7 @@ import {
   ExportRepository,
   createExportQueue,
   QUEUE_EXPORT,
+  ProjectRepository,
 } from '@exhibition/backend';
 import { bootstrapProviders } from './bootstrap.js';
 import { processAssetValidation } from './processors/asset-validation.processor.js';
@@ -98,6 +99,7 @@ const quotaService = new QuotaService(db, quotaRepo, new AuditService(db));
 const imageVersionRepo = new ImageVersionRepository(db);
 const briefRepo = new BriefRepository(db);
 const directionRepo = new DirectionRepository(db);
+const projectRepo = new ProjectRepository(db);
 const convRepo = new ConversationRepository(db);
 const msgRepo = new MessageRepository(db);
 const runRepo = new AgentRunRepository(db);
@@ -248,6 +250,7 @@ const designDirectionWorker = new Worker(
       taskRepo,
       briefRepo,
       directionRepo,
+      projectRepo,
       textProviderRegistry,
       textProviderId: defaultTextProviderId,
       promptRegistry,
