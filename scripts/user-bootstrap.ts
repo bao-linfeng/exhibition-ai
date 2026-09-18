@@ -28,9 +28,7 @@ async function bootstrap(): Promise<void> {
   }
 
   if (password.length < 12) {
-    console.error(
-      '[bootstrap] ADMIN_PASSWORD must be at least 12 characters.',
-    );
+    console.error('[bootstrap] ADMIN_PASSWORD must be at least 12 characters.');
     process.exit(1);
   }
 
@@ -54,9 +52,13 @@ async function bootstrap(): Promise<void> {
 
     if (result.length > 0) {
       console.log(`[bootstrap] Admin user created: ${email}`);
-      console.log('[bootstrap] mustChangePassword=true — user must set a new password on first login.');
+      console.log(
+        '[bootstrap] mustChangePassword=true — user must set a new password on first login.',
+      );
     } else {
-      console.log(`[bootstrap] Admin user already exists (${email}), skipping.`);
+      console.log(
+        `[bootstrap] Admin user already exists (${email}), skipping.`,
+      );
     }
   } finally {
     await pool.end();
