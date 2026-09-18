@@ -55,12 +55,12 @@ export async function authRoutes(app: FastifyInstance) {
         });
       }
 
-      // 设置 httpOnly cookie
-      reply.setCookie('sessionId', result.sessionId, {
+      // 设置 httpOnly cookie，存储原始 token（DB 只存 hash）
+      reply.setCookie('sessionId', result.sessionToken, {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'lax',
-        maxAge: 7 * 24 * 60 * 60, // 7 天（秒）
+        maxAge: 7 * 24 * 60 * 60, // cookie 保留 7 天，实际由服务端空闲超时控制
         path: '/',
       });
 
