@@ -1031,6 +1031,20 @@
         "apps/api/src/realtime/sse.routes.ts",
         "apps/web/src/composables/useProjectEvents.ts"
       ]
+    },
+    {
+      "id": "BUG-87",
+      "title": "修改密码接口返回成功但不更新密码",
+      "labels": ["bug", "P1", "auth"],
+      "issueNumber": 87,
+      "issueUrl": "https://github.com/bao-linfeng/exhibition-ai/issues/87",
+      "branch": "fix/issue-87-change-password-not-saved",
+      "prNumber": 105,
+      "prUrl": "https://github.com/bao-linfeng/exhibition-ai/pull/105",
+      "status": "in_review",
+      "files": [
+        "packages/backend/src/modules/auth/auth.service.ts"
+      ]
     }
   ],
   "documentationPr": {
