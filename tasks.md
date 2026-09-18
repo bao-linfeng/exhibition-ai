@@ -595,3 +595,13 @@ docker compose --env-file .env -f infra/compose.dev.yaml down
   根因：`request.actorContext` 只有类型声明，从未赋值；前端 SSE `message` 监听器无法捕获命名事件。
 
   修复：`conversations.ts`、`confirmations.ts`、`sse.routes.ts` 各添加 `currentUser` helper 并在每个 handler 开头验证 session cookie；前端提取统一 `handleEvent` 并为所有命名事件类型（含 `message.delta`、`message.completed`、`confirmation.created`）注册独立监听器。
+
+## P1 Bug 修复
+
+### 审查中
+
+- [ ] **[#87] 修改密码接口返回成功但不更新密码** — 状态：in_review；GitHub Issue：[#87](https://github.com/bao-linfeng/exhibition-ai/issues/87)；PR：[#105](https://github.com/bao-linfeng/exhibition-ai/pull/105)。
+
+  根因：`AuthService.changePassword()` 参数命名为 `_newPassword`，校验旧密码通过后直接 `return true`，缺少实际写库操作。
+
+  修复：将参数重命名为 `newPassword`，校验通过后调用 `this.hashPassword()` 生成新哈希，再通过已有的 `this.authRepo.updatePassword()` 写入数据库。
