@@ -216,6 +216,8 @@ export const TransferOwnerResponseSchema = Type.Object(
 
 // POST /projects/:id/transitions
 export const ProjectTransitionActionSchema = Type.Union([
+  Type.Literal('start_briefing'),
+  Type.Literal('start_designing'),
   Type.Literal('submit_review'),
   Type.Literal('approve'),
   Type.Literal('request_changes'),

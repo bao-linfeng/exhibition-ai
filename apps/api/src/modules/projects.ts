@@ -349,6 +349,16 @@ export async function projectRoutes(app: FastifyInstance) {
           body.expectedRevision,
           user,
         );
+      } else if (
+        body.action === 'start_briefing' ||
+        body.action === 'start_designing'
+      ) {
+        result = await app.services!.projectService.transitionLifecycle(
+          (request.params as { id: string }).id,
+          body.action,
+          body.expectedRevision,
+          user,
+        );
       } else {
         result = await app.services!.projectService.transitionReview(
           (request.params as { id: string }).id,

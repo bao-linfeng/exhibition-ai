@@ -1,6 +1,7 @@
 import type {
   BriefRepository,
   DirectionRepository,
+  ProjectRepository,
   TaskRepository,
 } from '@exhibition/backend';
 import { logger } from '@exhibition/backend';
@@ -31,6 +32,7 @@ export async function processDesignDirection(
     taskRepo: TaskRepository;
     briefRepo: BriefRepository;
     directionRepo: DirectionRepository;
+    projectRepo: ProjectRepository;
     textProviderRegistry: TextProviderRegistry;
     textProviderId: string;
     promptRegistry: PromptRegistry;
@@ -41,6 +43,7 @@ export async function processDesignDirection(
     taskRepo,
     briefRepo,
     directionRepo,
+    projectRepo,
     textProviderRegistry,
     textProviderId,
     promptRegistry,
@@ -125,6 +128,18 @@ export async function processDesignDirection(
       canCancel: false,
       canRetry: false,
     });
+
+    // 设计方向生成成功后，自动将项目从 briefing 推进到 designing
+    const project = await projectRepo.findById(projectId);
+    if (project && project.status === 'briefing') {
+      await projectRepo.update(
+        projectId,
+        { status: 'designing' },
+        project.revision,
+      );
+      logger.info({ projectId }, 'Project advanced from briefing to designing');
+    }
+
     logger.info(
       { taskId, directionCount: inserted.length },
       'Design directions completed',
