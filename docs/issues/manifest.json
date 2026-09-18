@@ -1157,6 +1157,28 @@
       "files": [
         "apps/web/src/router/index.ts"
       ]
+    },
+    {
+      "id": "BUG-93",
+      "title": "项目角色权限普遍过宽",
+      "labels": [
+        "bug",
+        "P1",
+        "security",
+        "auth"
+      ],
+      "issueNumber": 93,
+      "issueUrl": "https://github.com/bao-linfeng/exhibition-ai/issues/93",
+      "branch": "fix/issue-93-project-role-permission",
+      "prNumber": 111,
+      "prUrl": "https://github.com/bao-linfeng/exhibition-ai/pull/111",
+      "status": "in_review",
+      "files": [
+        "apps/api/src/modules/generations.ts",
+        "apps/api/src/modules/assets.ts",
+        "apps/api/src/modules/versions.ts",
+        "apps/api/src/modules/tasks.ts"
+      ]
     }
   ],
   "documentationPr": {

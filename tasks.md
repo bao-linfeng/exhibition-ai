@@ -623,3 +623,9 @@ docker compose --env-file .env -f infra/compose.dev.yaml down
   根因：路由守卫调用 `/api/v1/auth/me` 时只解构 `error` 检查登录态，忽略 `data` 返回值，未调用 `userStore.setUser()` 写入 Pinia store。只有登录动作才更新 store，刷新后 store 中用户角色为空，导致管理员判断、客户/项目创建按钮等角色相关 UI 全部失效。
 
   修复：`apps/web/src/router/index.ts` 引入 `useUserStore`，在守卫函数内实例化；两处 `/auth/me` 调用均改为解构 `{ data, error }`，成功时调用 `userStore.setUser(data.data)` 写入 store，确保刷新后角色状态与服务端一致。
+
+- [ ] **[#93] 项目角色权限普遍过宽** — 状态：in_review；GitHub Issue：[#93](https://github.com/bao-linfeng/exhibition-ai/issues/93)；PR：[#111](https://github.com/bao-linfeng/exhibition-ai/pull/111)。
+
+  根因：`generations`、`assets`、`versions`、`tasks` 路由的写操作只通过 `isMemberOrAdmin`/`isMemberFn` 检查项目成员身份，未检查用户的系统角色，导致 viewer/sales 角色用户可执行发起付费生成、上传素材、隐藏素材/版本、取消任务等高权限操作。
+
+  修复：在 4 个路由文件中新增 `canWrite(user)` 检查（`role === 'admin' || role === 'designer'`），以下 6 个写操作接口在鉴权通过前先验证系统角色，viewer/sales 调用直接返回 403：POST /generations、POST /assets/uploads、DELETE /assets/:assetId、PUT /projects/:id/selected-version、POST /versions/:id/hide、POST /tasks/:id/cancel。
