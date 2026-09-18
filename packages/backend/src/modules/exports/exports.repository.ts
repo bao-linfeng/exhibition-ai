@@ -71,10 +71,7 @@ export class ExportRepository {
     id: string,
     payload: Record<string, unknown>,
   ) {
-    await tx
-      .update(taskOutbox)
-      .set({ payload })
-      .where(eq(taskOutbox.id, id));
+    await tx.update(taskOutbox).set({ payload }).where(eq(taskOutbox.id, id));
   }
 
   async updateStatus(
