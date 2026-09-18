@@ -7,6 +7,10 @@ import {
   type ExportRecord,
 } from '@exhibition/db';
 
+type DatabaseTransaction = Parameters<
+  Parameters<Database['transaction']>[0]
+>[0];
+
 export class ExportRepository {
   constructor(private db: Database) {}
 
@@ -19,6 +23,22 @@ export class ExportRepository {
     expiresAt: Date;
   }): Promise<ExportRecord> {
     const [row] = await this.db.insert(exportRecords).values(input).returning();
+    if (!row) throw new Error('Failed to create export record');
+    return row;
+  }
+
+  async createInTx(
+    tx: DatabaseTransaction,
+    input: {
+      projectId: string;
+      taskId: string;
+      format: string;
+      versionIds: string[];
+      createdBy: string;
+      expiresAt: Date;
+    },
+  ): Promise<ExportRecord> {
+    const [row] = await tx.insert(exportRecords).values(input).returning();
     if (!row) throw new Error('Failed to create export record');
     return row;
   }
@@ -41,6 +61,17 @@ export class ExportRepository {
 
   async updateOutboxPayload(id: string, payload: Record<string, unknown>) {
     await this.db
+      .update(taskOutbox)
+      .set({ payload })
+      .where(eq(taskOutbox.id, id));
+  }
+
+  async updateOutboxPayloadInTx(
+    tx: DatabaseTransaction,
+    id: string,
+    payload: Record<string, unknown>,
+  ) {
+    await tx
       .update(taskOutbox)
       .set({ payload })
       .where(eq(taskOutbox.id, id));

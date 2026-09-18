@@ -376,6 +376,7 @@ export function createServices(): Services {
     taskService,
   );
   const exportService = new ExportService(
+    drizzleDb,
     new ExportRepository(drizzleDb),
     taskRepo,
     new AssetRepository(drizzleDb),
