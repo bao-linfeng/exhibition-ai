@@ -239,12 +239,31 @@ export async function authRoutes(app: FastifyInstance) {
         body: SendCodeRequestSchema,
       },
     },
-    async (_request, reply) => {
-      return reply.code(410).send({
-        error: 'Gone',
-        message:
-          'Public registration is not available. Contact your administrator.',
-      });
+    async (request, reply) => {
+      const { email, type } = request.body;
+
+      if (type === 'register') {
+        return reply.code(410).send({
+          error: 'Gone',
+          message:
+            'Public registration is not available. Contact your administrator.',
+        });
+      }
+
+      const result = await app.services!.authService.sendVerificationCode(
+        email,
+        type,
+      );
+
+      if (result === 'rate_limited') {
+        return reply.code(429).send({
+          error: 'Too Many Requests',
+          message: 'Please wait before requesting another code.',
+        });
+      }
+
+      // 对 not_found 返回 204 以避免泄露账号存在性
+      return reply.code(204).send();
     },
   );
 
