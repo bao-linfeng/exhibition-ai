@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import type { RouteRecordRaw } from 'vue-router';
 import AppLayout from '../layouts/AppLayout.vue';
+import { useUserStore } from '../stores/user.js';
 
 const routes: RouteRecordRaw[] = [
   {
@@ -141,11 +142,12 @@ export const router = createRouter({
 
 router.beforeEach(async (to, from, next) => {
   const requiresAuth = to.meta.requiresAuth !== false;
+  const userStore = useUserStore();
 
   if (requiresAuth && to.path !== '/login') {
     try {
       const { apiClient } = await import('../api/client.js');
-      const { error } = await apiClient.GET('/api/v1/auth/me');
+      const { data, error } = await apiClient.GET('/api/v1/auth/me');
       if (error) {
         const safeFullPath =
           to.fullPath.startsWith('/') && !to.fullPath.startsWith('//')
@@ -153,6 +155,9 @@ router.beforeEach(async (to, from, next) => {
             : '/dashboard';
         next({ path: '/login', query: { redirect: safeFullPath } });
         return;
+      }
+      if (data?.data) {
+        userStore.setUser(data.data);
       }
     } catch {
       const safeFullPath =
@@ -167,8 +172,11 @@ router.beforeEach(async (to, from, next) => {
   if (['/login', '/forgot-password'].includes(to.path)) {
     try {
       const { apiClient } = await import('../api/client.js');
-      const { error } = await apiClient.GET('/api/v1/auth/me');
+      const { data, error } = await apiClient.GET('/api/v1/auth/me');
       if (!error) {
+        if (data?.data) {
+          userStore.setUser(data.data);
+        }
         next('/dashboard');
         return;
       }

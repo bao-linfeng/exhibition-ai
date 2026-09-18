@@ -617,3 +617,9 @@ docker compose --env-file .env -f infra/compose.dev.yaml down
   根因：`sessions` 表以 UUID 明文存储 token（即主键 `id`），数据库泄漏直接暴露所有有效 Session；缺少绝对过期字段（Session 可无限续期）；无空闲刷新机制。
 
   修复：`sessions` 表新增 `token_hash TEXT NOT NULL UNIQUE`（存 SHA-256 hex）和 `absolute_expires_at`；登录时生成 `randomBytes(32)` 原始 token → 仅 hash 存库 → 原始 token 一次性下发 cookie；验证时 hash 后按 `token_hash` 查询，先检查绝对过期（7d）再检查空闲过期（8h）；空闲刷新节流（距上次活跃 >1h 才写库，且受绝对过期上限约束）；迁移时清除所有旧 session（旧 cookie 已失效，强制重新登录）。
+
+- [ ] **[#92] 页面刷新后用户角色状态不恢复** — 状态：in_review；GitHub Issue：[#92](https://github.com/bao-linfeng/exhibition-ai/issues/92)；PR：[#110](https://github.com/bao-linfeng/exhibition-ai/pull/110)。
+
+  根因：路由守卫调用 `/api/v1/auth/me` 时只解构 `error` 检查登录态，忽略 `data` 返回值，未调用 `userStore.setUser()` 写入 Pinia store。只有登录动作才更新 store，刷新后 store 中用户角色为空，导致管理员判断、客户/项目创建按钮等角色相关 UI 全部失效。
+
+  修复：`apps/web/src/router/index.ts` 引入 `useUserStore`，在守卫函数内实例化；两处 `/auth/me` 调用均改为解构 `{ data, error }`，成功时调用 `userStore.setUser(data.data)` 写入 store，确保刷新后角色状态与服务端一致。
