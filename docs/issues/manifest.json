@@ -1070,9 +1070,9 @@
       "issueNumber": 89,
       "issueUrl": "https://github.com/bao-linfeng/exhibition-ai/issues/89",
       "branch": "fix/issue-89-session-security",
-      "prNumber": null,
-      "prUrl": null,
-      "status": "in_progress",
+      "prNumber": 107,
+      "prUrl": "https://github.com/bao-linfeng/exhibition-ai/pull/107",
+      "status": "in_review",
       "files": [
         "packages/db/src/schema/sessions.ts",
         "packages/db/migrations/0020_session_token_hash_absolute_expiry.sql",
