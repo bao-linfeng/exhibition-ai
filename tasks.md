@@ -641,3 +641,9 @@ docker compose --env-file .env -f infra/compose.dev.yaml down
   根因：`ExportService.createExport()` 分三步串行执行：① `taskRepo.createWithOutbox()` 在内部事务中创建 task + outbox；② 事务外创建 export record；③ 事务外更新 outbox payload。若第②步失败，第①步产生的孤儿 task/outbox 会被 Worker 执行，占用资源但用户无法查询对应导出记录，导致数据不一致。
 
   修复：`TaskRepository` 新增 `createWithOutboxInTx(tx, input)`，原 `createWithOutbox` 复用该方法；`ExportRepository` 新增 `createInTx(tx, input)` 和 `updateOutboxPayloadInTx(tx, id, payload)`；`ExportService` 注入 `Database`，在单一 `db.transaction` 中完成 task、outbox、export record 及 outbox payload 更新，事务提交后再 relay outbox。
+
+- [ ] **[#96] ZIP/PDF 导出存在 Worker 内存风险** — 状态：in_review；GitHub Issue：[#96](https://github.com/bao-linfeng/exhibition-ai/issues/96)；PR：[#114](https://github.com/bao-linfeng/exhibition-ai/pull/114)。
+
+  根因：`export.processor.ts` 和 `pdf-export.processor.ts` 将全部导出图片读入内存后再打包，ZIP 上限接近 500 MiB，多个并发导出任务可能导致 Worker OOM 崩溃，影响所有正在处理的任务队列。
+
+  修复：ZIP 改为 `createStreamingZip` async generator，逐张从 S3 读取图片、计算 CRC32/SHA-256、立即 yield ZIP entry chunks 后释放 buffer，Central Directory 阶段仅保留轻量元数据（不含图片 data），`putObject` 不传 `contentLength`（chunked transfer），上传完成后通过 `headObject` 获取实际大小；PDF 改为先收集轻量 `ImageLocation` 元数据并排序，再逐张读取图片、立即渲染进 pdf-lib，不再持有原始大图 buffer 数组。峰值内存从「所有图片之和」降为「单张图片」。

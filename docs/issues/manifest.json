@@ -1219,6 +1219,24 @@
         "packages/backend/src/modules/exports/exports.service.ts",
         "packages/backend/src/index.ts"
       ]
+    },
+    {
+      "id": "BUG-96",
+      "title": "ZIP/PDF 导出存在 Worker 内存风险",
+      "labels": [
+        "bug",
+        "P1"
+      ],
+      "issueNumber": 96,
+      "issueUrl": "https://github.com/bao-linfeng/exhibition-ai/issues/96",
+      "branch": "fix/issue-96-zip-pdf-stream-export",
+      "prNumber": 114,
+      "prUrl": "https://github.com/bao-linfeng/exhibition-ai/pull/114",
+      "status": "in_review",
+      "files": [
+        "apps/worker/src/processors/export.processor.ts",
+        "apps/worker/src/processors/pdf-export.processor.ts"
+      ]
     }
   ],
   "documentationPr": {
