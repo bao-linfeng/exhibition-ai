@@ -103,15 +103,43 @@
     {
       "idx": 14,
       "version": "7",
-      "when": 1789728000000,
-      "tag": "0017_add_export_pdf_asset_kind",
+      "when": 1789557992000,
+      "tag": "0014_add_conversations",
       "breakpoints": true
     },
     {
       "idx": 15,
       "version": "7",
+      "when": 1789561117000,
+      "tag": "0015_project_review_fields",
+      "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1789565939000,
+      "tag": "0016_add_export_records",
+      "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1789728000000,
+      "tag": "0017_add_export_pdf_asset_kind",
+      "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
       "when": 1758153600000,
       "tag": "0018_add_prompt_templates",
+      "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1789643638000,
+      "tag": "0019_add_favorites_and_tags",
       "breakpoints": true
     }
   ]
