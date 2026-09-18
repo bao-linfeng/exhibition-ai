@@ -28,6 +28,11 @@ else
     devtools pnpm user:bootstrap
 fi
 
+echo "==> [2.7/4] 初始化模型配置（幂等，已存在时跳过）"
+$DEV_COMPOSE run --rm \
+  -e AI_PROVIDER_MODE="${AI_PROVIDER_MODE:-mock}" \
+  devtools pnpm model:bootstrap
+
 echo "==> [3/4] 重启应用服务（保留 postgres/redis/rustfs 不停机）"
 $COMPOSE up -d --no-deps api worker web
 
