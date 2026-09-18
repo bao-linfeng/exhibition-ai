@@ -43,9 +43,21 @@ export class UserService {
     id: string,
     data: UpdateUserRequest,
     requestingUser: UserSummary,
-  ): Promise<UserContract | null | 'conflict' | 'forbidden'> {
+  ): Promise<UserContract | null | 'conflict' | 'forbidden' | 'last_admin'> {
     if (requestingUser.role !== 'admin') return 'forbidden';
     const { expectedRevision, ...update } = data;
+
+    // Guard: refuse if this change would leave zero enabled admins
+    const wouldRemoveAdmin =
+      update.role === 'sales' || update.status === 'disabled';
+    if (wouldRemoveAdmin) {
+      const target = await this.repo.findById(id);
+      if (target?.role === 'admin' && target.status === 'enabled') {
+        const activeAdmins = await this.repo.countActiveAdmins();
+        if (activeAdmins <= 1) return 'last_admin';
+      }
+    }
+
     const user = await this.repo.update(id, update, expectedRevision);
     return user && user !== 'conflict' ? this.toUser(user) : user;
   }
