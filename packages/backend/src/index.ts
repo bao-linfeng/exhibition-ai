@@ -319,6 +319,7 @@ export function createServices(): Services {
     new DirectionRepository(drizzleDb),
     new AssetRepository(drizzleDb),
     new ProjectRepository(drizzleDb),
+    new ImageVersionRepository(drizzleDb),
   );
   const imageVersionService = new ImageVersionService(
     new ImageVersionRepository(drizzleDb),
