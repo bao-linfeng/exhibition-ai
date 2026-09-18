@@ -1018,7 +1018,11 @@
     {
       "id": "BUG-88",
       "title": "CSRF 为固定占位符，无真实防护",
-      "labels": ["bug", "P1", "security"],
+      "labels": [
+        "bug",
+        "P1",
+        "security"
+      ],
       "issueNumber": 88,
       "issueUrl": "https://github.com/bao-linfeng/exhibition-ai/issues/88",
       "branch": "fix/issue-88-csrf-protection",
@@ -1035,7 +1039,12 @@
     {
       "id": "BUG-86",
       "title": "Agent、Confirmation 和 SSE 路由固定返回 401",
-      "labels": ["bug", "P0", "agent", "auth"],
+      "labels": [
+        "bug",
+        "P0",
+        "agent",
+        "auth"
+      ],
       "issueNumber": 86,
       "issueUrl": "https://github.com/bao-linfeng/exhibition-ai/issues/86",
       "branch": "fix/issue-86-auth-sse-routing",
@@ -1052,7 +1061,11 @@
     {
       "id": "BUG-87",
       "title": "修改密码接口返回成功但不更新密码",
-      "labels": ["bug", "P1", "auth"],
+      "labels": [
+        "bug",
+        "P1",
+        "auth"
+      ],
       "issueNumber": 87,
       "issueUrl": "https://github.com/bao-linfeng/exhibition-ai/issues/87",
       "branch": "fix/issue-87-change-password-not-saved",
@@ -1066,7 +1079,12 @@
     {
       "id": "BUG-89",
       "title": "Session 安全模型不符合需求（token 明文存储、无绝对过期、无空闲刷新）",
-      "labels": ["bug", "P1", "security", "auth"],
+      "labels": [
+        "bug",
+        "P1",
+        "security",
+        "auth"
+      ],
       "issueNumber": 89,
       "issueUrl": "https://github.com/bao-linfeng/exhibition-ai/issues/89",
       "branch": "fix/issue-89-session-security",
@@ -1079,6 +1097,29 @@
         "packages/backend/src/modules/auth/auth.repository.ts",
         "packages/backend/src/modules/auth/auth.service.ts",
         "apps/api/src/modules/auth.ts"
+      ]
+    },
+    {
+      "id": "BUG-90",
+      "title": "图片任务失败重试被禁用（retryTask 缺少额度原子预留）",
+      "labels": [
+        "bug",
+        "P1",
+        "ai-generation"
+      ],
+      "issueNumber": 90,
+      "issueUrl": "https://github.com/bao-linfeng/exhibition-ai/issues/90",
+      "branch": "fix/issue-90-image-retry-quota",
+      "prNumber": null,
+      "prUrl": null,
+      "status": "in_review",
+      "files": [
+        "packages/backend/src/modules/tasks/tasks.repository.ts",
+        "packages/backend/src/modules/tasks/tasks.service.ts",
+        "packages/backend/src/modules/tasks/index.ts",
+        "packages/backend/src/index.ts",
+        "apps/api/src/modules/tasks.ts",
+        "apps/worker/src/index.ts"
       ]
     }
   ],

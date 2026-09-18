@@ -210,6 +210,11 @@ export async function taskRoutes(app: FastifyInstance) {
           'Task cannot be retried: unsupported_kind',
         );
       }
+      if (result === 'insufficient_quota') {
+        throw app.httpErrors.unprocessableEntity(
+          'Task cannot be retried: insufficient_quota',
+        );
+      }
 
       void app
         .services!.auditService.log({

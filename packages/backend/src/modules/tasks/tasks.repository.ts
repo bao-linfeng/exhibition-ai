@@ -7,9 +7,20 @@ import type {
   TaskOutput,
   TaskStatus,
 } from '@exhibition/contracts';
+import type { QuotaRepository } from '../settings/quota.repository.js';
+import { quotaPeriodDate } from '../settings/quota-period.js';
+
+export class InsufficientQuotaError extends Error {
+  constructor(message = 'Insufficient quota for retry') {
+    super(message);
+  }
+}
 
 export class TaskRepository {
-  constructor(private db: Database) {}
+  constructor(
+    private db: Database,
+    private quotaRepo: QuotaRepository,
+  ) {}
 
   async createWithOutbox(input: {
     projectId: string;
@@ -58,6 +69,12 @@ export class TaskRepository {
     outputs: TaskOutput[];
     queueName: string;
     payload: Record<string, unknown>;
+    quota: {
+      estimatedAmountMinor: number;
+      currency: string;
+      provider: string;
+      model: string;
+    };
   }) {
     return this.db.transaction(async (tx) => {
       const [originalTask] = await tx
@@ -92,6 +109,33 @@ export class TaskRepository {
         .returning();
 
       if (!task) throw new Error('Failed to insert retry task');
+
+      // Atomically reserve quota for the new retry task before enqueuing.
+      // This ensures the worker can settle the task without violating accounting invariants.
+      const account = await this.quotaRepo.findOrCreateSystemAccountIn(
+        tx,
+        input.quota.currency,
+      );
+      const reservation = await this.quotaRepo.atomicReserve(
+        tx,
+        account.id,
+        input.quota.estimatedAmountMinor,
+      );
+      if (!reservation.ok) throw new InsufficientQuotaError();
+
+      await this.quotaRepo.insertLedgerEntry(tx, {
+        taskId: task.id,
+        attemptOrdinal: null,
+        accountId: account.id,
+        entryType: 'reserve',
+        feeStatus: 'estimated',
+        amountMinor: input.quota.estimatedAmountMinor,
+        currency: input.quota.currency,
+        provider: input.quota.provider,
+        model: input.quota.model,
+        providerUsage: null,
+        periodDate: quotaPeriodDate(),
+      });
 
       const [outbox] = await tx
         .insert(taskOutbox)

@@ -77,7 +77,6 @@ const {
 
 // DB + services
 const { db, pool } = initDatabase();
-const taskRepo = new TaskRepository(db);
 const s3 = new S3StorageProvider(
   new S3Client({
     endpoint: env.S3_ENDPOINT,
@@ -94,6 +93,7 @@ const s3 = new S3StorageProvider(
 );
 const assetRepo = new AssetRepository(db);
 const quotaRepo = new QuotaRepository(db);
+const taskRepo = new TaskRepository(db, quotaRepo);
 const generationRepo = new GenerationRepository(db, quotaRepo);
 const quotaService = new QuotaService(db, quotaRepo, new AuditService(db));
 const imageVersionRepo = new ImageVersionRepository(db);
