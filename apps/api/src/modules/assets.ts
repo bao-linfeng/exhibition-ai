@@ -26,6 +26,10 @@ export async function assetRoutes(app: FastifyInstance) {
       : null;
   }
 
+  function canWrite(user: { role: string }) {
+    return user.role === 'admin' || user.role === 'designer';
+  }
+
   function isMemberFn(user: { id: string; role: string }) {
     return async (projectId: string) => {
       if (user.role === 'admin') return true;
@@ -93,6 +97,7 @@ export async function assetRoutes(app: FastifyInstance) {
     async (request) => {
       const user = await currentUser(request.cookies.sessionId);
       if (!user) throw app.httpErrors.unauthorized('Not authenticated');
+      if (!canWrite(user)) throw app.httpErrors.forbidden();
 
       const { projectId } = request.params as { projectId: string };
       const body = request.body as CreateUploadSessionRequest;
@@ -265,6 +270,7 @@ export async function assetRoutes(app: FastifyInstance) {
     async (request, reply) => {
       const user = await currentUser(request.cookies.sessionId);
       if (!user) throw app.httpErrors.unauthorized('Not authenticated');
+      if (!canWrite(user)) throw app.httpErrors.forbidden();
 
       const { projectId, assetId } = request.params as {
         projectId: string;

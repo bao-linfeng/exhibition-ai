@@ -34,6 +34,10 @@ export async function taskRoutes(app: FastifyInstance) {
     };
   }
 
+  function canWrite(user: { role: string }) {
+    return user.role === 'admin' || user.role === 'designer';
+  }
+
   // GET /api/v1/tasks
   app.get(
     '/api/v1/tasks',
@@ -130,6 +134,7 @@ export async function taskRoutes(app: FastifyInstance) {
     async (request) => {
       const user = await currentUser(request.cookies.sessionId);
       if (!user) throw app.httpErrors.unauthorized('Not authenticated');
+      if (!canWrite(user)) throw app.httpErrors.forbidden();
 
       const { id } = request.params as { id: string };
       const isAdmin = user.role === 'admin';
