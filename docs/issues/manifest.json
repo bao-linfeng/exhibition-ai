@@ -1139,6 +1139,24 @@
       "files": [
         "packages/backend/src/modules/generations/generations.service.ts"
       ]
+    },
+    {
+      "id": "BUG-92",
+      "title": "页面刷新后用户角色状态不恢复",
+      "labels": [
+        "bug",
+        "P1",
+        "auth"
+      ],
+      "issueNumber": 92,
+      "issueUrl": "https://github.com/bao-linfeng/exhibition-ai/issues/92",
+      "branch": "fix/issue-92-router-guard-user-store",
+      "prNumber": 110,
+      "prUrl": "https://github.com/bao-linfeng/exhibition-ai/pull/110",
+      "status": "in_review",
+      "files": [
+        "apps/web/src/router/index.ts"
+      ]
     }
   ],
   "documentationPr": {
