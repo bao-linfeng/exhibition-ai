@@ -236,33 +236,12 @@ export async function authRoutes(app: FastifyInstance) {
         body: SendCodeRequestSchema,
       },
     },
-    async (request, reply) => {
-      const { email, type } = request.body;
-      const result = await app.services!.authService.sendVerificationCode(
-        email,
-        type,
-      );
-
-      if (result === 'rate_limited') {
-        return reply.code(429).send({
-          error: 'Too Many Requests',
-          message: 'Please wait before requesting another code',
-        });
-      }
-      if (result === 'already_registered') {
-        return reply.code(409).send({
-          error: 'Conflict',
-          message: 'Email is already registered',
-        });
-      }
-      if (result === 'not_found') {
-        return reply.code(404).send({
-          error: 'Not Found',
-          message: 'User not found',
-        });
-      }
-
-      return { data: { sent: true } };
+    async (_request, reply) => {
+      return reply.code(410).send({
+        error: 'Gone',
+        message:
+          'Public registration is not available. Contact your administrator.',
+      });
     },
   );
 
@@ -279,37 +258,12 @@ export async function authRoutes(app: FastifyInstance) {
         },
       },
     },
-    async (request, reply) => {
-      const { email, code, displayName, password } = request.body;
-      const result = await app.services!.authService.register(
-        email,
-        code,
-        displayName,
-        password,
-      );
-
-      if (result === 'invalid_code') {
-        return reply.code(400).send({
-          error: 'Bad Request',
-          message: 'Invalid verification code',
-        });
-      }
-      if (result === 'already_registered') {
-        return reply.code(409).send({
-          error: 'Conflict',
-          message: 'Email is already registered',
-        });
-      }
-
-      reply.setCookie('sessionId', result.sessionId, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
-        maxAge: 7 * 24 * 60 * 60,
-        path: '/',
+    async (_request, reply) => {
+      return reply.code(410).send({
+        error: 'Gone',
+        message:
+          'Public registration is not available. Contact your administrator.',
       });
-
-      return { data: result.user };
     },
   );
 

@@ -28,7 +28,11 @@ export class CustomerService {
     if (!['admin', 'designer', 'sales', 'viewer'].includes(requestingUser.role))
       return 'forbidden';
 
-    const result = await this.repo.findAll(query);
+    const result = await this.repo.findAll({
+      ...query,
+      userId: requestingUser.id,
+      userRole: requestingUser.role,
+    });
     return {
       data: result.data.map((customer) => this.toCustomer(customer)),
       page: result.page,
@@ -52,7 +56,11 @@ export class CustomerService {
     if (!['admin', 'designer', 'sales', 'viewer'].includes(requestingUser.role))
       return 'forbidden';
 
-    const customer = await this.repo.findById(id);
+    const customer = await this.repo.findById(
+      id,
+      requestingUser.id,
+      requestingUser.role,
+    );
     return customer ? this.toCustomer(customer) : null;
   }
 
@@ -85,7 +93,13 @@ export class CustomerService {
     );
 
     if (customer) return this.toCustomer(customer);
-    return (await this.repo.findById(id)) ? 'conflict' : null;
+    return (await this.repo.findById(
+      id,
+      requestingUser.id,
+      requestingUser.role,
+    ))
+      ? 'conflict'
+      : null;
   }
 
   private toCustomer(customer: DbCustomer): CustomerContract {
