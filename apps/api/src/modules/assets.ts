@@ -136,6 +136,7 @@ export async function assetRoutes(app: FastifyInstance) {
     async (request) => {
       const user = await currentUser(request.cookies.sessionId);
       if (!user) throw app.httpErrors.unauthorized('Not authenticated');
+      if (!canWrite(user)) throw app.httpErrors.forbidden();
 
       const { projectId, uploadId } = request.params as {
         projectId: string;

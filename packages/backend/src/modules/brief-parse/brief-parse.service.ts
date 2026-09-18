@@ -18,7 +18,7 @@ export class BriefParseService {
     requestedBy: string,
     role: string,
   ): Promise<{ taskId: string; status: 'pending' } | 'forbidden'> {
-    void role;
+    if (role !== 'admin' && role !== 'designer') return 'forbidden';
     const hash = createHash('sha256')
       .update(
         JSON.stringify({ projectId, text, baseBriefRevisionId, requestedBy }),

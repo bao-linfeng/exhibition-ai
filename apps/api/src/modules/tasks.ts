@@ -191,6 +191,7 @@ export async function taskRoutes(app: FastifyInstance) {
     async (request, reply) => {
       const user = await currentUser(request.cookies.sessionId);
       if (!user) throw app.httpErrors.unauthorized('Not authenticated');
+      if (!canWrite(user)) throw app.httpErrors.forbidden();
 
       const { id } = request.params as { id: string };
       const body = request.body as RetryTaskRequest;
