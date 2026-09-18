@@ -1,4 +1,5 @@
 import type { BriefContent, BriefRevision } from '@exhibition/contracts';
+import { isProjectLocked } from '../../shared/project-write-guard.js';
 import { BriefRepository } from './briefs.repository.js';
 import type { EventsService } from '../events/events.service.js';
 
@@ -48,7 +49,11 @@ export class BriefService {
     expectedRevision: number,
     requestingUser: RequestingUser,
     isMemberOrAdmin: boolean,
-  ): Promise<BriefRevision | 'forbidden' | 'conflict' | 'not_found'> {
+    projectStatus: string,
+  ): Promise<
+    BriefRevision | 'forbidden' | 'conflict' | 'not_found' | 'project_locked'
+  > {
+    if (isProjectLocked(projectStatus)) return 'project_locked';
     if (requestingUser.role === 'viewer') return 'forbidden';
     if (!isMemberOrAdmin) return 'forbidden';
 
@@ -100,9 +105,16 @@ export class BriefService {
     expectedRevision: number,
     requestingUser: RequestingUser,
     isMemberOrAdmin: boolean,
+    projectStatus: string,
   ): Promise<
-    BriefRevision | 'forbidden' | 'conflict' | 'not_found' | 'wrong_revision'
+    | BriefRevision
+    | 'forbidden'
+    | 'conflict'
+    | 'not_found'
+    | 'wrong_revision'
+    | 'project_locked'
   > {
+    if (isProjectLocked(projectStatus)) return 'project_locked';
     if (requestingUser.role === 'viewer') return 'forbidden';
     if (!isMemberOrAdmin) return 'forbidden';
 

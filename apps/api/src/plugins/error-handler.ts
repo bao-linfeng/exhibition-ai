@@ -18,7 +18,7 @@ const errorHandler: FastifyPluginAsync = async (app) => {
   app.setErrorHandler((error: FastifyError, request, reply) => {
     const statusCode = error.statusCode ?? 500;
     const code =
-      error.code === 'ACTIVE_RUN_EXISTS'
+      error.code === 'ACTIVE_RUN_EXISTS' || error.code === 'project_locked'
         ? error.code
         : (HTTP_CODE_NAMES[statusCode] ?? 'INTERNAL_SERVER_ERROR');
     const message =

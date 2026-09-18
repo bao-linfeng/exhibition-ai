@@ -141,17 +141,32 @@ export async function assetRoutes(app: FastifyInstance) {
         projectId: string;
         uploadId: string;
       };
+      const project = await app.services!.projectService.getProject(
+        projectId,
+        user,
+      );
+      if (!project || project === 'forbidden') {
+        throw app.httpErrors.notFound('Project not found');
+      }
       const result = await app.services!.assetService.completeUpload(
         uploadId,
         projectId,
         user.id,
         isMemberFn(user),
+        project.status,
       );
 
       if (result === 'not_found') {
         throw app.httpErrors.notFound('Upload session not found');
       }
       if (result === 'forbidden') throw app.httpErrors.forbidden();
+      if (result === 'project_locked') {
+        const error = app.httpErrors.conflict(
+          '项目当前状态不允许此操作',
+        ) as Error & { code?: string };
+        error.code = 'project_locked';
+        throw error;
+      }
       if (result === 'expired') {
         throw app.httpErrors.gone('Upload session has expired');
       }
@@ -276,16 +291,31 @@ export async function assetRoutes(app: FastifyInstance) {
         projectId: string;
         assetId: string;
       };
+      const project = await app.services!.projectService.getProject(
+        projectId,
+        user,
+      );
+      if (!project || project === 'forbidden') {
+        throw app.httpErrors.notFound('Project not found');
+      }
       const result = await app.services!.assetService.hideAsset(
         assetId,
         projectId,
         user.id,
         isMemberFn(user),
+        project.status,
       );
 
       if (result === 'not_found')
         throw app.httpErrors.notFound('Asset not found');
       if (result === 'forbidden') throw app.httpErrors.forbidden();
+      if (result === 'project_locked') {
+        const error = app.httpErrors.conflict(
+          '项目当前状态不允许此操作',
+        ) as Error & { code?: string };
+        error.code = 'project_locked';
+        throw error;
+      }
       if (result === 'already_hidden')
         throw app.httpErrors.conflict('Asset already hidden');
 

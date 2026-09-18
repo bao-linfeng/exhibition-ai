@@ -17,6 +17,7 @@ import {
   InsufficientQuotaError,
 } from './generations.repository.js';
 import type { ImageVersionRepository } from '../image-versions/image-versions.repository.js';
+import { isProjectLocked } from '../../shared/project-write-guard.js';
 
 function canonicalize(value: unknown): unknown {
   if (Array.isArray(value)) return value.map(canonicalize);
@@ -95,6 +96,7 @@ export class GenerationService {
     | 'model_not_found'
     | 'model_disabled'
     | 'model_not_executable'
+    | 'project_locked'
   > {
     if (!isMemberOrAdmin) return 'forbidden';
 
@@ -128,6 +130,7 @@ export class GenerationService {
     if (!project) return 'forbidden';
     if (project.revision !== body.expectedProjectRevision) return 'conflict';
     if (project.status === 'draft') return 'forbidden';
+    if (isProjectLocked(project.status)) return 'project_locked';
 
     const brief = await this.briefRepo.findByProjectId(
       body.briefRevisionId,

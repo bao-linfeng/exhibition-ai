@@ -98,12 +98,14 @@ describe('concurrent selected version updates', () => {
         fixture.versionAId,
         1,
         true,
+        'active',
       ),
       services.imageVersionService.updateSelectedVersion(
         fixture.projectId,
         fixture.versionBId,
         1,
         true,
+        'active',
       ),
     ]);
     const values = results.map((result) => {
@@ -139,6 +141,7 @@ describe('concurrent selected version updates', () => {
       fixture.versionAId,
       1,
       true,
+      'active',
     );
     assert.deepEqual(first, {
       selectedVersionId: fixture.versionAId,
@@ -150,6 +153,7 @@ describe('concurrent selected version updates', () => {
       fixture.versionBId,
       2,
       true,
+      'active',
     );
     assert.deepEqual(second, {
       selectedVersionId: fixture.versionBId,
