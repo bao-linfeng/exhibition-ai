@@ -16,6 +16,7 @@ import {
   GenerationRepository,
   InsufficientQuotaError,
 } from './generations.repository.js';
+import type { ImageVersionRepository } from '../image-versions/image-versions.repository.js';
 
 function canonicalize(value: unknown): unknown {
   if (Array.isArray(value)) return value.map(canonicalize);
@@ -77,6 +78,7 @@ export class GenerationService {
     private directionRepo: DirectionRepository,
     private assetRepo: AssetRepository,
     private projectRepo: ProjectRepository,
+    private imageVersionRepo: ImageVersionRepository,
   ) {}
 
   async createGeneration(
@@ -139,6 +141,15 @@ export class GenerationService {
         projectId,
       );
       if (!direction || direction.briefRevisionId !== body.briefRevisionId) {
+        return 'forbidden';
+      }
+    }
+
+    if (body.mode === 'edit' && body.parentVersionId) {
+      const parentVersion = await this.imageVersionRepo.findById(
+        body.parentVersionId,
+      );
+      if (!parentVersion || parentVersion.projectId !== projectId) {
         return 'forbidden';
       }
     }

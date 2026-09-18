@@ -70,7 +70,10 @@ export class ImageVersionRepository {
     return row ?? null;
   }
 
-  async findAssetLocation(id: string): Promise<{
+  async findAssetLocation(
+    id: string,
+    projectId?: string,
+  ): Promise<{
     bucket: string;
     objectKey: string;
     originalFilename: string;
@@ -80,6 +83,10 @@ export class ImageVersionRepository {
     sequence: number;
     createdAt: Date;
   } | null> {
+    const conditions = [eq(imageVersions.id, id)];
+    if (projectId !== undefined) {
+      conditions.push(eq(imageVersions.projectId, projectId));
+    }
     const [row] = await this.db
       .select({
         bucket: assets.bucket,
@@ -93,7 +100,7 @@ export class ImageVersionRepository {
       })
       .from(imageVersions)
       .innerJoin(assets, eq(imageVersions.assetId, assets.id))
-      .where(eq(imageVersions.id, id));
+      .where(and(...conditions));
     return row ?? null;
   }
 

@@ -283,6 +283,7 @@ export async function processImageGeneration(
           imageVersionRepo,
           storage,
           genRequest.parentVersionId,
+          genRequest.projectId,
         );
         parentImageBytes = parentImage.bytes;
         parentImageMimeType = parentImage.mimeType;
@@ -571,8 +572,12 @@ async function getParentImage(
   imageVersionRepo: ImageVersionRepository,
   storage: StorageProvider,
   parentVersionId: string,
+  projectId: string,
 ): Promise<{ bytes: Buffer; mimeType: string }> {
-  const parent = await imageVersionRepo.findAssetLocation(parentVersionId);
+  const parent = await imageVersionRepo.findAssetLocation(
+    parentVersionId,
+    projectId,
+  );
   if (!parent) throw new Error('Parent image version not found');
 
   const { body, contentType } = await storage.getObject({
