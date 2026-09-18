@@ -118,6 +118,7 @@ export class AssetService {
     if (!session || session.projectId !== projectId) return 'not_found';
 
     if (!(await isMemberFn(session.projectId))) return 'forbidden';
+    if (session.createdBy !== requestedBy) return 'forbidden';
     if (isProjectLocked(projectStatus)) return 'project_locked';
 
     if (session.status === 'completed' && session.assetId) {
