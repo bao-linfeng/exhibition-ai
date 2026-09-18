@@ -2,6 +2,8 @@ import { and, count, desc, eq, ilike, lt, or, sql } from 'drizzle-orm';
 import type { Database, User } from '@exhibition/db';
 import { users } from '@exhibition/db';
 
+type TxDb = Parameters<Parameters<Database['transaction']>[0]>[0];
+
 export interface UserListOptions {
   role?: User['role'];
   status?: User['status'];
@@ -83,6 +85,61 @@ export class UserRepository {
       .from(users)
       .where(and(eq(users.role, 'admin'), eq(users.status, 'enabled')));
     return row?.cnt ?? 0;
+  }
+
+  /**
+   * 在同一事务内，用行锁原子地检查最后管理员保护条件并执行更新。
+   * 先以 FOR UPDATE 锁定目标行，再统计活跃管理员数量，若仍有剩余则更新。
+   * 返回 'last_admin' 表示拒绝（降权/禁用后系统将无可用管理员）。
+   */
+  async updateWithLastAdminGuard(
+    id: string,
+    data: Partial<Pick<User, 'role' | 'status'>>,
+    expectedRevision: number,
+  ): Promise<User | null | 'conflict' | 'last_admin'> {
+    return this.db.transaction(async (tx: TxDb) => {
+      // 锁定目标行，防止并发竞态（FOR UPDATE 悲观锁）
+      const [target] = await tx
+        .select()
+        .from(users)
+        .where(eq(users.id, id))
+        .for('update')
+        .limit(1);
+      if (!target) return null;
+
+      // 判断此次变更是否会移除管理员身份或禁用管理员
+      const wouldLoseAdmin =
+        (data.role !== undefined &&
+          data.role !== 'admin' &&
+          target.role === 'admin') ||
+        (data.status === 'disabled' &&
+          target.role === 'admin' &&
+          target.status === 'enabled');
+
+      if (wouldLoseAdmin) {
+        const [row] = await tx
+          .select({ cnt: count() })
+          .from(users)
+          .where(and(eq(users.role, 'admin'), eq(users.status, 'enabled')));
+        const activeAdmins = row?.cnt ?? 0;
+        if (activeAdmins <= 1) return 'last_admin';
+      }
+
+      // 乐观锁更新
+      const [updated] = await tx
+        .update(users)
+        .set({
+          ...data,
+          updatedAt: new Date(),
+          revision: sql`${users.revision} + 1`,
+        })
+        .where(and(eq(users.id, id), eq(users.revision, expectedRevision)))
+        .returning();
+
+      if (updated) return updated;
+      // revision 不匹配 → 并发冲突
+      return 'conflict';
+    });
   }
 
   async findOptions(
