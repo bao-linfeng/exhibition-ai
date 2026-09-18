@@ -176,7 +176,8 @@ else
   echo ""
   echo "    处理建议："
   echo "      - pending/queued：Worker 重启后会自动重新消费（Outbox 扫描），通常无需干预"
-  echo "      - running/reconciling：超时后 Timeout Reconciler 会自动标记为 failed，可等待或手动取消"
+  echo "      - running：超时 15 分钟后 Timeout Reconciler 自动转为 reconciling，可等待或手动取消
+      - reconciling：超时 30 分钟后 Timeout Reconciler 自动标记为 failed 并允许重试；亦可通过管理员 API POST /api/v1/tasks/:id/reconcile 手动对账"
   echo "      - awaiting_confirmation：需通知用户重新确认"
   echo ""
   echo "    手动查询命令："

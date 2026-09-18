@@ -354,6 +354,36 @@ export class TaskRepository {
       );
   }
 
+  async findStuckReconciling(thresholdMs: number) {
+    return this.db
+      .select({ id: tasks.id, kind: tasks.kind })
+      .from(tasks)
+      .where(
+        and(
+          eq(tasks.status, 'reconciling'),
+          lt(tasks.startedAt, new Date(Date.now() - thresholdMs)),
+        ),
+      );
+  }
+
+  async markFailedFromReconciling(ids: string[]) {
+    if (ids.length === 0) return [];
+
+    return this.db
+      .update(tasks)
+      .set({
+        status: 'failed',
+        finishedAt: new Date(),
+        canCancel: false,
+        canRetry: true,
+        errorCode: 'reconciling_timeout',
+        errorMessage:
+          'Task remained in reconciling state beyond the allowed timeout and was automatically marked as failed.',
+      })
+      .where(and(inArray(tasks.id, ids), eq(tasks.status, 'reconciling')))
+      .returning({ id: tasks.id });
+  }
+
   async markReconciling(ids: string[]) {
     if (ids.length === 0) return [];
 
