@@ -629,3 +629,9 @@ docker compose --env-file .env -f infra/compose.dev.yaml down
   根因：`generations`、`assets`、`versions`、`tasks` 路由的写操作只通过 `isMemberOrAdmin`/`isMemberFn` 检查项目成员身份，未检查用户的系统角色，导致 viewer/sales 角色用户可执行发起付费生成、上传素材、隐藏素材/版本、取消任务等高权限操作。
 
   修复：在 4 个路由文件中新增 `canWrite(user)` 检查（`role === 'admin' || role === 'designer'`），以下 6 个写操作接口在鉴权通过前先验证系统角色，viewer/sales 调用直接返回 403：POST /generations、POST /assets/uploads、DELETE /assets/:assetId、PUT /projects/:id/selected-version、POST /versions/:id/hide、POST /tasks/:id/cancel。
+
+- [ ] **[#94] 允许停用或降权最后一个管理员** — 状态：in_review；GitHub Issue：[#94](https://github.com/bao-linfeng/exhibition-ai/issues/94)；PR：[#112](https://github.com/bao-linfeng/exhibition-ai/pull/112)。
+
+  根因：`updateUser` 缺少"至少保留一名启用管理员"的保护逻辑，管理员可误操作停用或降权最后一名管理员，导致系统无法通过正常途径恢复管理访问。
+
+  修复：`UserRepository` 新增 `countActiveAdmins()`；`UserService.updateUser()` 在目标用户为唯一启用管理员且本次操作会将其角色降为 `sales` 或状态设为 `disabled` 时，拒绝并返回 `'last_admin'`；API 层映射为 422 Unprocessable Entity。

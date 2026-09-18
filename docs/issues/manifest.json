@@ -1179,6 +1179,26 @@
         "apps/api/src/modules/versions.ts",
         "apps/api/src/modules/tasks.ts"
       ]
+    },
+    {
+      "id": "BUG-94",
+      "title": "允许停用或降权最后一个管理员",
+      "labels": [
+        "bug",
+        "P1",
+        "auth"
+      ],
+      "issueNumber": 94,
+      "issueUrl": "https://github.com/bao-linfeng/exhibition-ai/issues/94",
+      "branch": "fix/issue-94-last-admin-guard",
+      "prNumber": 112,
+      "prUrl": "https://github.com/bao-linfeng/exhibition-ai/pull/112",
+      "status": "in_review",
+      "files": [
+        "packages/backend/src/modules/users/users.repository.ts",
+        "packages/backend/src/modules/users/users.service.ts",
+        "apps/api/src/modules/users.ts"
+      ]
     }
   ],
   "documentationPr": {
