@@ -605,3 +605,9 @@ docker compose --env-file .env -f infra/compose.dev.yaml down
   根因：`AuthService.changePassword()` 参数命名为 `_newPassword`，校验旧密码通过后直接 `return true`，缺少实际写库操作。
 
   修复：将参数重命名为 `newPassword`，校验通过后调用 `this.hashPassword()` 生成新哈希，再通过已有的 `this.authRepo.updatePassword()` 写入数据库。
+
+- [ ] **[#88] CSRF 为固定占位符，无真实防护** — 状态：in_review；GitHub Issue：[#88](https://github.com/bao-linfeng/exhibition-ai/issues/88)；PR：[#106](https://github.com/bao-linfeng/exhibition-ai/pull/106)。
+
+  根因：`/auth/csrf` 接口固定返回 `csrf-token-placeholder`，全局无 CSRF token 校验，跨站请求可伪造合法用户写操作。
+
+  修复：新增 `apps/api/src/plugins/csrf.ts`，基于 `HMAC-SHA256(COOKIE_SECRET, sessionId)` 无状态派生 token，恒定时间比较防时序攻击；全局 `preHandler` hook 对 POST/PUT/PATCH/DELETE 校验 `x-csrf-token` header，豁免登录/忘记密码等无 session 公开接口；前端 `apiClient` middleware 自动获取、缓存并注入 token。

@@ -1,4 +1,5 @@
 import type { FastifyInstance } from 'fastify';
+import { deriveCsrfToken } from '../plugins/csrf.js';
 import type {
   ForgotPasswordRequest,
   LoginRequest,
@@ -117,19 +118,21 @@ export async function authRoutes(app: FastifyInstance) {
     {
       schema: {
         operationId: 'getCsrf',
-        description: 'Get CSRF token.',
+        description: 'Get CSRF token bound to current session.',
         tags: ['auth'],
         response: {
           200: CsrfResponseSchema,
         },
       },
     },
-    async () => {
-      // 简化实现：返回一个固定 token
-      // 生产环境应该使用 @fastify/csrf-protection
+    async (request) => {
+      const sessionId = request.cookies.sessionId;
+      if (!sessionId) {
+        return { data: { token: '' } };
+      }
       return {
         data: {
-          token: 'csrf-token-placeholder',
+          token: deriveCsrfToken(sessionId),
         },
       };
     },

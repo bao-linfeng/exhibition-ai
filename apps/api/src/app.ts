@@ -14,6 +14,7 @@ import {
   ProjectPolicy,
 } from '@exhibition/backend';
 import { errorHandlerPlugin } from './plugins/error-handler.js';
+import { csrfPlugin } from './plugins/csrf.js';
 import healthPlugin from './health/health.plugin.js';
 import { authRoutes } from './modules/auth.js';
 import { userRoutes } from './modules/users.js';
@@ -60,6 +61,7 @@ export async function buildApp(
   await app.register(errorHandlerPlugin);
   await app.register(sensible);
   await app.register(cookie, { secret: env.COOKIE_SECRET });
+  await app.register(csrfPlugin);
   await app.register(swagger, {
     openapi: {
       openapi: '3.0.3',
