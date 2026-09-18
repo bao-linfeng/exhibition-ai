@@ -1,5 +1,5 @@
 import type { ExportTask } from '@exhibition/contracts';
-import type { ExportRecord } from '@exhibition/db';
+import type { Database, ExportRecord } from '@exhibition/db';
 import type { Queue } from 'bullmq';
 import { QUEUE_EXPORT } from '../../infrastructure/queue.js';
 import type { StorageProvider } from '../../infrastructure/storage.js';
@@ -27,6 +27,7 @@ function toExportDto(row: ExportRecord): ExportTask {
 
 export class ExportService {
   constructor(
+    private db: Database,
     private repo: ExportRepository,
     private taskRepo: TaskRepository,
     private assetRepo: AssetRepository,
@@ -60,29 +61,38 @@ export class ExportService {
       return 'versions_not_found';
     }
 
-    const { task, outbox } = await this.taskRepo.createWithOutbox({
-      projectId: input.projectId,
-      kind: 'export',
-      requestedBy: input.requestedBy,
-      queueName: QUEUE_EXPORT,
-      payload: { projectId: input.projectId },
+    const { task, outbox, record } = await this.db.transaction(async (tx) => {
+      const { task, outbox } = await this.taskRepo.createWithOutboxInTx(tx, {
+        projectId: input.projectId,
+        kind: 'export',
+        requestedBy: input.requestedBy,
+        queueName: QUEUE_EXPORT,
+        payload: { projectId: input.projectId },
+      });
+      const record = await this.repo.createInTx(tx, {
+        projectId: input.projectId,
+        taskId: task.id,
+        format: input.format,
+        versionIds: input.versionIds,
+        createdBy: input.requestedBy,
+        expiresAt: new Date(Date.now() + EXPORT_TTL_MS),
+      });
+      const payload = {
+        taskId: task.id,
+        projectId: input.projectId,
+        exportId: record.id,
+        outboxId: outbox.id,
+      };
+      await this.repo.updateOutboxPayloadInTx(tx, outbox.id, payload);
+
+      return { task, outbox: { ...outbox, payload }, record };
     });
-    const record = await this.repo.create({
-      projectId: input.projectId,
-      taskId: task.id,
-      format: input.format,
-      versionIds: input.versionIds,
-      createdBy: input.requestedBy,
-      expiresAt: new Date(Date.now() + EXPORT_TTL_MS),
-    });
-    const payload = {
-      taskId: task.id,
-      projectId: input.projectId,
-      exportId: record.id,
-      outboxId: outbox.id,
-    };
-    await this.repo.updateOutboxPayload(outbox.id, payload);
-    await this.relayOutbox(outbox.id, task.id, payload);
+
+    await this.relayOutbox(
+      outbox.id,
+      task.id,
+      outbox.payload as Record<string, unknown>,
+    );
 
     return { exportId: record.id, taskId: task.id, status: 'pending' };
   }

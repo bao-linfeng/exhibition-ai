@@ -10,6 +10,10 @@ import type {
 import type { QuotaRepository } from '../settings/quota.repository.js';
 import { quotaPeriodDate } from '../settings/quota-period.js';
 
+type DatabaseTransaction = Parameters<
+  Parameters<Database['transaction']>[0]
+>[0];
+
 export class InsufficientQuotaError extends Error {
   constructor(message = 'Insufficient quota for retry') {
     super(message);
@@ -32,36 +36,50 @@ export class TaskRepository {
     queueName: string;
     payload: Record<string, unknown>;
   }) {
-    return this.db.transaction(async (tx) => {
-      const [task] = await tx
-        .insert(tasks)
-        .values({
-          projectId: input.projectId,
-          kind: input.kind,
-          subtype: input.subtype ?? null,
-          idempotencyKey: input.idempotencyKey ?? null,
-          inputSnapshot: input.inputSnapshot ?? null,
-          requestedBy: input.requestedBy,
-          status: 'pending',
-          outputs: [],
-        })
-        .returning();
+    return this.db.transaction((tx) => this.createWithOutboxInTx(tx, input));
+  }
 
-      if (!task) throw new Error('Failed to insert task');
+  async createWithOutboxInTx(
+    tx: DatabaseTransaction,
+    input: {
+      projectId: string;
+      kind: TaskKind;
+      subtype?: string;
+      idempotencyKey?: string;
+      inputSnapshot?: unknown;
+      requestedBy: string;
+      queueName: string;
+      payload: Record<string, unknown>;
+    },
+  ) {
+    const [task] = await tx
+      .insert(tasks)
+      .values({
+        projectId: input.projectId,
+        kind: input.kind,
+        subtype: input.subtype ?? null,
+        idempotencyKey: input.idempotencyKey ?? null,
+        inputSnapshot: input.inputSnapshot ?? null,
+        requestedBy: input.requestedBy,
+        status: 'pending',
+        outputs: [],
+      })
+      .returning();
 
-      const [outbox] = await tx
-        .insert(taskOutbox)
-        .values({
-          taskId: task.id,
-          queueName: input.queueName,
-          payload: { ...input.payload, taskId: task.id },
-        })
-        .returning();
+    if (!task) throw new Error('Failed to insert task');
 
-      if (!outbox) throw new Error('Failed to insert outbox');
+    const [outbox] = await tx
+      .insert(taskOutbox)
+      .values({
+        taskId: task.id,
+        queueName: input.queueName,
+        payload: { ...input.payload, taskId: task.id },
+      })
+      .returning();
 
-      return { task, outbox };
-    });
+    if (!outbox) throw new Error('Failed to insert outbox');
+
+    return { task, outbox };
   }
 
   async createRetryTask(input: {

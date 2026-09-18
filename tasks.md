@@ -635,3 +635,9 @@ docker compose --env-file .env -f infra/compose.dev.yaml down
   根因：`updateUser` 缺少"至少保留一名启用管理员"的保护逻辑，管理员可误操作停用或降权最后一名管理员，导致系统无法通过正常途径恢复管理访问。
 
   修复：`UserRepository` 新增 `countActiveAdmins()`；`UserService.updateUser()` 在目标用户为唯一启用管理员且本次操作会将其角色降为 `sales` 或状态设为 `disabled` 时，拒绝并返回 `'last_admin'`；API 层映射为 422 Unprocessable Entity。
+
+- [ ] **[#95] 导出创建不是单一事务，可能产生孤儿任务** — 状态：in_review；GitHub Issue：[#95](https://github.com/bao-linfeng/exhibition-ai/issues/95)；PR：[#113](https://github.com/bao-linfeng/exhibition-ai/pull/113)。
+
+  根因：`ExportService.createExport()` 分三步串行执行：① `taskRepo.createWithOutbox()` 在内部事务中创建 task + outbox；② 事务外创建 export record；③ 事务外更新 outbox payload。若第②步失败，第①步产生的孤儿 task/outbox 会被 Worker 执行，占用资源但用户无法查询对应导出记录，导致数据不一致。
+
+  修复：`TaskRepository` 新增 `createWithOutboxInTx(tx, input)`，原 `createWithOutbox` 复用该方法；`ExportRepository` 新增 `createInTx(tx, input)` 和 `updateOutboxPayloadInTx(tx, id, payload)`；`ExportService` 注入 `Database`，在单一 `db.transaction` 中完成 task、outbox、export record 及 outbox payload 更新，事务提交后再 relay outbox。

@@ -1199,6 +1199,26 @@
         "packages/backend/src/modules/users/users.service.ts",
         "apps/api/src/modules/users.ts"
       ]
+    },
+    {
+      "id": "BUG-95",
+      "title": "导出创建不是单一事务，可能产生孤儿任务",
+      "labels": [
+        "bug",
+        "P1"
+      ],
+      "issueNumber": 95,
+      "issueUrl": "https://github.com/bao-linfeng/exhibition-ai/issues/95",
+      "branch": "fix/issue-95-export-atomic-transaction",
+      "prNumber": 113,
+      "prUrl": "https://github.com/bao-linfeng/exhibition-ai/pull/113",
+      "status": "in_review",
+      "files": [
+        "packages/backend/src/modules/tasks/tasks.repository.ts",
+        "packages/backend/src/modules/exports/exports.repository.ts",
+        "packages/backend/src/modules/exports/exports.service.ts",
+        "packages/backend/src/index.ts"
+      ]
     }
   ],
   "documentationPr": {
