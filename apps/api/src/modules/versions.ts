@@ -34,6 +34,10 @@ export async function versionRoutes(app: FastifyInstance) {
     return project !== null && project !== 'forbidden';
   }
 
+  function canWrite(user: { role: string }) {
+    return user.role === 'admin' || user.role === 'designer';
+  }
+
   // GET /api/v1/projects/:projectId/versions
   app.get(
     '/api/v1/projects/:projectId/versions',
@@ -125,6 +129,7 @@ export async function versionRoutes(app: FastifyInstance) {
     async (request, reply) => {
       const user = await currentUser(request.cookies.sessionId);
       if (!user) throw app.httpErrors.unauthorized('Not authenticated');
+      if (!canWrite(user)) throw app.httpErrors.forbidden();
 
       const { projectId } = request.params as { projectId: string };
       const body = request.body as UpdateSelectedVersionRequest;
@@ -165,6 +170,7 @@ export async function versionRoutes(app: FastifyInstance) {
     async (request, reply) => {
       const user = await currentUser(request.cookies.sessionId);
       if (!user) throw app.httpErrors.unauthorized('Not authenticated');
+      if (!canWrite(user)) throw app.httpErrors.forbidden();
 
       const { id } = request.params as { id: string };
 

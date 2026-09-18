@@ -18,6 +18,10 @@ export async function generationRoutes(app: FastifyInstance) {
       : null;
   }
 
+  function canWrite(user: { role: string }) {
+    return user.role === 'admin' || user.role === 'designer';
+  }
+
   async function isMemberOrAdmin(
     projectId: string,
     user: { id: string; role: string },
@@ -48,6 +52,7 @@ export async function generationRoutes(app: FastifyInstance) {
     async (request, reply) => {
       const user = await currentUser(request.cookies.sessionId);
       if (!user) throw app.httpErrors.unauthorized('Not authenticated');
+      if (!canWrite(user)) throw app.httpErrors.forbidden();
 
       const { projectId } = request.params as { projectId: string };
       const body = request.body as CreateGenerationRequest;
