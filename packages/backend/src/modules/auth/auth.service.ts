@@ -1,4 +1,4 @@
-import { randomBytes, scrypt, timingSafeEqual } from 'node:crypto';
+import { randomBytes, createHash, scrypt, timingSafeEqual } from 'node:crypto';
 import { promisify } from 'node:util';
 import { AuthRepository } from './auth.repository.js';
 import { MailService } from '../mail/mail.service.js';
@@ -9,7 +9,12 @@ import type { User } from '@exhibition/db';
 const scryptAsync = promisify(scrypt);
 
 export class AuthService {
-  private readonly SESSION_DURATION_MS = 7 * 24 * 60 * 60 * 1000; // 7 天
+  // 空闲超时：8 小时无活跃则过期
+  private readonly IDLE_TIMEOUT_MS = 8 * 60 * 60 * 1000;
+  // 绝对过期：7 天，无论是否活跃
+  private readonly ABSOLUTE_DURATION_MS = 7 * 24 * 60 * 60 * 1000;
+  // 空闲刷新节流：距上次刷新超过 1 小时才写库
+  private readonly REFRESH_THRESHOLD_MS = 60 * 60 * 1000;
 
   constructor(
     private authRepo: AuthRepository,
@@ -17,10 +22,18 @@ export class AuthService {
     private mailService: MailService,
   ) {}
 
+  private hashToken(token: string): string {
+    return createHash('sha256').update(token).digest('hex');
+  }
+
+  private generateToken(): string {
+    return randomBytes(32).toString('hex');
+  }
+
   async login(
     email: string,
     password: string,
-  ): Promise<{ sessionId: string; user: UserSummary } | null> {
+  ): Promise<{ sessionToken: string; user: UserSummary } | null> {
     const user = await this.authRepo.findUserByEmail(email);
 
     if (!user || !user.passwordHash) {
@@ -36,13 +49,20 @@ export class AuthService {
       return null;
     }
 
-    // 创建 session - 使用数据库自动生成的 UUID
-    const expiresAt = new Date(Date.now() + this.SESSION_DURATION_MS);
+    const token = this.generateToken();
+    const tokenHash = this.hashToken(token);
+    const now = new Date();
+    const expiresAt = new Date(now.getTime() + this.IDLE_TIMEOUT_MS);
+    const absoluteExpiresAt = new Date(
+      now.getTime() + this.ABSOLUTE_DURATION_MS,
+    );
 
     const session = await this.authRepo.createSession({
+      tokenHash,
       userId: user.id,
       expiresAt,
-      createdAt: new Date(),
+      absoluteExpiresAt,
+      createdAt: now,
     });
 
     if (!session) {
@@ -50,32 +70,59 @@ export class AuthService {
     }
 
     return {
-      sessionId: session.id,
+      sessionToken: token,
       user: this.toUserSummary(user),
     };
   }
 
-  async logout(sessionId: string): Promise<void> {
-    await this.authRepo.deleteSession(sessionId);
+  async logout(sessionToken: string): Promise<void> {
+    const tokenHash = this.hashToken(sessionToken);
+    const session = await this.authRepo.findSessionByTokenHash(tokenHash);
+    if (session) {
+      await this.authRepo.deleteSessionById(session.id);
+    }
   }
 
-  async validateSession(sessionId: string): Promise<UserSummary | null> {
-    const session = await this.authRepo.findSessionById(sessionId);
+  async validateSession(sessionToken: string): Promise<UserSummary | null> {
+    const tokenHash = this.hashToken(sessionToken);
+    const session = await this.authRepo.findSessionByTokenHash(tokenHash);
 
     if (!session) {
       return null;
     }
 
-    if (session.expiresAt < new Date()) {
-      await this.authRepo.deleteSession(sessionId);
+    const now = new Date();
+
+    // 检查绝对过期
+    if (session.absoluteExpiresAt < now) {
+      await this.authRepo.deleteSessionById(session.id);
+      return null;
+    }
+
+    // 检查空闲过期
+    if (session.expiresAt < now) {
+      await this.authRepo.deleteSessionById(session.id);
       return null;
     }
 
     const user = await this.authRepo.findUserById(session.userId);
 
     if (!user || user.status === 'disabled') {
-      await this.authRepo.deleteSession(sessionId);
+      await this.authRepo.deleteSessionById(session.id);
       return null;
+    }
+
+    // 空闲刷新：超过阈值才写库，避免每次请求都写
+    const msSinceLastActivity =
+      now.getTime() - session.lastActivityAt.getTime();
+    if (msSinceLastActivity > this.REFRESH_THRESHOLD_MS) {
+      const newExpiresAt = new Date(now.getTime() + this.IDLE_TIMEOUT_MS);
+      // 不超过绝对过期
+      const clampedExpiresAt =
+        newExpiresAt < session.absoluteExpiresAt
+          ? newExpiresAt
+          : session.absoluteExpiresAt;
+      await this.authRepo.refreshSessionActivity(session.id, clampedExpiresAt);
     }
 
     return this.toUserSummary(user);
@@ -129,7 +176,7 @@ export class AuthService {
     displayName: string,
     password: string,
   ): Promise<
-    | { sessionId: string; user: UserSummary }
+    | { sessionToken: string; user: UserSummary }
     | 'invalid_code'
     | 'already_registered'
   > {
@@ -149,14 +196,20 @@ export class AuthService {
       displayName,
       await this.hashPassword(password),
     );
+
+    const token = this.generateToken();
+    const tokenHash = this.hashToken(token);
+    const now = new Date();
     const session = await this.authRepo.createSession({
+      tokenHash,
       userId: user.id,
-      expiresAt: new Date(Date.now() + this.SESSION_DURATION_MS),
-      createdAt: new Date(),
+      expiresAt: new Date(now.getTime() + this.IDLE_TIMEOUT_MS),
+      absoluteExpiresAt: new Date(now.getTime() + this.ABSOLUTE_DURATION_MS),
+      createdAt: now,
     });
     if (!session) throw new Error('Failed to create session');
 
-    return { sessionId: session.id, user: this.toUserSummary(user) };
+    return { sessionToken: token, user: this.toUserSummary(user) };
   }
 
   async forgotPassword(

@@ -1062,6 +1062,24 @@
       "files": [
         "packages/backend/src/modules/auth/auth.service.ts"
       ]
+    },
+    {
+      "id": "BUG-89",
+      "title": "Session 安全模型不符合需求（token 明文存储、无绝对过期、无空闲刷新）",
+      "labels": ["bug", "P1", "security", "auth"],
+      "issueNumber": 89,
+      "issueUrl": "https://github.com/bao-linfeng/exhibition-ai/issues/89",
+      "branch": "fix/issue-89-session-security",
+      "prNumber": 107,
+      "prUrl": "https://github.com/bao-linfeng/exhibition-ai/pull/107",
+      "status": "in_review",
+      "files": [
+        "packages/db/src/schema/sessions.ts",
+        "packages/db/migrations/0020_session_token_hash_absolute_expiry.sql",
+        "packages/backend/src/modules/auth/auth.repository.ts",
+        "packages/backend/src/modules/auth/auth.service.ts",
+        "apps/api/src/modules/auth.ts"
+      ]
     }
   ],
   "documentationPr": {

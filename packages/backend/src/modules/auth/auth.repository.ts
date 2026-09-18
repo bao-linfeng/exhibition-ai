@@ -52,31 +52,27 @@ export class AuthRepository {
     return created;
   }
 
-  async findSessionById(id: string) {
+  async findSessionByTokenHash(tokenHash: string) {
     const [session] = await this.db
       .select()
       .from(sessions)
-      .where(eq(sessions.id, id))
+      .where(eq(sessions.tokenHash, tokenHash))
       .limit(1);
     return session;
   }
 
-  async deleteSession(id: string): Promise<void> {
+  async deleteSessionById(id: string): Promise<void> {
     await this.db.delete(sessions).where(eq(sessions.id, id));
-  }
-
-  async deleteUserSessions(userId: string): Promise<void> {
-    await this.db.delete(sessions).where(eq(sessions.userId, userId));
   }
 
   async deleteSessionsByUserId(userId: string): Promise<void> {
     await this.db.delete(sessions).where(eq(sessions.userId, userId));
   }
 
-  async updateSessionExpiry(id: string, expiresAt: Date): Promise<void> {
+  async refreshSessionActivity(id: string, expiresAt: Date): Promise<void> {
     await this.db
       .update(sessions)
-      .set({ expiresAt })
+      .set({ expiresAt, lastActivityAt: new Date() })
       .where(eq(sessions.id, id));
   }
 }

@@ -611,3 +611,9 @@ docker compose --env-file .env -f infra/compose.dev.yaml down
   根因：`/auth/csrf` 接口固定返回 `csrf-token-placeholder`，全局无 CSRF token 校验，跨站请求可伪造合法用户写操作。
 
   修复：新增 `apps/api/src/plugins/csrf.ts`，基于 `HMAC-SHA256(COOKIE_SECRET, sessionId)` 无状态派生 token，恒定时间比较防时序攻击；全局 `preHandler` hook 对 POST/PUT/PATCH/DELETE 校验 `x-csrf-token` header，豁免登录/忘记密码等无 session 公开接口；前端 `apiClient` middleware 自动获取、缓存并注入 token。
+
+- [ ] **[#89] Session 安全模型不符合需求（token 明文存储、无绝对过期、无空闲刷新）** — 状态：in_review；GitHub Issue：[#89](https://github.com/bao-linfeng/exhibition-ai/issues/89)；PR：[#107](https://github.com/bao-linfeng/exhibition-ai/pull/107)。
+
+  根因：`sessions` 表以 UUID 明文存储 token（即主键 `id`），数据库泄漏直接暴露所有有效 Session；缺少绝对过期字段（Session 可无限续期）；无空闲刷新机制。
+
+  修复：`sessions` 表新增 `token_hash TEXT NOT NULL UNIQUE`（存 SHA-256 hex）和 `absolute_expires_at`；登录时生成 `randomBytes(32)` 原始 token → 仅 hash 存库 → 原始 token 一次性下发 cookie；验证时 hash 后按 `token_hash` 查询，先检查绝对过期（7d）再检查空闲过期（8h）；空闲刷新节流（距上次活跃 >1h 才写库，且受绝对过期上限约束）；迁移时清除所有旧 session（旧 cookie 已失效，强制重新登录）。
