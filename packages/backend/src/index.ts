@@ -293,7 +293,7 @@ export function createServices(): Services {
   queues.set(QUEUE_AGENT_RUN, agentRunQueue as import('bullmq').Queue);
   const exportQueue = createExportQueue({ connection: queueConnection });
   queues.set(QUEUE_EXPORT, exportQueue as import('bullmq').Queue);
-  const taskRepo = new TaskRepository(drizzleDb);
+  const taskRepo = new TaskRepository(drizzleDb, quotaRepo);
   const taskService = new TaskService(taskRepo, queues);
   const briefParseService = new BriefParseService(
     new BriefParseRepository(drizzleDb),

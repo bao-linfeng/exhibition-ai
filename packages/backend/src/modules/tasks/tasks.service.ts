@@ -7,7 +7,10 @@ import type {
   TaskOutput,
 } from '@exhibition/contracts';
 import { logger } from '../../infrastructure/logger.js';
-import type { TaskRepository } from './tasks.repository.js';
+import {
+  type TaskRepository,
+  InsufficientQuotaError,
+} from './tasks.repository.js';
 import type { Queue } from 'bullmq';
 
 function toTaskDto(row: {
@@ -189,7 +192,12 @@ export class TaskService {
     isMemberFn: (projectId: string) => Promise<boolean>,
     body: RetryTaskRequest,
   ): Promise<
-    Task | 'not_found' | 'forbidden' | 'not_retryable' | 'unsupported_kind'
+    | Task
+    | 'not_found'
+    | 'forbidden'
+    | 'not_retryable'
+    | 'unsupported_kind'
+    | 'insufficient_quota'
   > {
     const task = await this.repo.findById(id);
     if (!task) return 'not_found';
@@ -217,35 +225,70 @@ export class TaskService {
 
     if (task.kind !== 'image_generation') return 'unsupported_kind';
 
-    // SAFETY: Retry for image_generation is disabled until retry creation can atomically
-    // reserve quota for the new outputs. Without a reservation, a retry task could call
-    // the paid Provider, violating the accounting invariant.
-    // See TODO-T019.md P0 item: "Fix image retry tasks so they cannot call a paid Provider without a reservation."
-    return 'not_retryable';
+    // Extract pricing info from the original task's inputSnapshot
+    const snapshot = task.inputSnapshot as {
+      model?: {
+        costPerImageMinor?: unknown;
+        currency?: unknown;
+        providerId?: unknown;
+        modelId?: unknown;
+      };
+    } | null;
+    const costPerImageMinor = snapshot?.model?.costPerImageMinor;
+    const currency = snapshot?.model?.currency;
+    const providerId = snapshot?.model?.providerId;
+    const modelId = snapshot?.model?.modelId;
 
-    // const retryOutputs = retryableOutputs.map((output) => ({
-    //   ...output,
-    //   state: 'pending' as const,
-    //   errorCode: null,
-    //   errorMessage: null,
-    // }));
-    // const created = await this.repo.createRetryTask({
-    //   originalTaskId: task.id,
-    //   outputs: retryOutputs,
-    //   queueName: 'exhibition-image-generation',
-    //   payload: { projectId: task.projectId },
-    // });
+    if (
+      !Number.isSafeInteger(costPerImageMinor) ||
+      (costPerImageMinor as number) < 0 ||
+      typeof currency !== 'string' ||
+      typeof providerId !== 'string' ||
+      typeof modelId !== 'string'
+    ) {
+      return 'not_retryable';
+    }
 
-    // if (!created) return 'not_retryable';
+    const estimatedAmountMinor =
+      (costPerImageMinor as number) * failedOrdinals.length;
+    if (!Number.isSafeInteger(estimatedAmountMinor)) return 'not_retryable';
 
-    // await this.relayOutbox(
-    //   created.outbox.id,
-    //   created.task.id,
-    //   created.outbox.queueName,
-    //   created.outbox.payload as Record<string, unknown>,
-    // );
+    const retryOutputs = retryableOutputs.map((output) => ({
+      ...output,
+      state: 'pending' as const,
+      errorCode: null,
+      errorMessage: null,
+    }));
 
-    // return toTaskDto(created.task);
+    let created: Awaited<ReturnType<TaskRepository['createRetryTask']>>;
+    try {
+      created = await this.repo.createRetryTask({
+        originalTaskId: task.id,
+        outputs: retryOutputs,
+        queueName: 'exhibition-image-generation',
+        payload: { projectId: task.projectId },
+        quota: {
+          estimatedAmountMinor,
+          currency,
+          provider: providerId,
+          model: modelId,
+        },
+      });
+    } catch (err) {
+      if (err instanceof InsufficientQuotaError) return 'insufficient_quota';
+      throw err;
+    }
+
+    if (!created) return 'not_retryable';
+
+    await this.relayOutbox(
+      created.outbox.id,
+      created.task.id,
+      created.outbox.queueName,
+      created.outbox.payload as Record<string, unknown>,
+    );
+
+    return toTaskDto(created.task);
   }
 
   async reconcileTaskOutput(
