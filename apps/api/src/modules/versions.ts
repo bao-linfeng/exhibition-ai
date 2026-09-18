@@ -133,6 +133,13 @@ export async function versionRoutes(app: FastifyInstance) {
 
       const { projectId } = request.params as { projectId: string };
       const body = request.body as UpdateSelectedVersionRequest;
+      const project = await app.services!.projectService.getProject(
+        projectId,
+        user,
+      );
+      if (!project || project === 'forbidden') {
+        throw app.httpErrors.notFound('Project not found');
+      }
 
       const result =
         await app.services!.imageVersionService.updateSelectedVersion(
@@ -140,9 +147,17 @@ export async function versionRoutes(app: FastifyInstance) {
           body.versionId,
           body.expectedRevision,
           await isMemberOrAdmin(projectId, user),
+          project.status,
         );
 
       if (result === 'forbidden') throw app.httpErrors.forbidden();
+      if (result === 'project_locked') {
+        const error = app.httpErrors.conflict(
+          '项目当前状态不允许此操作',
+        ) as Error & { code?: string };
+        error.code = 'project_locked';
+        throw error;
+      }
       if (result === 'version_not_found')
         throw app.httpErrors.notFound('Version not found');
       if (result === 'conflict')
@@ -184,15 +199,30 @@ export async function versionRoutes(app: FastifyInstance) {
 
       const allowed = await isMemberOrAdmin(version.projectId, user);
       if (!allowed) throw app.httpErrors.forbidden();
+      const project = await app.services!.projectService.getProject(
+        version.projectId,
+        user,
+      );
+      if (!project || project === 'forbidden') {
+        throw app.httpErrors.notFound('Project not found');
+      }
 
       const result = await app.services!.imageVersionService.hideVersion(
         id,
         version.projectId,
         true,
+        project.status,
       );
 
       if (result === 'not_found') throw app.httpErrors.notFound();
       if (result === 'forbidden') throw app.httpErrors.forbidden();
+      if (result === 'project_locked') {
+        const error = app.httpErrors.conflict(
+          '项目当前状态不允许此操作',
+        ) as Error & { code?: string };
+        error.code = 'project_locked';
+        throw error;
+      }
       if (result === 'already_hidden')
         throw app.httpErrors.conflict('Version already hidden');
 

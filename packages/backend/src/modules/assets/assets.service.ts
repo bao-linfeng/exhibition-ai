@@ -1,5 +1,6 @@
 import type { Asset, AssetKind, AssetStatus } from '@exhibition/contracts';
 import type { StorageProvider } from '../../infrastructure/storage.js';
+import { isProjectLocked } from '../../shared/project-write-guard.js';
 import type { TaskService } from '../tasks/tasks.service.js';
 import type { AssetRepository } from './assets.repository.js';
 
@@ -103,6 +104,7 @@ export class AssetService {
     projectId: string,
     requestedBy: string,
     isMemberFn: (projectId: string) => Promise<boolean>,
+    projectStatus: string,
   ): Promise<
     | { assetId: string; validationTaskId: string }
     | 'not_found'
@@ -110,11 +112,13 @@ export class AssetService {
     | 'already_completed'
     | 'expired'
     | 'not_uploaded'
+    | 'project_locked'
   > {
     const session = await this.repo.findUploadSession(uploadId);
     if (!session || session.projectId !== projectId) return 'not_found';
 
     if (!(await isMemberFn(session.projectId))) return 'forbidden';
+    if (isProjectLocked(projectStatus)) return 'project_locked';
 
     if (session.status === 'completed' && session.assetId) {
       const asset = await this.repo.findById(session.assetId);
@@ -234,10 +238,14 @@ export class AssetService {
     projectId: string,
     requestedBy: string,
     isMemberFn: (projectId: string) => Promise<boolean>,
-  ): Promise<'ok' | 'not_found' | 'forbidden' | 'already_hidden'> {
+    projectStatus: string,
+  ): Promise<
+    'ok' | 'not_found' | 'forbidden' | 'already_hidden' | 'project_locked'
+  > {
     const asset = await this.repo.findById(assetId);
     if (!asset || asset.projectId !== projectId) return 'not_found';
     if (!(await isMemberFn(asset.projectId))) return 'forbidden';
+    if (isProjectLocked(projectStatus)) return 'project_locked';
     if (asset.hiddenAt) return 'already_hidden';
     const updated = await this.repo.hideAsset(assetId);
     if (!updated) return 'already_hidden';

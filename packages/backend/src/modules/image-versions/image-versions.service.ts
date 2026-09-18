@@ -1,5 +1,6 @@
 import type { ImageVersion } from '@exhibition/contracts';
 import type { ImageVersion as DbImageVersion } from '@exhibition/db';
+import { isProjectLocked } from '../../shared/project-write-guard.js';
 import type { ImageVersionRepository } from './image-versions.repository.js';
 
 function toVersionDto(row: DbImageVersion): ImageVersion {
@@ -63,10 +64,14 @@ export class ImageVersionService {
     id: string,
     projectId: string,
     isMemberOrAdmin: boolean,
-  ): Promise<'ok' | 'not_found' | 'forbidden' | 'already_hidden'> {
+    projectStatus: string,
+  ): Promise<
+    'ok' | 'not_found' | 'forbidden' | 'already_hidden' | 'project_locked'
+  > {
     const version = await this.repo.findById(id);
     if (!version || version.projectId !== projectId) return 'not_found';
     if (!isMemberOrAdmin) return 'forbidden';
+    if (isProjectLocked(projectStatus)) return 'project_locked';
     if (version.hiddenAt) return 'already_hidden';
 
     const updated = await this.repo.hideVersion(id);
@@ -78,13 +83,16 @@ export class ImageVersionService {
     versionId: string | null,
     expectedRevision: number,
     isMemberOrAdmin: boolean,
+    projectStatus: string,
   ): Promise<
     | { selectedVersionId: string | null; revision: number }
     | 'conflict'
     | 'forbidden'
     | 'version_not_found'
+    | 'project_locked'
   > {
     if (!isMemberOrAdmin) return 'forbidden';
+    if (isProjectLocked(projectStatus)) return 'project_locked';
 
     if (versionId) {
       const version = await this.repo.findById(versionId);

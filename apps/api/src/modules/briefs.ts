@@ -95,9 +95,17 @@ export async function briefRoutes(app: FastifyInstance) {
         body.expectedRevision,
         user,
         true,
+        project.status,
       );
 
       if (result === 'forbidden') throw app.httpErrors.forbidden();
+      if (result === 'project_locked') {
+        const error = app.httpErrors.conflict(
+          '项目当前状态不允许此操作',
+        ) as Error & { code?: string };
+        error.code = 'project_locked';
+        throw error;
+      }
       if (result === 'conflict') {
         throw app.httpErrors.conflict('Revision conflict');
       }
@@ -240,9 +248,17 @@ export async function briefRoutes(app: FastifyInstance) {
         body.expectedRevision,
         user,
         true,
+        project.status,
       );
 
       if (result === 'forbidden') throw app.httpErrors.forbidden();
+      if (result === 'project_locked') {
+        const error = app.httpErrors.conflict(
+          '项目当前状态不允许此操作',
+        ) as Error & { code?: string };
+        error.code = 'project_locked';
+        throw error;
+      }
       if (result === 'conflict') {
         throw app.httpErrors.conflict('Revision conflict');
       }
