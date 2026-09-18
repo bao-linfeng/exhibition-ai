@@ -22,6 +22,7 @@
     "db:seed": "node --import tsx --conditions=development packages/db/src/seed.ts",
     "storage:init": "node --import tsx --conditions=development scripts/storage-init.mjs",
     "test:integration": "node --import tsx --conditions=development scripts/smoke.mjs",
+    "user:bootstrap": "node --import tsx --conditions=development scripts/user-bootstrap.ts",
     "test:sse": "node scripts/test-sse-e2e.mjs"
   },
   "devDependencies": {
