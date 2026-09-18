@@ -1258,6 +1258,27 @@
         "packages/backend/src/modules/tasks/tasks.service.ts",
         "infra/scripts/restore.sh"
       ]
+    },
+    {
+      "id": "BUG-116",
+      "title": "0020 Session 迁移漏登记导致空库首次启动认证链路不可用",
+      "labels": [
+        "auth",
+        "bug",
+        "deployment",
+        "P0"
+      ],
+      "issueNumber": 116,
+      "issueUrl": "https://github.com/bao-linfeng/exhibition-ai/issues/116",
+      "branch": "fix/issue-116-migration-journal-integrity",
+      "prNumber": null,
+      "prUrl": null,
+      "status": "in_review",
+      "files": [
+        "packages/db/migrations/meta/_journal.json",
+        "scripts/check-migrations.mjs",
+        "package.json"
+      ]
     }
   ],
   "documentationPr": {

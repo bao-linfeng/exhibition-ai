@@ -647,3 +647,13 @@ docker compose --env-file .env -f infra/compose.dev.yaml down
   根因：`export.processor.ts` 和 `pdf-export.processor.ts` 将全部导出图片读入内存后再打包，ZIP 上限接近 500 MiB，多个并发导出任务可能导致 Worker OOM 崩溃，影响所有正在处理的任务队列。
 
   修复：ZIP 改为 `createStreamingZip` async generator，逐张从 S3 读取图片、计算 CRC32/SHA-256、立即 yield ZIP entry chunks 后释放 buffer，Central Directory 阶段仅保留轻量元数据（不含图片 data），`putObject` 不传 `contentLength`（chunked transfer），上传完成后通过 `headObject` 获取实际大小；PDF 改为先收集轻量 `ImageLocation` 元数据并排序，再逐张读取图片、立即渲染进 pdf-lib，不再持有原始大图 buffer 数组。峰值内存从「所有图片之和」降为「单张图片」。
+
+## P0 Bug 修复
+
+### 审查中
+
+- [ ] **[#116] 0020 Session 迁移漏登记导致空库首次启动认证链路不可用** — 状态：in_review；GitHub Issue：[#116](https://github.com/bao-linfeng/exhibition-ai/issues/116)；PR：—。
+
+  根因：`packages/db/migrations/meta/_journal.json` 遗漏了 `0020_session_token_hash_absolute_expiry` 条目，导致 `pnpm db:migrate` 在全新空库上不会应用该迁移文件，`sessions` 表缺少 `token_hash` 和 `absolute_expires_at` 列，而 `AuthRepository`/`AuthService` 已无条件访问这两列，全新部署首次登录即崩溃。
+
+  修复：① 在 `_journal.json` 补登记 idx=20 条目；② 新增 `scripts/check-migrations.mjs` 门禁脚本，校验 migrations 目录中的 SQL 文件与 `_journal.json` entries 完全一致（双向比对 + idx 连续性校验）；③ 将 `check:migrations` 加入 `pnpm check` 链，防止未来迁移再次漏登记。
