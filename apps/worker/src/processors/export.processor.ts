@@ -18,11 +18,6 @@ export interface ExportJobData {
   outboxId: string;
 }
 
-type ExportFile = {
-  filename: string;
-  data: Buffer;
-};
-
 type ManifestVersion = {
   versionId: string;
   filename: string;
@@ -31,6 +26,14 @@ type ManifestVersion = {
   sha256: string;
   createdAt: string;
   sequence: number;
+};
+
+type ZipEntryMeta = {
+  name: Buffer;
+  crc: number;
+  dataLength: number;
+  timestamp: number;
+  offset: number;
 };
 
 export async function processExport(
@@ -70,63 +73,25 @@ export async function processExport(
     }
 
     const exportedAt = new Date();
-    let totalSourceSize = 0;
-    const files: ExportFile[] = [];
-    const versions: ManifestVersion[] = [];
-
-    for (const versionId of exportRecord.versionIds) {
-      const location = await imageVersionRepo.findAssetLocation(versionId);
-      if (!location) throw new Error(`Image version ${versionId} not found`);
-
-      if (location.sizeBytes > MAX_EXPORT_SIZE_BYTES - totalSourceSize) {
-        throw new Error('Export size exceeds 500 MiB');
-      }
-
-      const image = await readObject(
-        storage,
-        location.bucket,
-        location.objectKey,
-        MAX_EXPORT_SIZE_BYTES - totalSourceSize,
-      );
-      totalSourceSize += image.length;
-      const filename = `${String(location.sequence).padStart(3, '0')}_${sanitizeFilename(
-        location.originalFilename,
-      )}`;
-      const sha256 = createHash('sha256').update(image).digest('hex');
-
-      files.push({ filename, data: image });
-      versions.push({
-        versionId,
-        filename,
-        mimeType: location.mimeType,
-        sizeBytes: image.length,
-        sha256,
-        createdAt: location.createdAt.toISOString(),
-        sequence: location.sequence,
-      });
-    }
-
-    const manifest = Buffer.from(
-      JSON.stringify({
-        exportedAt: exportedAt.toISOString(),
-        projectId,
-        versions,
-      }),
-      'utf8',
-    );
-    const zipFiles = [...files, { filename: 'manifest.json', data: manifest }];
-    const zipSize = getStoredZipSize(zipFiles);
-    if (zipSize > MAX_EXPORT_SIZE_BYTES) {
-      throw new Error('Export size exceeds 500 MiB');
-    }
-
     const objectKey = `projects/${projectId}/exports/${exportRecord.id}.zip`;
     await storage.putObject({
       bucket,
       key: objectKey,
-      body: Readable.from(createStoredZip(zipFiles)),
+      body: Readable.from(
+        createStreamingZip(
+          exportRecord.versionIds,
+          imageVersionRepo,
+          storage,
+          exportedAt,
+          projectId,
+          MAX_EXPORT_SIZE_BYTES,
+        ),
+      ),
       contentType: 'application/zip',
-      contentLength: zipSize,
+    });
+    const { contentLength } = await storage.headObject({
+      bucket,
+      key: objectKey,
     });
     const asset = await assetRepo.createAsset({
       projectId,
@@ -136,7 +101,7 @@ export async function processExport(
       objectKey,
       originalFilename: `export_${exportRecord.id}.zip`,
       mimeType: 'application/zip',
-      sizeBytes: zipSize,
+      sizeBytes: contentLength ?? 0,
       createdBy: exportRecord.createdBy,
     });
     await exportRepo.updateStatus(exportRecord.id, 'succeeded', {
@@ -150,7 +115,11 @@ export async function processExport(
     });
 
     logger.info(
-      { taskId, exportId: exportRecord.id, versionCount: versions.length },
+      {
+        taskId,
+        exportId: exportRecord.id,
+        versionCount: exportRecord.versionIds.length,
+      },
       'Export completed',
     );
   } catch (err) {
@@ -209,22 +178,98 @@ async function readObject(
   return Buffer.concat(chunks, size);
 }
 
-function* createStoredZip(files: ExportFile[]): Generator<Buffer> {
-  const timestamp = toDosTimestamp(new Date());
-  const entries = files.map((file) => toZipEntry(file, timestamp));
+async function* createStreamingZip(
+  versionIds: string[],
+  imageVersionRepo: ImageVersionRepository,
+  storage: StorageProvider,
+  exportedAt: Date,
+  projectId: string,
+  maxTotalBytes: number,
+): AsyncGenerator<Buffer> {
+  const timestamp = toDosTimestamp(exportedAt);
+  const entries: ZipEntryMeta[] = [];
+  const versions: ManifestVersion[] = [];
+  let totalSourceSize = 0;
   let offset = 0;
 
-  for (const entry of entries) {
-    entry.offset = offset;
-    yield createLocalHeader(entry);
-    yield entry.name;
-    yield entry.data;
-    offset += 30 + entry.name.length + entry.data.length;
+  for (const versionId of versionIds) {
+    const location = await imageVersionRepo.findAssetLocation(versionId);
+    if (!location) throw new Error(`Image version ${versionId} not found`);
+
+    if (location.sizeBytes > maxTotalBytes - totalSourceSize) {
+      throw new Error('Export size exceeds 500 MiB');
+    }
+
+    const image = await readObject(
+      storage,
+      location.bucket,
+      location.objectKey,
+      maxTotalBytes - totalSourceSize,
+    );
+    totalSourceSize += image.length;
+    const filename = `${String(location.sequence).padStart(3, '0')}_${sanitizeFilename(
+      location.originalFilename,
+    )}`;
+    const name = Buffer.from(filename, 'utf8');
+    const entry: ZipEntryMeta = {
+      name,
+      crc: crc32(image),
+      dataLength: image.length,
+      timestamp,
+      offset,
+    };
+    entries.push(entry);
+    versions.push({
+      versionId,
+      filename,
+      mimeType: location.mimeType,
+      sizeBytes: image.length,
+      sha256: createHash('sha256').update(image).digest('hex'),
+      createdAt: location.createdAt.toISOString(),
+      sequence: location.sequence,
+    });
+
+    yield createLocalFileHeader(entry);
+    yield name;
+    yield image;
+    offset += 30 + name.length + image.length;
   }
+
+  const manifest = Buffer.from(
+    JSON.stringify({
+      exportedAt: exportedAt.toISOString(),
+      projectId,
+      versions,
+    }),
+    'utf8',
+  );
+  const manifestEntry: ZipEntryMeta = {
+    name: Buffer.from('manifest.json', 'utf8'),
+    crc: crc32(manifest),
+    dataLength: manifest.length,
+    timestamp,
+    offset,
+  };
+  entries.push(manifestEntry);
+  const finalSize =
+    offset +
+    30 +
+    manifestEntry.name.length +
+    manifest.length +
+    entries.reduce((size, entry) => size + 46 + entry.name.length, 0) +
+    22;
+  if (finalSize > maxTotalBytes) {
+    throw new Error('Export size exceeds 500 MiB');
+  }
+
+  yield createLocalFileHeader(manifestEntry);
+  yield manifestEntry.name;
+  yield manifest;
+  offset += 30 + manifestEntry.name.length + manifest.length;
 
   const centralDirectoryOffset = offset;
   for (const entry of entries) {
-    yield createCentralDirectoryHeader(entry, entry.offset);
+    yield createCentralDirHeader(entry);
     yield entry.name;
     offset += 46 + entry.name.length;
   }
@@ -238,24 +283,7 @@ function* createStoredZip(files: ExportFile[]): Generator<Buffer> {
   yield end;
 }
 
-function getStoredZipSize(files: ExportFile[]): number {
-  const entrySize = files.reduce((size, file) => {
-    return size + 76 + Buffer.byteLength(file.filename) + file.data.length;
-  }, 0);
-  return entrySize + 22;
-}
-
-function toZipEntry(file: ExportFile, timestamp: number) {
-  return {
-    name: Buffer.from(file.filename, 'utf8'),
-    data: file.data,
-    crc: crc32(file.data),
-    timestamp,
-    offset: 0,
-  };
-}
-
-function createLocalHeader(entry: ReturnType<typeof toZipEntry>): Buffer {
+function createLocalFileHeader(entry: ZipEntryMeta): Buffer {
   const header = Buffer.alloc(30);
   header.writeUInt32LE(0x04034b50, 0);
   header.writeUInt16LE(20, 4);
@@ -263,16 +291,13 @@ function createLocalHeader(entry: ReturnType<typeof toZipEntry>): Buffer {
   header.writeUInt16LE(0, 8);
   header.writeUInt32LE(entry.timestamp, 10);
   header.writeUInt32LE(entry.crc, 14);
-  header.writeUInt32LE(entry.data.length, 18);
-  header.writeUInt32LE(entry.data.length, 22);
+  header.writeUInt32LE(entry.dataLength, 18);
+  header.writeUInt32LE(entry.dataLength, 22);
   header.writeUInt16LE(entry.name.length, 26);
   return header;
 }
 
-function createCentralDirectoryHeader(
-  entry: ReturnType<typeof toZipEntry>,
-  offset: number,
-): Buffer {
+function createCentralDirHeader(entry: ZipEntryMeta): Buffer {
   const header = Buffer.alloc(46);
   header.writeUInt32LE(0x02014b50, 0);
   header.writeUInt16LE(20, 4);
@@ -281,10 +306,10 @@ function createCentralDirectoryHeader(
   header.writeUInt16LE(0, 10);
   header.writeUInt32LE(entry.timestamp, 12);
   header.writeUInt32LE(entry.crc, 16);
-  header.writeUInt32LE(entry.data.length, 20);
-  header.writeUInt32LE(entry.data.length, 24);
+  header.writeUInt32LE(entry.dataLength, 20);
+  header.writeUInt32LE(entry.dataLength, 24);
   header.writeUInt16LE(entry.name.length, 28);
-  header.writeUInt32LE(offset, 42);
+  header.writeUInt32LE(entry.offset, 42);
   return header;
 }
 

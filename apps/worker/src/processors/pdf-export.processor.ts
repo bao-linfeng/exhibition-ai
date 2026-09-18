@@ -16,11 +16,13 @@ const MAX_IMAGE_DIMENSION = 2000;
 const PAGE_PADDING = 36;
 const FOOTER_HEIGHT = 28;
 
-type PdfImage = {
+type ImageLocation = {
   versionId: string;
   filename: string;
   sequence: number;
-  data: Buffer;
+  bucket: string;
+  objectKey: string;
+  sizeBytes: number;
 };
 
 export async function processPdfExport(
@@ -61,7 +63,7 @@ export async function processPdfExport(
 
     const exportedAt = new Date();
     let totalSourceSize = 0;
-    const images: PdfImage[] = [];
+    const locations: ImageLocation[] = [];
 
     for (const versionId of exportRecord.versionIds) {
       const location = await imageVersionRepo.findAssetLocation(versionId);
@@ -71,35 +73,42 @@ export async function processPdfExport(
         throw new Error('Export size exceeds 500 MiB');
       }
 
-      const image = await readObject(
-        storage,
-        location.bucket,
-        location.objectKey,
-        MAX_EXPORT_SIZE_BYTES - totalSourceSize,
-      );
-      totalSourceSize += image.length;
-      images.push({
+      totalSourceSize += location.sizeBytes;
+      locations.push({
         versionId,
         filename: toPdfFilename(location.originalFilename),
         sequence: location.sequence,
-        data: image,
+        bucket: location.bucket,
+        objectKey: location.objectKey,
+        sizeBytes: location.sizeBytes,
       });
     }
 
-    images.sort((a, b) => a.sequence - b.sequence);
+    locations.sort((a, b) => a.sequence - b.sequence);
 
     const pdfDoc = await PDFDocument.create();
     const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
     drawCoverPage(pdfDoc, font, projectId, exportedAt);
 
-    for (const image of images) {
-      await drawImagePage(pdfDoc, font, image);
+    let actualSourceSize = 0;
+    const versionIds: string[] = [];
+    for (const location of locations) {
+      const imageData = await readObject(
+        storage,
+        location.bucket,
+        location.objectKey,
+        MAX_EXPORT_SIZE_BYTES - actualSourceSize,
+      );
+      actualSourceSize += imageData.length;
+      await drawImagePage(
+        pdfDoc,
+        font,
+        { sequence: location.sequence, filename: location.filename },
+        imageData,
+      );
+      versionIds.push(location.versionId);
     }
-    drawSourcePage(
-      pdfDoc,
-      font,
-      images.map((image) => image.versionId),
-    );
+    drawSourcePage(pdfDoc, font, versionIds);
 
     const pdf = await pdfDoc.save();
     if (pdf.length > MAX_EXPORT_SIZE_BYTES) {
@@ -136,7 +145,7 @@ export async function processPdfExport(
     });
 
     logger.info(
-      { taskId, exportId: exportRecord.id, versionCount: images.length },
+      { taskId, exportId: exportRecord.id, versionCount: locations.length },
       'PDF export completed',
     );
   } catch (err) {
@@ -195,9 +204,10 @@ function drawCoverPage(
 async function drawImagePage(
   pdfDoc: PDFDocument,
   font: PDFFont,
-  source: PdfImage,
+  source: { sequence: number; filename: string },
+  data: Buffer,
 ): Promise<void> {
-  const image = sharp(source.data);
+  const image = sharp(data);
   const metadata = await image.metadata();
   const jpeg = await (
     metadata.width &&
