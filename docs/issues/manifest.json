@@ -1279,6 +1279,24 @@
         "scripts/check-migrations.mjs",
         "package.json"
       ]
+    },
+    {
+      "id": "BUG-127",
+      "title": "保持图片重试输出与原失败 ordinal 的稳定映射",
+      "labels": [
+        "ai-generation",
+        "bug",
+        "P1"
+      ],
+      "issueNumber": 127,
+      "issueUrl": "https://github.com/bao-linfeng/exhibition-ai/issues/127",
+      "branch": "fix/issue-127-retry-ordinal-mapping",
+      "prNumber": null,
+      "prUrl": null,
+      "status": "in_review",
+      "files": [
+        "apps/worker/src/processors/image-generation.processor.ts"
+      ]
     }
   ],
   "documentationPr": {
