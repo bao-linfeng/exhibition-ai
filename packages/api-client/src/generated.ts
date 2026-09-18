@@ -74,7 +74,7 @@ export interface paths {
       path?: never;
       cookie?: never;
     };
-    /** @description Get CSRF token. */
+    /** @description Get CSRF token bound to current session. */
     get: operations['getCsrf'];
     put?: never;
     post?: never;

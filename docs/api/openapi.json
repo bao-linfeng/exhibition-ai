@@ -280,7 +280,7 @@
       "get": {
         "operationId": "getCsrf",
         "tags": ["auth"],
-        "description": "Get CSRF token.",
+        "description": "Get CSRF token bound to current session.",
         "responses": {
           "200": {
             "description": "Default Response",
