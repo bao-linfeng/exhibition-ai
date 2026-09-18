@@ -93,7 +93,11 @@ export class CustomerService {
     );
 
     if (customer) return this.toCustomer(customer);
-    return (await this.repo.findById(id, requestingUser.id, requestingUser.role))
+    return (await this.repo.findById(
+      id,
+      requestingUser.id,
+      requestingUser.role,
+    ))
       ? 'conflict'
       : null;
   }

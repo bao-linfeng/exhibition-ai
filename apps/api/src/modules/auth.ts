@@ -239,7 +239,8 @@ export async function authRoutes(app: FastifyInstance) {
     async (_request, reply) => {
       return reply.code(410).send({
         error: 'Gone',
-        message: 'Public registration is not available. Contact your administrator.',
+        message:
+          'Public registration is not available. Contact your administrator.',
       });
     },
   );
@@ -260,7 +261,8 @@ export async function authRoutes(app: FastifyInstance) {
     async (_request, reply) => {
       return reply.code(410).send({
         error: 'Gone',
-        message: 'Public registration is not available. Contact your administrator.',
+        message:
+          'Public registration is not available. Contact your administrator.',
       });
     },
   );
