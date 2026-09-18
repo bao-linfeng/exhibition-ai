@@ -48,6 +48,7 @@ export class MockImageProvider implements ImageProvider {
       maxOutputCount: 4,
       supportsSeed: true,
       supportsNegativePrompt: true,
+      supportsReferenceAssets: true,
     },
   ) {}
 
@@ -88,6 +89,17 @@ export class MockImageProvider implements ImageProvider {
       throw new ProviderError(
         'parameter_invalid',
         `sizePreset "${req.sizePreset}" is not supported`,
+        false,
+      );
+    }
+    if (
+      !this._capability.supportsReferenceAssets &&
+      req.referenceAssets !== undefined &&
+      req.referenceAssets.length > 0
+    ) {
+      throw new ProviderError(
+        'capability_not_supported',
+        'This mock model does not support reference assets',
         false,
       );
     }
@@ -151,6 +163,7 @@ export class MockImageProvider implements ImageProvider {
         scenario,
         callCount: this.callCount,
         promptSnapshotVersion: req.promptSnapshot.version,
+        referenceAssetCount: req.referenceAssets?.length ?? 0,
       },
     };
 

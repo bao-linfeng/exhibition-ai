@@ -38,6 +38,17 @@ export class GeminiImageProvider implements ImageProvider {
         false,
       );
     }
+    if (
+      req.referenceAssets !== undefined &&
+      req.referenceAssets.length > 0 &&
+      !this.capability.supportsReferenceAssets
+    ) {
+      throw new ProviderError(
+        'capability_not_supported',
+        'This Gemini model does not support reference assets',
+        false,
+      );
+    }
 
     const outputs: ImageGenerationOutput[] = [];
 

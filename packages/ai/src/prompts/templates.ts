@@ -25,11 +25,11 @@ export const BUILTIN_TEMPLATES: PromptTemplate[] = [
   },
   {
     id: 'image_generation_prompt',
-    version: '2026-09-15.1',
+    version: '2026-09-18.1',
     text: `展览空间效果图，{{instruction}}。
 
 设计方向：{{direction}}
 尺寸规格：{{size_preset}}
-风格要求：专业展览设计，高品质渲染，真实材质表现{{negative_prompt_suffix}}`,
+{{brief_context}}风格要求：专业展览设计，高品质渲染，真实材质表现{{negative_prompt_suffix}}`,
   },
 ];
