@@ -34,7 +34,7 @@ curl http://localhost:3000/api/ready
 ### 创建测试用户（如果尚未创建）
 
 ```bash
-docker compose --env-file .env -f infra/compose.dev.yaml run --rm devtools node scripts/create-admin.mjs
+docker compose --env-file .env -f infra/compose.dev.yaml run --rm devtools pnpm user:bootstrap
 ```
 
 ---
