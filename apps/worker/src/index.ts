@@ -95,7 +95,8 @@ const assetRepo = new AssetRepository(db);
 const quotaRepo = new QuotaRepository(db);
 const taskRepo = new TaskRepository(db, quotaRepo);
 const generationRepo = new GenerationRepository(db, quotaRepo);
-const quotaService = new QuotaService(db, quotaRepo, new AuditService(db));
+const auditService = new AuditService(db);
+const quotaService = new QuotaService(db, quotaRepo, auditService);
 const imageVersionRepo = new ImageVersionRepository(db);
 const briefRepo = new BriefRepository(db);
 const directionRepo = new DirectionRepository(db);
@@ -255,6 +256,8 @@ const designDirectionWorker = new Worker(
       briefRepo,
       directionRepo,
       projectRepo,
+      eventsService,
+      auditService,
       textProviderRegistry,
       textProviderId: defaultTextProviderId,
       promptRegistry,

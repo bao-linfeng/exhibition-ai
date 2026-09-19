@@ -1,6 +1,8 @@
 import type {
+  AuditService,
   BriefRepository,
   DirectionRepository,
+  EventsService,
   ProjectRepository,
   TaskRepository,
 } from '@exhibition/backend';
@@ -33,6 +35,8 @@ export async function processDesignDirection(
     briefRepo: BriefRepository;
     directionRepo: DirectionRepository;
     projectRepo: ProjectRepository;
+    eventsService: EventsService;
+    auditService: AuditService;
     textProviderRegistry: TextProviderRegistry;
     textProviderId: string;
     promptRegistry: PromptRegistry;
@@ -44,6 +48,8 @@ export async function processDesignDirection(
     briefRepo,
     directionRepo,
     projectRepo,
+    eventsService,
+    auditService,
     textProviderRegistry,
     textProviderId,
     promptRegistry,
@@ -130,14 +136,69 @@ export async function processDesignDirection(
     });
 
     // 设计方向生成成功后，自动将项目从 briefing 推进到 designing
-    const project = await projectRepo.findById(projectId);
-    if (project && project.status === 'briefing') {
-      await projectRepo.update(
+    // 使用 CAS 重试机制，避免并发修改导致的状态推进静默失败
+    const MAX_RETRIES = 3;
+    let advanced = false;
+    for (let attempt = 0; attempt < MAX_RETRIES && !advanced; attempt++) {
+      const project = await projectRepo.findById(projectId);
+      if (!project || project.status !== 'briefing') break;
+
+      const updated = await projectRepo.update(
         projectId,
         { status: 'designing' },
         project.revision,
       );
-      logger.info({ projectId }, 'Project advanced from briefing to designing');
+
+      if (updated) {
+        await eventsService.appendEvent(
+          projectId,
+          {
+            type: 'project.transitioned',
+            data: {
+              projectId,
+              action: 'start_designing',
+              previousStatus: 'briefing',
+              newStatus: 'designing',
+            },
+            resourceId: projectId,
+            resourceRevision: updated.revision,
+          },
+          { userId: task.requestedBy, role: 'worker' },
+        );
+
+        await auditService.log({
+          eventType: 'project.transitioned',
+          actorId: task.requestedBy,
+          projectId,
+          resourceType: 'project',
+          resourceId: projectId,
+          metadata: {
+            action: 'start_designing',
+            previousStatus: 'briefing',
+            newStatus: 'designing',
+            triggeredBy: 'design_direction_task',
+            taskId,
+          },
+        });
+
+        logger.info(
+          { projectId, attempt },
+          'Project advanced from briefing to designing',
+        );
+        advanced = true;
+      } else {
+        logger.warn(
+          { projectId, attempt },
+          'CAS conflict advancing project status, retrying',
+        );
+      }
+    }
+
+    if (!advanced) {
+      logger.warn(
+        { projectId },
+        'Failed to advance project from briefing to designing after retries',
+      );
     }
 
     logger.info(
