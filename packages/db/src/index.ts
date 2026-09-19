@@ -73,12 +73,13 @@ function assertJournalMonotonic(
 /**
  * 修复已有数据库中因 journal 时间戳乱序而导致的 __drizzle_migrations 记录问题。
  *
- * 历史背景：journal 中 idx 18/21/22 的 when 时间戳曾小于 idx 17 的 when，
+ * 历史背景：journal 中多个 entry 的 when 时间戳小于前面已应用迁移的 when，
  * 导致 Drizzle 迁移器（基于 MAX(created_at) 比较）静默跳过这些迁移。
- * 本函数在调用 drizzleMigrate 之前，将数据库中残留的旧乱序时间戳更新为
+ * 本函数在调用 drizzleMigrate 之前，将数据库中残留的旧乱序时间戳批量更新为
  * 修正后的值，使后续迁移能正常运行。
  *
- * 映射表：旧 when → 新 when（与 _journal.json 中的修正值对应）
+ * 策略：按 id ASC 顺序读取所有现有记录，与目标时间戳序列对齐后批量更新，
+ * 避免旧值重复（如 idx 5 和 idx 10 旧 when 相同）导致 UPDATE WHERE 歧义。
  */
 async function repairOutOfOrderMigrationTimestamps(
   pool: pg.Pool,
@@ -103,20 +104,51 @@ async function repairOutOfOrderMigrationTimestamps(
 
   if (!tableExists) return;
 
-  // 旧（错误）时间戳 → 新（修正）时间戳的映射
-  // 这些是 _journal.json 修正前后的对应值
-  const timestampFixes: [oldWhen: number, newWhen: number][] = [
-    [1758153600000, 1789728000001], // idx 18: 0018_add_prompt_templates
-    [1789643638000, 1789728000002], // idx 19: 0019_add_favorites_and_tags
-    [1758153600001, 1789730000001], // idx 21: 0021_confirmation_processing_failed_status
-    [1758240000000, 1789730000002], // idx 22: 0022_add_reconciling_at_to_tasks
+  // 修正后的 journal when 序列（按 idx 升序，与 _journal.json 完全一致）
+  const correctedWhens = [
+    1789396346356, // idx 0
+    1789396346357, // idx 1
+    1789396346358, // idx 2
+    1789443151716, // idx 3
+    1789500000000, // idx 4
+    1789500000001, // idx 5  (旧: 1757980800000)
+    1789500000002, // idx 6  (旧: 1757980800001)
+    1789500000003, // idx 7  (旧: 1757980800002)
+    1789500000004, // idx 8  (旧: 1757980800003)
+    1789500000005, // idx 9  (旧: 1757980800004)
+    1789500000006, // idx 10 (旧: 1757980800000, 与 idx 5 重复)
+    1789500000007, // idx 11 (旧: 1789420800000)
+    1789500000008, // idx 12
+    1789539249154, // idx 13
+    1789557992000, // idx 14
+    1789561117000, // idx 15
+    1789565939000, // idx 16
+    1789728000000, // idx 17
+    1789728000001, // idx 18 (旧: 1758153600000)
+    1789728000002, // idx 19 (旧: 1789643638000)
+    1789730000000, // idx 20
+    1789730000001, // idx 21 (旧: 1758153600001)
+    1789730000002, // idx 22 (旧: 1758240000000)
   ];
 
-  for (const [oldWhen, newWhen] of timestampFixes) {
-    await pool.query(
-      `UPDATE drizzle.__drizzle_migrations SET created_at = $1 WHERE created_at = $2`,
-      [newWhen, oldWhen],
-    );
+  // 按 id ASC 读取现有记录
+  const { rows } = await pool.query<{ id: number; created_at: string }>(
+    `SELECT id, created_at FROM drizzle.__drizzle_migrations ORDER BY id ASC`,
+  );
+
+  // 仅处理已存在的记录数（可能少于 correctedWhens 长度，剩余的由 drizzleMigrate 补录）
+  for (let i = 0; i < rows.length; i++) {
+    const row = rows[i];
+    const targetWhen = correctedWhens[i];
+    if (row === undefined || targetWhen === undefined) break;
+
+    const currentWhen = Number(row.created_at);
+    if (currentWhen !== targetWhen) {
+      await pool.query(
+        `UPDATE drizzle.__drizzle_migrations SET created_at = $1 WHERE id = $2`,
+        [targetWhen, row.id],
+      );
+    }
   }
 }
 
