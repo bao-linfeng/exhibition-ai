@@ -11,6 +11,7 @@ import {
   type TaskRepository,
   InsufficientQuotaError,
 } from './tasks.repository.js';
+import type { QuotaService } from '../settings/quota.service.js';
 import type { Queue } from 'bullmq';
 
 function toTaskDto(row: {
@@ -59,6 +60,7 @@ export class TaskService {
   constructor(
     private repo: TaskRepository,
     private queues: Map<string, Queue>,
+    private quotaService: QuotaService,
   ) {}
 
   async enqueueAssetValidation(input: {
@@ -332,6 +334,19 @@ export class TaskService {
       logger.warn(
         { taskIds: failed.map((task) => task.id), thresholdMs },
         'Auto-failed tasks stuck in reconciling state',
+      );
+      // 释放各任务的 quota reservation，防止冻结额度永久滞留
+      await Promise.allSettled(
+        failed.map((task) =>
+          this.quotaService
+            .releaseReservation({ taskId: task.id })
+            .catch((err: unknown) => {
+              logger.error(
+                { taskId: task.id, err },
+                'Failed to release quota reservation for auto-failed reconciling task',
+              );
+            }),
+        ),
       );
     }
   }
