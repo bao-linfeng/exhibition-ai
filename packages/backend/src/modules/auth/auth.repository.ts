@@ -40,7 +40,7 @@ export class AuthRepository {
   async updatePassword(userId: string, passwordHash: string): Promise<void> {
     await this.db
       .update(users)
-      .set({ passwordHash, updatedAt: new Date() })
+      .set({ passwordHash, mustChangePassword: false, updatedAt: new Date() })
       .where(eq(users.id, userId));
   }
 
