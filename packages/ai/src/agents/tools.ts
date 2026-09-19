@@ -57,7 +57,10 @@ export function createBoothTools(): AgentTool[] {
           payload: payload as Record<string, unknown>,
           payloadHash,
         });
-        await context.onConfirmationCreated(result.confirmationId);
+        await context.onConfirmationCreated(
+          result.confirmationId,
+          '已创建 Brief 修改请求，等待您的确认',
+        );
         return {
           confirmationId: result.confirmationId,
           message: '已创建 Brief 修改请求，等待您的确认',
@@ -106,7 +109,10 @@ export function createBoothTools(): AgentTool[] {
               : undefined,
           currency: 'CNY',
         });
-        await context.onConfirmationCreated(result.confirmationId);
+        await context.onConfirmationCreated(
+          result.confirmationId,
+          '已创建生成请求，等待您的确认',
+        );
         return {
           confirmationId: result.confirmationId,
           message: '已创建生成请求，等待您的确认',

@@ -229,7 +229,10 @@ export async function processAgentRun(
           await persistParts();
         }
       },
-      onConfirmationCreated: async (confirmationId: string) => {
+      onConfirmationCreated: async (
+        confirmationId: string,
+        question: string,
+      ) => {
         assistantParts.push({ type: 'confirmation', confirmationId });
         await persistParts();
         await runRepo.updateStatus(run.id, 'awaiting_confirmation', {
@@ -237,7 +240,7 @@ export async function processAgentRun(
         });
         await eventsService.appendEvent(
           projectId,
-          { type: 'confirmation.created', data: { confirmationId } },
+          { type: 'confirmation.created', data: { confirmationId, question } },
           actor,
         );
       },

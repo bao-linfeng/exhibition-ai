@@ -51,7 +51,10 @@ export interface AgentRunContext {
     status: 'succeeded' | 'failed',
     summary: string,
   ): Promise<void>;
-  onConfirmationCreated(confirmationId: string): Promise<void>;
+  onConfirmationCreated(
+    confirmationId: string,
+    question: string,
+  ): Promise<void>;
 }
 
 export interface AgentRunOptions {
