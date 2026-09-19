@@ -6,6 +6,7 @@ import {
   useLogoutMutation,
 } from '../api/queries/auth.js';
 import { useUserStore } from '../stores/user.js';
+import { clearCsrfTokenCache } from '../api/client.js';
 
 export function useAuth() {
   const router = useRouter();
@@ -18,6 +19,7 @@ export function useAuth() {
   const isAuthenticated = computed(() => !!user.value);
 
   async function login(email: string, password: string) {
+    clearCsrfTokenCache();
     const result = await loginMutation.mutateAsync({ email, password });
     if (result.data) {
       userStore.setUser(result.data);
@@ -27,6 +29,7 @@ export function useAuth() {
 
   async function logout() {
     await logoutMutation.mutateAsync();
+    clearCsrfTokenCache();
     userStore.clearUser();
     router.push('/login');
   }
