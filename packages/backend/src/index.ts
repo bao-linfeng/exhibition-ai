@@ -425,10 +425,26 @@ export function createServices(): Services {
     ]).finally(() => {
       clearTimeout(timeout);
     });
+
+    const REQUIRED_MIGRATION_COUNT = 23;
+    const migrationCheck = pool
+      .query<{ count: string }>(
+        `SELECT COUNT(*) AS count FROM drizzle.__drizzle_migrations`,
+      )
+      .then(({ rows }) => {
+        const count = Number(rows[0]?.count ?? 0);
+        if (count < REQUIRED_MIGRATION_COUNT) {
+          throw new Error(
+            `Database migrations incomplete: ${count}/${REQUIRED_MIGRATION_COUNT} applied`,
+          );
+        }
+      });
+
     const checks: Promise<unknown>[] = [
       pool.query('SELECT 1'),
       ping,
       s3.send(new HeadBucketCommand({ Bucket: bucket })),
+      migrationCheck,
     ];
 
     const isRealMode = env.AI_PROVIDER_MODE === 'real';
@@ -447,9 +463,10 @@ export function createServices(): Services {
       postgres: results[0]?.status === 'fulfilled',
       redis: results[1]?.status === 'fulfilled',
       storage: results[2]?.status === 'fulfilled',
+      migration: results[3]?.status === 'fulfilled',
     };
     if (isRealMode) {
-      return { ...base, model_config: results[3]?.status === 'fulfilled' };
+      return { ...base, model_config: results[4]?.status === 'fulfilled' };
     }
     return base;
   }

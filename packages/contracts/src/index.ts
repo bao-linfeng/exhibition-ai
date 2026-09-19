@@ -13,6 +13,7 @@ export const ReadySchema = Type.Object(
         postgres: Type.Boolean(),
         redis: Type.Boolean(),
         storage: Type.Boolean(),
+        migration: Type.Optional(Type.Boolean()),
         model_config: Type.Optional(Type.Boolean()),
       },
       { additionalProperties: false },
