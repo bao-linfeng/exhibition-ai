@@ -8,6 +8,11 @@ export const apiClient = createClient<paths>({
 /** 缓存 CSRF token，session 变化时会重新获取 */
 let cachedCsrfToken: string | null = null;
 
+/** 主动清除 CSRF token 缓存，登录和登出时调用 */
+export function clearCsrfTokenCache(): void {
+  cachedCsrfToken = null;
+}
+
 const SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS']);
 
 const csrfMiddleware: Middleware = {
