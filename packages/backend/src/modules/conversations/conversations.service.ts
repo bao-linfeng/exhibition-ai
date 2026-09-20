@@ -194,6 +194,40 @@ export class ConversationService {
     return 'ok';
   }
 
+  async findExpiredConfirmationIds(): Promise<string[]> {
+    return this.confirmRepo.findExpiredPendingIds();
+  }
+
+  async handleConfirmationExpiry(
+    confirmationId: string,
+  ): Promise<'ok' | 'not_found' | 'not_pending'> {
+    const confirmation = await this.confirmRepo.findById(confirmationId);
+    if (!confirmation) return 'not_found';
+    if (confirmation.status !== 'pending') return 'not_pending';
+
+    await this.confirmRepo.updateStatus(confirmationId, 'expired');
+    const run = await this.runRepo.findById(confirmation.runId);
+    if (run?.status === 'awaiting_confirmation') {
+      const assistantMessage = await this.msgRepo.findByRunId(run.id);
+      if (assistantMessage?.status === 'streaming') {
+        await this.msgRepo.updateStatus(assistantMessage.id, 'interrupted');
+      }
+      await this.runRepo.updateStatus(run.id, 'cancelled', {
+        finishedAt: new Date(),
+      });
+      await this.taskRepo.updateStatus(run.taskId, 'failed', {
+        finishedAt: new Date(),
+        errorCode: 'CONFIRMATION_EXPIRED',
+        errorMessage: 'Confirmation expired',
+        canCancel: false,
+        canRetry: false,
+      });
+      await this.convRepo.setActiveRun(run.conversationId, null);
+    }
+
+    return 'ok';
+  }
+
   async approveConfirmation(
     id: string,
     projectId: string,
@@ -231,7 +265,7 @@ export class ConversationService {
     if (confirmation.status !== 'pending') return 'not_pending';
     if (confirmation.payloadHash !== payloadHash) return 'hash_mismatch';
     if (confirmation.expiresAt <= new Date()) {
-      await this.confirmRepo.updateStatus(id, 'expired');
+      await this.handleConfirmationExpiry(id);
       return 'expired';
     }
 
