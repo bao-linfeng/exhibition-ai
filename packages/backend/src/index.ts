@@ -241,9 +241,9 @@ export function createServices(): Services {
   const customerService = new CustomerService(
     new CustomerRepository(drizzleDb),
   );
-  const userService = new UserService(userRepository);
   const dashboardService = new DashboardService(drizzleDb);
   const auditService = new AuditService(drizzleDb);
+  const userService = new UserService(userRepository, auditService);
   const modelConfigRepo = new ModelConfigRepository(drizzleDb);
   const quotaRepo = new QuotaRepository(drizzleDb);
   const settingsService = new SettingsService(modelConfigRepo);
