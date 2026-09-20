@@ -53,13 +53,16 @@ const acknowledgeBriefChange = ref(false);
 const selectedDirectionId = ref<string>('');
 
 const shouldFetchDirections = computed(
-  () => props.mode === 'generate' && !props.directionId
+  () => props.mode === 'generate' && !props.directionId,
 );
 
-const { data: directionsResponse, isLoading: directionsLoading } = useDirectionsQuery(
-  () => props.projectId,
-  computed(() => shouldFetchDirections.value ? props.briefRevisionId : undefined)
-);
+const { data: directionsResponse, isLoading: directionsLoading } =
+  useDirectionsQuery(
+    () => props.projectId,
+    computed(() =>
+      shouldFetchDirections.value ? props.briefRevisionId : undefined,
+    ),
+  );
 
 const directions = computed(() => directionsResponse.value?.data ?? []);
 
@@ -70,10 +73,12 @@ watch(
       selectedDirectionId.value = newDirections[0]!.id;
     }
   },
-  { immediate: true }
+  { immediate: true },
 );
 
-const effectiveDirectionId = computed(() => props.directionId ?? selectedDirectionId.value);
+const effectiveDirectionId = computed(
+  () => props.directionId ?? selectedDirectionId.value,
+);
 
 const { data: modelsResponse, isLoading: modelsLoading } = useQuery({
   queryKey: ['models'],
@@ -191,7 +196,10 @@ function handleSubmit() {
       <Label for="direction-select">
         设计方向 <span class="text-red-500">*</span>
       </Label>
-      <div v-if="!directionsLoading && directions.length === 0" class="text-sm text-amber-400 p-2 bg-amber-950/40 rounded border border-amber-800">
+      <div
+        v-if="!directionsLoading && directions.length === 0"
+        class="text-sm text-amber-400 p-2 bg-amber-950/40 rounded border border-amber-800"
+      >
         请先生成设计方向
       </div>
       <Select
@@ -200,15 +208,18 @@ function handleSubmit() {
         :disabled="disabled || directionsLoading"
       >
         <SelectTrigger id="direction-select">
-          <SelectValue :placeholder="directionsLoading ? '加载中...' : '选择设计方向'" />
+          <SelectValue
+            :placeholder="directionsLoading ? '加载中...' : '选择设计方向'"
+          />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem
-            v-for="dir in directions"
-            :key="dir.id"
-            :value="dir.id"
-          >
-            {{ dir.title || (dir.concept.length > 40 ? dir.concept.substring(0, 40) + '...' : dir.concept) }}
+          <SelectItem v-for="dir in directions" :key="dir.id" :value="dir.id">
+            {{
+              dir.title ||
+              (dir.concept.length > 40
+                ? dir.concept.substring(0, 40) + '...'
+                : dir.concept)
+            }}
           </SelectItem>
         </SelectContent>
       </Select>
