@@ -140,6 +140,15 @@ export async function confirmationRoutes(app: FastifyInstance) {
         throw app.httpErrors.notFound('Confirmation not found');
       }
 
+      // Only admin and designer can approve confirmations (which may trigger generation)
+      const canGenerate =
+        actorContext.role === 'admin' || actorContext.role === 'designer';
+      if (!canGenerate) {
+        throw app.httpErrors.forbidden(
+          'Only admin and designer roles can approve confirmations',
+        );
+      }
+
       const result =
         await app.services!.conversationService.approveConfirmation(
           id,
@@ -204,6 +213,15 @@ export async function confirmationRoutes(app: FastifyInstance) {
         ))
       ) {
         throw app.httpErrors.notFound('Confirmation not found');
+      }
+
+      // Only admin and designer can reject confirmations
+      const canGenerate =
+        actorContext.role === 'admin' || actorContext.role === 'designer';
+      if (!canGenerate) {
+        throw app.httpErrors.forbidden(
+          'Only admin and designer roles can reject confirmations',
+        );
       }
 
       const result = await app.services!.conversationService.rejectConfirmation(
