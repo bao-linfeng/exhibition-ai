@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
-import { useRoute } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import { useAuth } from '../composables/useAuth.js';
 import {
   LayoutDashboard,
@@ -12,6 +12,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Archive,
+  Settings,
 } from '@lucide/vue';
 import { Avatar, AvatarFallback } from '../components/ui/avatar/index.js';
 import {
@@ -32,18 +33,27 @@ import {
 import { Button } from '../components/ui/button/index.js';
 
 const route = useRoute();
+const router = useRouter();
 const { user, logout } = useAuth();
 
 const isCollapsed = ref(false);
 const isMobileMenuOpen = ref(false);
 
-const navigation = [
-  { name: '仪表盘', href: '/dashboard', icon: LayoutDashboard },
-  { name: '客户管理', href: '/customers', icon: Building2 },
-  { name: '项目管理', href: '/projects', icon: FolderKanban },
-  { name: '任务中心', href: '/tasks', icon: ClipboardList },
-  { name: '历史案例库', href: '/cases', icon: Archive },
-];
+const navigation = computed(() => {
+  const items = [
+    { name: '仪表盘', href: '/dashboard', icon: LayoutDashboard },
+    { name: '客户管理', href: '/customers', icon: Building2 },
+    { name: '项目管理', href: '/projects', icon: FolderKanban },
+    { name: '任务中心', href: '/tasks', icon: ClipboardList },
+    { name: '历史案例库', href: '/cases', icon: Archive },
+  ];
+
+  if (user.value?.role === 'admin') {
+    items.push({ name: '系统设置', href: '/settings', icon: Settings });
+  }
+
+  return items;
+});
 
 const currentRouteName = computed(() => {
   if (route.name === 'dashboard') return '仪表盘';
@@ -51,6 +61,7 @@ const currentRouteName = computed(() => {
   if (route.path.startsWith('/projects')) return '项目管理';
   if (route.path.startsWith('/tasks')) return '任务中心';
   if (route.path.startsWith('/cases')) return '历史案例库';
+  if (route.path.startsWith('/settings')) return '系统设置';
   return '';
 });
 
@@ -141,6 +152,14 @@ async function handleLogout() {
           <DropdownMenuContent align="start" class="w-56">
             <DropdownMenuLabel>我的账户</DropdownMenuLabel>
             <DropdownMenuSeparator />
+            <DropdownMenuItem
+              v-if="user?.role === 'admin'"
+              @click="router.push('/settings')"
+            >
+              <Settings class="mr-2 h-4 w-4" />
+              系统设置
+            </DropdownMenuItem>
+            <DropdownMenuSeparator v-if="user?.role === 'admin'" />
             <DropdownMenuItem class="text-destructive" @click="handleLogout">
               <LogOut class="mr-2 h-4 w-4" />
               退出登录
