@@ -67,7 +67,7 @@ watch(
   directions,
   (newDirections) => {
     if (newDirections.length > 0 && !selectedDirectionId.value) {
-      selectedDirectionId.value = newDirections[0].id;
+      selectedDirectionId.value = newDirections[0]!.id;
     }
   },
   { immediate: true }
@@ -208,7 +208,7 @@ function handleSubmit() {
             :key="dir.id"
             :value="dir.id"
           >
-            {{ dir.title || (dir.summary.length > 40 ? dir.summary.substring(0, 40) + '...' : dir.summary) }}
+            {{ dir.title || (dir.concept.length > 40 ? dir.concept.substring(0, 40) + '...' : dir.concept) }}
           </SelectItem>
         </SelectContent>
       </Select>
