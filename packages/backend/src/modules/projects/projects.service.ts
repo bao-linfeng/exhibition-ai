@@ -398,9 +398,21 @@ export class ProjectService {
       if (existing.status !== 'designing') return 'invalid_transition';
     } else if (action === 'approve') {
       if (!['admin', 'sales'].includes(requestingUser.role)) return 'forbidden';
+      if (
+        requestingUser.role === 'sales' &&
+        !(await this.repo.isMember(projectId, requestingUser.id))
+      ) {
+        return null;
+      }
       if (existing.status !== 'reviewing') return 'invalid_transition';
     } else if (action === 'request_changes') {
       if (!['admin', 'sales'].includes(requestingUser.role)) return 'forbidden';
+      if (
+        requestingUser.role === 'sales' &&
+        !(await this.repo.isMember(projectId, requestingUser.id))
+      ) {
+        return null;
+      }
       if (existing.status !== 'reviewing') return 'invalid_transition';
     } else {
       if (requestingUser.role !== 'admin') return 'forbidden';
