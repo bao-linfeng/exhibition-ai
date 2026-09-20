@@ -1309,8 +1309,8 @@
       "issueNumber": 156,
       "issueUrl": "https://github.com/bao-linfeng/exhibition-ai/issues/156",
       "branch": "fix/issue-156-workspace-direction-id",
-      "prNumber": null,
-      "prUrl": null,
+      "prNumber": 182,
+      "prUrl": "https://github.com/bao-linfeng/exhibition-ai/pull/182",
       "status": "in_review",
       "files": [
         "apps/web/src/views/generations/GenerationForm.vue",
