@@ -17,6 +17,12 @@ const routes: RouteRecordRaw[] = [
     meta: { requiresAuth: false },
   },
   {
+    path: '/change-password',
+    name: 'change-password',
+    component: () => import('../views/auth/ChangePasswordRequired.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
     path: '/',
     component: AppLayout,
     meta: { requiresAuth: true },
@@ -158,6 +164,16 @@ router.beforeEach(async (to, from, next) => {
       }
       if (data?.data) {
         userStore.setUser(data.data);
+
+        if (data.data.mustChangePassword && to.path !== '/change-password') {
+          next('/change-password');
+          return;
+        }
+
+        if (!data.data.mustChangePassword && to.path === '/change-password') {
+          next('/dashboard');
+          return;
+        }
       }
     } catch {
       const safeFullPath =
@@ -176,6 +192,10 @@ router.beforeEach(async (to, from, next) => {
       if (!error) {
         if (data?.data) {
           userStore.setUser(data.data);
+          if (data.data.mustChangePassword) {
+            next('/change-password');
+            return;
+          }
         }
         next('/dashboard');
         return;
