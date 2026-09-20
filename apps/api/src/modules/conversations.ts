@@ -181,7 +181,15 @@ export async function conversationRoutes(app: FastifyInstance) {
       if (!(await app.projectPolicy.canViewProject(actorContext, projectId))) {
         throw app.httpErrors.notFound('Project not found');
       }
-      if (actorContext.role === 'viewer') throw app.httpErrors.forbidden();
+
+      // Only admin and designer can start Agent sessions and generation
+      const canGenerate =
+        actorContext.role === 'admin' || actorContext.role === 'designer';
+      if (!canGenerate) {
+        throw app.httpErrors.forbidden(
+          'Only admin and designer roles can start Agent sessions',
+        );
+      }
 
       const conversation =
         await app.services!.conversationService.getOrCreateConversation(
