@@ -303,7 +303,10 @@ async function createScenario(
   return { actorId, customerId, projectId, sessionId };
 }
 
-async function cleanupScenario(db: Database, scenario: Scenario): Promise<void> {
+async function cleanupScenario(
+  db: Database,
+  scenario: Scenario,
+): Promise<void> {
   await cleanupProject(db, scenario.projectId);
   await db.delete(customers).where(eq(customers.id, scenario.customerId));
   await db.delete(users).where(eq(users.id, scenario.actorId));
