@@ -341,7 +341,7 @@ async function createPendingConfirmation(db: Database, scenario: Scenario) {
     .values({
       projectId: scenario.projectId,
       kind: 'agent_run',
-      status: 'awaiting_confirmation',
+      status: 'pending',
       requestedBy: scenario.actorId,
     })
     .returning();
@@ -353,7 +353,7 @@ async function createPendingConfirmation(db: Database, scenario: Scenario) {
       conversationId: conversation.id,
       projectId: scenario.projectId,
       taskId: task.id,
-      status: 'awaiting_confirmation',
+      status: 'pending',
     })
     .returning();
   if (!run) throw new Error('Failed to create test Agent run');
