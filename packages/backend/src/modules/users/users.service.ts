@@ -6,10 +6,14 @@ import type {
   UpdateUserRequest,
 } from '@exhibition/contracts';
 import type { User as DbUser } from '@exhibition/db';
+import type { AuditService } from '../audit/audit.service.js';
 import { UserRepository } from './users.repository.js';
 
 export class UserService {
-  constructor(private repo: UserRepository) {}
+  constructor(
+    private repo: UserRepository,
+    private auditService: AuditService,
+  ) {}
 
   async listUsers(
     query: ListUsersQuery,
@@ -46,15 +50,29 @@ export class UserService {
   ): Promise<UserContract | null | 'conflict' | 'forbidden' | 'last_admin'> {
     if (requestingUser.role !== 'admin') return 'forbidden';
     const { expectedRevision, ...update } = data;
+    const oldUser = await this.repo.findById(id);
+    if (!oldUser) return null;
 
     const user = await this.repo.updateWithLastAdminGuard(
       id,
       update,
       expectedRevision,
     );
-    return user && user !== 'conflict' && user !== 'last_admin'
-      ? this.toUser(user)
-      : user;
+    if (user && user !== 'conflict' && user !== 'last_admin') {
+      await this.auditService.log({
+        eventType: 'user.updated',
+        actorId: requestingUser.id,
+        resourceType: 'user',
+        resourceId: id,
+        metadata: {
+          changes: update,
+          previousRole: oldUser.role,
+          previousStatus: oldUser.status,
+        },
+      });
+      return this.toUser(user);
+    }
+    return user;
   }
 
   async listOptions(

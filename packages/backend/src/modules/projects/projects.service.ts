@@ -208,6 +208,19 @@ export class ProjectService {
     const created = await this.repo.addMember(projectId, userId, addedBy);
     if (!created) return null;
 
+    await this.auditService.log({
+      eventType: 'project.member_added',
+      actorId: requestingUser.id,
+      projectId,
+      resourceType: 'project_member',
+      resourceId: `${projectId}:${userId}`,
+      metadata: {
+        projectId,
+        userId,
+        addedBy,
+      },
+    });
+
     return (
       (await this.repo.findMembers(projectId))
         .map((member) => this.toMember(member))
@@ -233,6 +246,18 @@ export class ProjectService {
     if (userId === project.ownerId) return 'forbidden';
 
     await this.repo.removeMember(projectId, userId);
+
+    await this.auditService.log({
+      eventType: 'project.member_removed',
+      actorId: requestingUser.id,
+      projectId,
+      resourceType: 'project_member',
+      resourceId: `${projectId}:${userId}`,
+      metadata: {
+        projectId,
+        userId,
+      },
+    });
   }
 
   async transferOwner(
@@ -266,7 +291,21 @@ export class ProjectService {
       expectedRevision,
     );
 
-    if (updatedProject) return this.toProject(updatedProject);
+    if (updatedProject) {
+      await this.auditService.log({
+        eventType: 'project.owner_transferred',
+        actorId: requestingUser.id,
+        projectId,
+        resourceType: 'project',
+        resourceId: projectId,
+        metadata: {
+          projectId,
+          previousOwnerId: project.ownerId,
+          newOwnerId,
+        },
+      });
+      return this.toProject(updatedProject);
+    }
     return (await this.repo.findById(projectId)) ? 'conflict' : null;
   }
 
