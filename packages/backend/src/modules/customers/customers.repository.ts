@@ -1,4 +1,4 @@
-import { and, desc, eq, ilike, inArray, lt, sql } from 'drizzle-orm';
+import { and, desc, eq, ilike, inArray, lt, or, sql } from 'drizzle-orm';
 import type { Customer, Database, NewCustomer } from '@exhibition/db';
 import { customers, projectMembers, projects } from '@exhibition/db';
 
@@ -19,17 +19,28 @@ export class CustomerRepository {
     page: { nextCursor: string | null; hasMore: boolean };
   }> {
     const limit = Math.min(Math.max(options.limit ?? 20, 1), 100);
-    const visibleCustomerIdsSubquery =
-      options.userRole === 'designer' || options.userRole === 'viewer'
-        ? this.db
-            .select({ customerId: projects.customerId })
-            .from(projects)
-            .innerJoin(
-              projectMembers,
-              eq(projects.id, projectMembers.projectId),
-            )
-            .where(eq(projectMembers.userId, options.userId))
-        : undefined;
+
+    // For non-admin users, apply scope filtering:
+    // - Can see customers they created
+    // - Can see customers linked to projects they're members of
+    let scopeFilter = undefined;
+    if (
+      options.userRole === 'designer' ||
+      options.userRole === 'viewer' ||
+      options.userRole === 'sales'
+    ) {
+      const visibleCustomerIdsSubquery = this.db
+        .select({ customerId: projects.customerId })
+        .from(projects)
+        .innerJoin(projectMembers, eq(projects.id, projectMembers.projectId))
+        .where(eq(projectMembers.userId, options.userId));
+
+      scopeFilter = or(
+        eq(customers.createdBy, options.userId),
+        inArray(customers.id, visibleCustomerIdsSubquery),
+      );
+    }
+
     const rows = await this.db
       .select()
       .from(customers)
@@ -42,9 +53,7 @@ export class CustomerRepository {
           options.cursor
             ? lt(customers.createdAt, new Date(options.cursor))
             : undefined,
-          visibleCustomerIdsSubquery
-            ? inArray(customers.id, visibleCustomerIdsSubquery)
-            : undefined,
+          scopeFilter,
         ),
       )
       .orderBy(desc(customers.createdAt))
@@ -66,28 +75,31 @@ export class CustomerRepository {
     userId: string,
     userRole: string,
   ): Promise<Customer | undefined> {
-    const visibleCustomerIdsSubquery =
-      userRole === 'designer' || userRole === 'viewer'
-        ? this.db
-            .select({ customerId: projects.customerId })
-            .from(projects)
-            .innerJoin(
-              projectMembers,
-              eq(projects.id, projectMembers.projectId),
-            )
-            .where(eq(projectMembers.userId, userId))
-        : undefined;
+    // For non-admin users, apply scope filtering:
+    // - Can see customers they created
+    // - Can see customers linked to projects they're members of
+    let scopeFilter = undefined;
+    if (
+      userRole === 'designer' ||
+      userRole === 'viewer' ||
+      userRole === 'sales'
+    ) {
+      const visibleCustomerIdsSubquery = this.db
+        .select({ customerId: projects.customerId })
+        .from(projects)
+        .innerJoin(projectMembers, eq(projects.id, projectMembers.projectId))
+        .where(eq(projectMembers.userId, userId));
+
+      scopeFilter = or(
+        eq(customers.createdBy, userId),
+        inArray(customers.id, visibleCustomerIdsSubquery),
+      );
+    }
+
     const [customer] = await this.db
       .select()
       .from(customers)
-      .where(
-        and(
-          eq(customers.id, id),
-          visibleCustomerIdsSubquery
-            ? inArray(customers.id, visibleCustomerIdsSubquery)
-            : undefined,
-        ),
-      )
+      .where(and(eq(customers.id, id), scopeFilter))
       .limit(1);
     return customer;
   }

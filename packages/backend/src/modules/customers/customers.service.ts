@@ -77,6 +77,14 @@ export class CustomerService {
       return 'forbidden';
     }
 
+    // Verify the requesting user has access to this customer before allowing updates
+    const existing = await this.repo.findById(
+      id,
+      requestingUser.id,
+      requestingUser.role,
+    );
+    if (!existing) return 'forbidden';
+
     const customer = await this.repo.update(
       id,
       {
