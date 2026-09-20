@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue';
 import { useQuery } from '@tanstack/vue-query';
+import { useDirectionsQuery } from '@/api/queries/directions';
 import { apiClient } from '@/api/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -49,6 +50,36 @@ const seed = ref<number | undefined>(undefined);
 const negativePrompt = ref('');
 const acknowledgeBriefChange = ref(false);
 
+const selectedDirectionId = ref<string>('');
+
+const shouldFetchDirections = computed(
+  () => props.mode === 'generate' && !props.directionId,
+);
+
+const { data: directionsResponse, isLoading: directionsLoading } =
+  useDirectionsQuery(
+    () => props.projectId,
+    computed(() =>
+      shouldFetchDirections.value ? props.briefRevisionId : undefined,
+    ),
+  );
+
+const directions = computed(() => directionsResponse.value?.data ?? []);
+
+watch(
+  directions,
+  (newDirections) => {
+    if (newDirections.length > 0 && !selectedDirectionId.value) {
+      selectedDirectionId.value = newDirections[0]!.id;
+    }
+  },
+  { immediate: true },
+);
+
+const effectiveDirectionId = computed(
+  () => props.directionId ?? selectedDirectionId.value,
+);
+
 const { data: modelsResponse, isLoading: modelsLoading } = useQuery({
   queryKey: ['models'],
   queryFn: async () => {
@@ -94,7 +125,7 @@ const briefChanged = computed(() => {
 const canSubmit = computed(() => {
   if (!instruction.value.trim()) return false;
   if (!selectedModelConfigId.value) return false;
-  if (props.mode === 'generate' && !props.directionId) return false;
+  if (props.mode === 'generate' && !effectiveDirectionId.value) return false;
   if (props.mode === 'edit' && !props.parentVersionId) return false;
   // 如果 Brief 变化了，必须显式确认
   if (briefChanged.value && !acknowledgeBriefChange.value) return false;
@@ -123,7 +154,7 @@ function handleSubmit() {
     emit('submit', {
       ...baseRequest,
       mode: 'generate',
-      directionId: props.directionId!,
+      directionId: effectiveDirectionId.value!,
       parentVersionId: null,
     } as CreateGenerationRequest);
   } else {
@@ -159,6 +190,39 @@ function handleSubmit() {
           我已知晓需求变更，仍要继续修改此图片
         </Label>
       </div>
+    </div>
+
+    <div v-if="mode === 'generate' && !directionId" class="space-y-2">
+      <Label for="direction-select">
+        设计方向 <span class="text-red-500">*</span>
+      </Label>
+      <div
+        v-if="!directionsLoading && directions.length === 0"
+        class="text-sm text-amber-400 p-2 bg-amber-950/40 rounded border border-amber-800"
+      >
+        请先生成设计方向
+      </div>
+      <Select
+        v-else
+        v-model="selectedDirectionId"
+        :disabled="disabled || directionsLoading"
+      >
+        <SelectTrigger id="direction-select">
+          <SelectValue
+            :placeholder="directionsLoading ? '加载中...' : '选择设计方向'"
+          />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem v-for="dir in directions" :key="dir.id" :value="dir.id">
+            {{
+              dir.title ||
+              (dir.concept.length > 40
+                ? dir.concept.substring(0, 40) + '...'
+                : dir.concept)
+            }}
+          </SelectItem>
+        </SelectContent>
+      </Select>
     </div>
 
     <div class="space-y-2">

@@ -739,7 +739,6 @@ function handleViewDetails(version: ImageVersion) {
           :project-id="projectId"
           :mode="generationMode"
           :brief-revision-id="project.currentBriefRevisionId ?? ''"
-          :direction-id="undefined"
           :parent-version-id="selectedParentVersionId"
           :current-brief-revision-id="
             project.currentBriefRevisionId ?? undefined
