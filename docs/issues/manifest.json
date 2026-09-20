@@ -1297,6 +1297,25 @@
       "files": [
         "apps/worker/src/processors/image-generation.processor.ts"
       ]
+    },
+    {
+      "id": "BUG-156",
+      "title": "设计工作台新建图片生成永远无法提交",
+      "labels": [
+        "bug",
+        "P1",
+        "ai-generation"
+      ],
+      "issueNumber": 156,
+      "issueUrl": "https://github.com/bao-linfeng/exhibition-ai/issues/156",
+      "branch": "fix/issue-156-workspace-direction-id",
+      "prNumber": null,
+      "prUrl": null,
+      "status": "in_review",
+      "files": [
+        "apps/web/src/views/generations/GenerationForm.vue",
+        "apps/web/src/views/design/DesignWorkspaceView.vue"
+      ]
     }
   ],
   "documentationPr": {
