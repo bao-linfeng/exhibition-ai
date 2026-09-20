@@ -114,11 +114,7 @@ async function handleSubmit() {
         </form>
 
         <div class="auth-footer">
-          <p class="footer-text">
-            还没有账号？<RouterLink to="/register" class="text-link">
-              立即注册
-            </RouterLink>
-          </p>
+          <p class="footer-text">需要账号？请联系您的系统管理员</p>
           <p class="footer-text">
             忘记密码？<RouterLink to="/forgot-password" class="text-link">
               找回密码
