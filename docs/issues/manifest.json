@@ -1316,6 +1316,25 @@
         "apps/web/src/views/generations/GenerationForm.vue",
         "apps/web/src/views/design/DesignWorkspaceView.vue"
       ]
+    },
+    {
+      "id": "BUG-157",
+      "title": "取消排队中的生图任务不会释放额度预留",
+      "labels": [
+        "bug",
+        "P1",
+        "ai-generation"
+      ],
+      "issueNumber": 157,
+      "issueUrl": "https://github.com/bao-linfeng/exhibition-ai/issues/157",
+      "branch": "fix/issue-157-cancel-quota-release",
+      "prNumber": 183,
+      "prUrl": "https://github.com/bao-linfeng/exhibition-ai/pull/183",
+      "status": "in_review",
+      "files": [
+        "packages/backend/src/modules/tasks/tasks.repository.ts",
+        "packages/backend/src/modules/tasks/tasks.service.ts"
+      ]
     }
   ],
   "documentationPr": {
