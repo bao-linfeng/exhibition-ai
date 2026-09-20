@@ -20,7 +20,9 @@ export class CustomerRepository {
   }> {
     const limit = Math.min(Math.max(options.limit ?? 20, 1), 100);
     const visibleCustomerIdsSubquery =
-      options.userRole === 'designer' || options.userRole === 'viewer'
+      options.userRole === 'designer' ||
+      options.userRole === 'viewer' ||
+      options.userRole === 'sales'
         ? this.db
             .select({ customerId: projects.customerId })
             .from(projects)
@@ -67,7 +69,7 @@ export class CustomerRepository {
     userRole: string,
   ): Promise<Customer | undefined> {
     const visibleCustomerIdsSubquery =
-      userRole === 'designer' || userRole === 'viewer'
+      userRole === 'designer' || userRole === 'viewer' || userRole === 'sales'
         ? this.db
             .select({ customerId: projects.customerId })
             .from(projects)
