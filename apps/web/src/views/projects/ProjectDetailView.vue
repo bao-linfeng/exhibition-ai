@@ -103,6 +103,13 @@ const canArchive = computed(() => {
   return !['archived', 'reviewing'].includes(project.value.status);
 });
 
+const isArchived = computed(() => project.value?.status === 'archived');
+
+const canEnterDesignWorkspace = computed(() => {
+  if (!project.value) return false;
+  return ['designing', 'reviewing', 'approved'].includes(project.value.status);
+});
+
 const canRestore = computed(() => {
   if (!project.value) return false;
   if (userStore.user?.role !== 'admin') return false;
@@ -350,7 +357,18 @@ const availableUsers = computed(() => {
         >
           管理素材
         </Button>
-        <Button disabled>进入设计大厅</Button>
+        <div
+          v-if="!isArchived"
+          :title="canEnterDesignWorkspace ? '' : '请先完成 Brief 准备工作'"
+          class="inline-block"
+        >
+          <Button
+            :disabled="!canEnterDesignWorkspace"
+            @click="router.push(`/projects/${projectId}/design`)"
+          >
+            进入设计大厅
+          </Button>
+        </div>
       </template>
     </PageHeader>
 
