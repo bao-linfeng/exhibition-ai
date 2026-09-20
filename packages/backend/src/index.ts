@@ -237,10 +237,11 @@ export function createServices(): Services {
 
   // 初始化认证服务
   const authRepository = new AuthRepository(drizzleDb);
+  const userRepository = new UserRepository(drizzleDb);
   const customerService = new CustomerService(
     new CustomerRepository(drizzleDb),
   );
-  const userService = new UserService(new UserRepository(drizzleDb));
+  const userService = new UserService(userRepository);
   const dashboardService = new DashboardService(drizzleDb);
   const auditService = new AuditService(drizzleDb);
   const modelConfigRepo = new ModelConfigRepository(drizzleDb);
@@ -271,6 +272,7 @@ export function createServices(): Services {
     new ProjectRepository(drizzleDb),
     eventsService,
     auditService,
+    userRepository,
   );
   const briefService = new BriefService(
     new BriefRepository(drizzleDb),

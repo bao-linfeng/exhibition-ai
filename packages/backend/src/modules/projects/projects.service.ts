@@ -13,12 +13,14 @@ import {
 } from './projects.repository.js';
 import type { EventsService } from '../events/events.service.js';
 import type { AuditService } from '../audit/audit.service.js';
+import type { UserRepository } from '../users/users.repository.js';
 
 export class ProjectService {
   constructor(
     private repo: ProjectRepository,
     private eventsService: EventsService,
     private auditService: AuditService,
+    private userRepo: UserRepository,
   ) {}
 
   async listProjects(
@@ -58,9 +60,13 @@ export class ProjectService {
     data: CreateProjectRequest,
     requestedBy: string,
     requestingUser: { id: string; role: string },
-  ): Promise<ProjectContract | 'forbidden'> {
+  ): Promise<ProjectContract | 'forbidden' | null> {
     if (!['admin', 'designer', 'sales'].includes(requestingUser.role))
       return 'forbidden';
+
+    const ownerValidation = await this.validateProjectOwner(data.ownerId);
+    if (ownerValidation !== true)
+      return ownerValidation === 'invalid_user' ? null : 'forbidden';
 
     const project = await this.repo.create(data);
     await this.repo.addMember(project.id, data.ownerId, requestedBy);
@@ -245,6 +251,15 @@ export class ProjectService {
       if (project.ownerId !== requestingUser.id) return 'forbidden';
     }
 
+    const ownerValidation = await this.validateProjectOwner(newOwnerId);
+    if (ownerValidation !== true)
+      return ownerValidation === 'invalid_user' ? null : 'forbidden';
+
+    const isMember = await this.repo.isMember(projectId, newOwnerId);
+    if (!isMember) {
+      await this.repo.addMember(projectId, newOwnerId, requestingUser.id);
+    }
+
     const updatedProject = await this.repo.updateOwner(
       projectId,
       newOwnerId,
@@ -253,6 +268,17 @@ export class ProjectService {
 
     if (updatedProject) return this.toProject(updatedProject);
     return (await this.repo.findById(projectId)) ? 'conflict' : null;
+  }
+
+  private async validateProjectOwner(
+    userId: string,
+  ): Promise<'invalid_user' | 'forbidden_role' | true> {
+    const user = await this.userRepo.findById(userId);
+    if (!user || user.status !== 'enabled') return 'invalid_user';
+    if (!['admin', 'designer', 'sales'].includes(user.role)) {
+      return 'forbidden_role';
+    }
+    return true;
   }
 
   async transitionLifecycle(
