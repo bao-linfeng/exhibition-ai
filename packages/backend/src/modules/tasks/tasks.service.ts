@@ -184,7 +184,22 @@ export class TaskService {
 
     if (!isAdmin && !(await isMemberFn(task.projectId))) return 'forbidden';
 
-    return this.repo.cancelIfCancellable(id);
+    const result = await this.repo.cancelIfCancellable(id);
+    if (result !== 'ok') return result;
+
+    // Release any quota reservation atomically. The release is idempotent:
+    // if no reservation exists or it has already been settled/released,
+    // releaseReservation is a no-op.
+    try {
+      await this.quotaService.releaseReservation({ taskId: id });
+    } catch (err) {
+      logger.error(
+        { taskId: id, err },
+        'Failed to release quota reservation after task cancellation',
+      );
+    }
+
+    return 'ok';
   }
 
   async retryTask(
