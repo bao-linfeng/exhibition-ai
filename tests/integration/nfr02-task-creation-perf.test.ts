@@ -2,17 +2,16 @@ import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
 import { after, before, describe, it } from 'node:test';
 import { eq } from 'drizzle-orm';
-import {
-  createServices,
-  initDatabase,
-  type Services,
-} from '../../packages/backend/src/index.js';
+import type { Services } from '../../packages/backend/src/index.js';
 import type { Database } from '../../packages/db/src/index.js';
 import { modelConfigs } from '../../packages/db/src/schema/index.js';
 import {
   cleanupProject,
+  insertTestBriefRevision,
   insertTestCustomer,
+  insertTestDesignDirection,
   insertTestProject,
+  insertTestTask,
   insertTestUser,
 } from '../helpers/db-fixtures.js';
 
@@ -22,14 +21,36 @@ describe('NFR-02: 创建任务性能', () => {
   let projectId: string;
   let userId: string;
   let modelConfigId: string;
+  let briefRevisionId: string;
+  let directionId: string;
+
   before(async () => {
     process.env.AI_PROVIDER_MODE = 'mock';
-    services = createServices();
-    ({ db } = initDatabase());
+    const backend = await import('../../packages/backend/src/index.js');
+    services = backend.createServices();
+    ({ db } = backend.initDatabase());
     const user = await insertTestUser(db);
     userId = user.id;
     const customer = await insertTestCustomer(db, userId);
     projectId = (await insertTestProject(db, customer.id, userId)).id;
+
+    // Create brief revision
+    const brief = await insertTestBriefRevision(db, projectId, userId);
+    briefRevisionId = brief.id;
+
+    // Create a task for the design direction
+    const task = await insertTestTask(db, projectId, userId);
+
+    // Create design direction
+    const direction = await insertTestDesignDirection(
+      db,
+      projectId,
+      briefRevisionId,
+      task.id,
+      userId,
+    );
+    directionId = direction.id;
+
     modelConfigId = randomUUID();
     await db.insert(modelConfigs).values({
       id: modelConfigId,
@@ -55,8 +76,8 @@ describe('NFR-02: 创建任务性能', () => {
       projectId,
       {
         mode: 'generate',
-        briefRevisionId: randomUUID(),
-        directionId: randomUUID(),
+        briefRevisionId,
+        directionId,
         parentVersionId: null,
         instruction: 'Measure creation latency.',
         modelConfigId,
