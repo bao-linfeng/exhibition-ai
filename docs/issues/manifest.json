@@ -1335,6 +1335,26 @@
         "packages/backend/src/modules/tasks/tasks.repository.ts",
         "packages/backend/src/modules/tasks/tasks.service.ts"
       ]
+    },
+    {
+      "id": "BUG-169",
+      "title": "[P1] 项目负责人可被设置为 viewer、disabled 用户或非成员",
+      "labels": [
+        "bug",
+        "P1",
+        "auth"
+      ],
+      "issueNumber": 169,
+      "issueUrl": "https://github.com/bao-linfeng/exhibition-ai/issues/169",
+      "branch": "fix/issue-169-project-owner-validation",
+      "prNumber": null,
+      "prUrl": null,
+      "status": "in_review",
+      "files": [
+        "packages/backend/src/modules/projects/projects.service.ts",
+        "packages/backend/src/index.ts",
+        "apps/api/src/modules/projects.ts"
+      ]
     }
   ],
   "documentationPr": {

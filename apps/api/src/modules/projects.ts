@@ -96,6 +96,9 @@ export async function projectRoutes(app: FastifyInstance) {
       );
 
       if (project === 'forbidden') throw app.httpErrors.forbidden();
+      if (!project) {
+        throw app.httpErrors.unprocessableEntity('Invalid project owner');
+      }
       return reply.code(201).send({ data: project });
     },
   );
@@ -309,7 +312,16 @@ export async function projectRoutes(app: FastifyInstance) {
       if (result === 'conflict') {
         throw app.httpErrors.conflict('Project revision conflict');
       }
-      if (!result) throw app.httpErrors.notFound('Project not found');
+      if (!result) {
+        const project = await app.services!.projectService.getProject(
+          (request.params as { id: string }).id,
+          user,
+        );
+        if (project === 'forbidden' || !project) {
+          throw app.httpErrors.notFound('Project not found');
+        }
+        throw app.httpErrors.unprocessableEntity('Invalid project owner');
+      }
 
       return { data: result };
     },
