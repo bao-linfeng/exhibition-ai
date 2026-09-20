@@ -71,9 +71,14 @@ const rejectComment = ref('');
 
 const transitionMutation = useTransitionProjectMutation();
 
+const isProjectOwner = computed(() => {
+  if (!project.value || !userStore.user) return false;
+  return project.value.ownerId === userStore.user.id;
+});
+
 const canSubmitReview = computed(() => {
-  if (!project.value) return false;
-  if (!['admin', 'sales'].includes(userStore.user?.role ?? '')) return false;
+  if (!userStore.user || !project.value) return false;
+  if (!['admin', 'designer'].includes(userStore.user.role)) return false;
   return (
     project.value.status === 'designing' && !!project.value.selectedVersionId
   );
@@ -98,8 +103,9 @@ const canReopen = computed(() => {
 });
 
 const canArchive = computed(() => {
-  if (!project.value) return false;
-  if (userStore.user?.role !== 'admin') return false;
+  if (!userStore.user || !project.value) return false;
+  const hasPermission = userStore.user.role === 'admin' || isProjectOwner.value;
+  if (!hasPermission) return false;
   return !['archived', 'reviewing'].includes(project.value.status);
 });
 
@@ -111,8 +117,9 @@ const canEnterDesignWorkspace = computed(() => {
 });
 
 const canRestore = computed(() => {
-  if (!project.value) return false;
-  if (userStore.user?.role !== 'admin') return false;
+  if (!userStore.user || !project.value) return false;
+  const hasPermission = userStore.user.role === 'admin' || isProjectOwner.value;
+  if (!hasPermission) return false;
   return project.value.status === 'archived';
 });
 
@@ -190,7 +197,10 @@ const canEditProject = computed(() => {
   return false;
 });
 
-const canTransferOwner = computed(() => userStore.user?.role === 'admin');
+const canTransferOwner = computed(() => {
+  if (!userStore.user || !project.value) return false;
+  return userStore.user.role === 'admin' || isProjectOwner.value;
+});
 const canManageMembers = computed(
   () => userStore.user?.role === 'admin' || isOwner.value,
 );

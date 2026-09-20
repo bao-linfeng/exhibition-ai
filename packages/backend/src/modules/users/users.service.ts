@@ -62,7 +62,8 @@ export class UserService {
     limit: number | undefined,
     requestingUser: UserSummary,
   ): Promise<UserOption[] | 'forbidden'> {
-    if (requestingUser.role !== 'admin') return 'forbidden';
+    if (!['admin', 'designer', 'sales'].includes(requestingUser.role))
+      return 'forbidden';
     return this.repo.findOptions(search, limit);
   }
 
