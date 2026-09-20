@@ -323,7 +323,9 @@ export class TaskRepository {
         status: 'cancelled',
         finishedAt: new Date(),
         canCancel: false,
-        canRetry: true,
+        // Cancelled tasks have no failed outputs to retry; set false to avoid
+        // exposing a retry action that would always return 422.
+        canRetry: false,
       })
       .where(
         and(
