@@ -3,13 +3,19 @@ import { eq, inArray } from 'drizzle-orm';
 import type { Database } from '../../packages/db/src/index.js';
 import {
   assets,
+  briefRevisions,
   customers,
+  designDirections,
+  imageVersions,
   projects,
   tasks,
   usageLedger,
   users,
   type Asset,
+  type BriefRevision,
   type Customer,
+  type DesignDirectionRow,
+  type ImageVersion,
   type Project,
   type Task,
   type User,
@@ -117,6 +123,88 @@ export async function insertTestAsset(
 
   if (!asset) throw new Error('Failed to create test asset');
   return asset;
+}
+
+export async function insertTestBriefRevision(
+  db: Database,
+  projectId: string,
+  createdBy: string,
+): Promise<BriefRevision> {
+  const [brief] = await db
+    .insert(briefRevisions)
+    .values({
+      id: randomUUID(),
+      projectId,
+      number: 1,
+      content: {
+        title: 'Integration Test Brief',
+        description: 'Test brief for integration tests',
+      },
+      createdBy,
+      confirmedBy: createdBy,
+      confirmedAt: new Date(),
+    })
+    .returning();
+
+  if (!brief) throw new Error('Failed to create test brief revision');
+  return brief;
+}
+
+export async function insertTestDesignDirection(
+  db: Database,
+  projectId: string,
+  briefRevisionId: string,
+  taskId: string,
+  createdBy: string,
+): Promise<DesignDirectionRow> {
+  const [direction] = await db
+    .insert(designDirections)
+    .values({
+      id: randomUUID(),
+      projectId,
+      briefRevisionId,
+      sourceTaskId: taskId,
+      title: 'Integration Test Direction',
+      concept: 'Test concept',
+      layoutDescription: 'Test layout',
+      materialsAndColors: 'Test materials',
+      constraintsChecklist: [],
+      createdBy,
+    })
+    .returning();
+
+  if (!direction) throw new Error('Failed to create test design direction');
+  return direction;
+}
+
+export async function insertTestImageVersion(
+  db: Database,
+  projectId: string,
+  taskId: string,
+  assetId: string,
+  briefRevisionId: string,
+  createdBy: string,
+): Promise<ImageVersion> {
+  const [imageVersion] = await db
+    .insert(imageVersions)
+    .values({
+      id: randomUUID(),
+      projectId,
+      taskId,
+      outputOrdinal: 0,
+      assetId,
+      sequence: 1,
+      briefRevisionId,
+      width: 1280,
+      height: 720,
+      sizeBytes: 1024,
+      mimeType: 'image/png',
+      createdBy,
+    })
+    .returning();
+
+  if (!imageVersion) throw new Error('Failed to create test image version');
+  return imageVersion;
 }
 
 export async function cleanupProject(

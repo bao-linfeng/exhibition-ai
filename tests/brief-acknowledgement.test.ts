@@ -8,8 +8,12 @@ import type { Database } from '../packages/db/src/index.js';
 import { modelConfigs } from '../packages/db/src/schema/index.js';
 import {
   cleanupProject,
+  insertTestAsset,
+  insertTestBriefRevision,
   insertTestCustomer,
+  insertTestImageVersion,
   insertTestProject,
+  insertTestTask,
   insertTestUser,
 } from './helpers/db-fixtures.js';
 
@@ -19,6 +23,8 @@ describe('edit generation brief acknowledgement idempotency', () => {
   let projectId: string;
   let userId: string;
   let modelConfigId: string;
+  let briefRevisionId: string;
+  let parentVersionId: string;
   let createdModelConfig = false;
 
   before(async () => {
@@ -32,6 +38,28 @@ describe('edit generation brief acknowledgement idempotency', () => {
     const project = await insertTestProject(db, customer.id, user.id);
     projectId = project.id;
     userId = user.id;
+
+    // Create a brief revision
+    const brief = await insertTestBriefRevision(db, projectId, userId);
+    briefRevisionId = brief.id;
+
+    // Create a task for parent image version
+    const task = await insertTestTask(db, projectId, userId);
+
+    // Create an asset for parent image version
+    const asset = await insertTestAsset(db, projectId, userId);
+
+    // Create a parent image version
+    const parentVersion = await insertTestImageVersion(
+      db,
+      projectId,
+      task.id,
+      asset.id,
+      briefRevisionId,
+      userId,
+    );
+    parentVersionId = parentVersion.id;
+
     const [existingModelConfig] = await db
       .select()
       .from(modelConfigs)
@@ -66,8 +94,8 @@ describe('edit generation brief acknowledgement idempotency', () => {
   it('treats acknowledgement state as part of the idempotency input', async () => {
     const baseRequest: CreateGenerationRequest = {
       mode: 'edit',
-      briefRevisionId: randomUUID(),
-      parentVersionId: randomUUID(),
+      briefRevisionId,
+      parentVersionId,
       instruction:
         'Adjust the layout while preserving the original visual style.',
       modelConfigId,
