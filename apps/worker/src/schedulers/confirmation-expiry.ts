@@ -1,13 +1,30 @@
-import type { ConfirmationRepository } from '@exhibition/backend';
+import type { ConversationService } from '@exhibition/backend';
 import { logger } from '@exhibition/backend';
 
 export async function runConfirmationExpiry(
-  confirmRepo: ConfirmationRepository,
+  conversationService: ConversationService,
 ): Promise<void> {
   try {
-    const count = await confirmRepo.expireOldConfirmations();
-    if (count > 0) {
-      logger.info({ count }, 'Expired pending confirmations');
+    const expiredIds = await conversationService.findExpiredConfirmationIds();
+    for (const id of expiredIds) {
+      const result = await conversationService.handleConfirmationExpiry(id);
+      if (result === 'ok') {
+        logger.info(
+          { confirmationId: id },
+          'Expired confirmation and cleaned up run state',
+        );
+      } else {
+        logger.warn(
+          { confirmationId: id, result },
+          'Expiry handler returned non-ok',
+        );
+      }
+    }
+    if (expiredIds.length > 0) {
+      logger.info(
+        { count: expiredIds.length },
+        'Processed expired confirmations',
+      );
     }
   } catch (err) {
     logger.error({ err }, 'Confirmation expiry error');

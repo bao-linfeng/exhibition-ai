@@ -20,6 +20,7 @@ import {
   DirectionRepository,
   QuotaRepository,
   QuotaService,
+  ModelConfigRepository,
   AuditService,
   createImageGenerationQueue,
   QUEUE_IMAGE_GENERATION,
@@ -38,6 +39,8 @@ import {
   createExportQueue,
   QUEUE_EXPORT,
   ProjectRepository,
+  GenerationService,
+  ConversationService,
 } from '@exhibition/backend';
 import { bootstrapProviders } from './bootstrap.js';
 import { processAssetValidation } from './processors/asset-validation.processor.js';
@@ -138,6 +141,28 @@ const queues = new Map<string, Queue>([
   [QUEUE_EXPORT, exportQueue],
 ]);
 const taskService = new TaskService(taskRepo, queues, quotaService);
+const generationService = new GenerationService(
+  generationRepo,
+  taskRepo,
+  new ModelConfigRepository(db),
+  queues,
+  briefRepo,
+  directionRepo,
+  assetRepo,
+  projectRepo,
+  imageVersionRepo,
+);
+const conversationService = new ConversationService(
+  convRepo,
+  msgRepo,
+  runRepo,
+  confirmRepo,
+  taskRepo,
+  queues,
+  eventsService,
+  briefRepo,
+  generationService,
+);
 
 // Probe worker (existing)
 const probeWorker = new Worker(
@@ -382,7 +407,7 @@ async function scanExpiredConfirmations() {
   if (expiringConfirmations || stopping) return;
   expiringConfirmations = true;
   try {
-    await runConfirmationExpiry(confirmRepo);
+    await runConfirmationExpiry(conversationService);
   } finally {
     expiringConfirmations = false;
   }

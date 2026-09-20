@@ -349,18 +349,18 @@ export class ConfirmationRepository {
       .where(eq(confirmations.id, id));
   }
 
-  async expireOldConfirmations(): Promise<number> {
-    const expired = await this.db
-      .update(confirmations)
-      .set({ status: 'expired' })
+  async findExpiredPendingIds(): Promise<string[]> {
+    const rows = await this.db
+      .select({ id: confirmations.id })
+      .from(confirmations)
       .where(
         and(
           eq(confirmations.status, 'pending'),
           lt(confirmations.expiresAt, new Date()),
         ),
       )
-      .returning({ id: confirmations.id });
+      .limit(100);
 
-    return expired.length;
+    return rows.map((row) => row.id);
   }
 }
