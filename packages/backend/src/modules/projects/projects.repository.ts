@@ -1,4 +1,4 @@
-import { and, desc, eq, ilike, lt, sql } from 'drizzle-orm';
+import { and, desc, eq, ilike, sql } from 'drizzle-orm';
 import type { Database, NewProject, Project } from '@exhibition/db';
 import { customers, projectMembers, projects, users } from '@exhibition/db';
 
@@ -63,43 +63,50 @@ export class ProjectRepository {
   }> {
     const limit = Math.min(Math.max(options.limit ?? 20, 1), 100);
 
+    const conditions = [
+      options.status ? eq(projects.status, options.status) : undefined,
+      options.customerId
+        ? eq(projects.customerId, options.customerId)
+        : undefined,
+      options.ownerId ? eq(projects.ownerId, options.ownerId) : undefined,
+      options.memberId
+        ? sql`exists (select 1 from ${projectMembers} where ${projectMembers.projectId} = ${projects.id} and ${projectMembers.userId} = ${options.memberId})`
+        : undefined,
+      options.search ? ilike(projects.name, `%${options.search}%`) : undefined,
+    ].filter(Boolean);
+
+    if (options.cursor) {
+      const { updatedAt, id } = JSON.parse(
+        Buffer.from(options.cursor, 'base64url').toString(),
+      ) as { updatedAt: string; id: string };
+      conditions.push(
+        sql`(${projects.updatedAt} < ${new Date(updatedAt)} OR (${projects.updatedAt} = ${new Date(updatedAt)} AND ${projects.id} < ${id}))`,
+      );
+    }
+
     const rows = await this.db
       .select(projectColumns)
       .from(projects)
       .innerJoin(customers, eq(projects.customerId, customers.id))
       .innerJoin(users, eq(projects.ownerId, users.id))
-      .where(
-        and(
-          options.status ? eq(projects.status, options.status) : undefined,
-          options.customerId
-            ? eq(projects.customerId, options.customerId)
-            : undefined,
-          options.ownerId ? eq(projects.ownerId, options.ownerId) : undefined,
-          options.memberId
-            ? sql`exists (select 1 from ${projectMembers} where ${projectMembers.projectId} = ${projects.id} and ${projectMembers.userId} = ${options.memberId})`
-            : undefined,
-          options.search
-            ? ilike(projects.name, `%${options.search}%`)
-            : undefined,
-          options.cursor
-            ? lt(projects.createdAt, new Date(options.cursor))
-            : undefined,
-        ),
-      )
-      .orderBy(desc(projects.createdAt), desc(projects.id))
+      .where(and(...(conditions as Parameters<typeof and>)))
+      .orderBy(desc(projects.updatedAt), desc(projects.id))
       .limit(limit + 1);
 
     const hasMore = rows.length > limit;
     const data = hasMore ? rows.slice(0, limit) : rows;
     const last = data.at(-1);
+    const nextCursor =
+      hasMore && last
+        ? Buffer.from(
+            JSON.stringify({
+              updatedAt: last.updatedAt.toISOString(),
+              id: last.id,
+            }),
+          ).toString('base64url')
+        : null;
 
-    return {
-      data,
-      page: {
-        hasMore,
-        nextCursor: hasMore && last ? last.createdAt.toISOString() : null,
-      },
-    };
+    return { data, page: { nextCursor, hasMore } };
   }
 
   async findById(id: string): Promise<ProjectWithNames | undefined> {
