@@ -50,10 +50,21 @@ async function handleTopup() {
     return;
   }
 
+  const amountStr = topupForm.value.amount.toString();
+  const [integerPart, fractionalPart = ''] = amountStr.split('.');
+
+  if (fractionalPart.length > 2) {
+    toast({ title: '充值金额最多只能包含两位小数', variant: 'destructive' });
+    return;
+  }
+
+  const paddedFractionalPart = fractionalPart.padEnd(2, '0');
+  const amountMinor = parseInt(integerPart + paddedFractionalPart, 10);
+
   try {
     await topupMutation.mutateAsync({
       ownerType: 'system',
-      amountMinor: topupForm.value.amount * 100,
+      amountMinor,
       currency: 'CNY',
       reason: topupForm.value.reason,
     });
