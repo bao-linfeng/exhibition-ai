@@ -5,7 +5,7 @@ import {
   useCreateProjectMutation,
   useUserOptionsQuery,
 } from '../../api/queries/projects.js';
-import { useCustomersQuery } from '../../api/queries/customers.js';
+import CustomerSearchableSelect from '../../components/projects/CustomerSearchableSelect.vue';
 import PageHeader from '../../components/PageHeader.vue';
 import { Button } from '../../components/ui/button/index.js';
 import { Input } from '../../components/ui/input/index.js';
@@ -19,7 +19,6 @@ const { user } = useAuth();
 const defaultCustomerId = route.query.customerId as string;
 
 const createMutation = useCreateProjectMutation();
-const { data: customersData } = useCustomersQuery({ status: 'active' });
 const { data: usersData } = useUserOptionsQuery();
 
 const formData = ref({
@@ -89,26 +88,7 @@ function cancel() {
         </div>
 
         <div class="grid gap-6 md:grid-cols-2">
-          <div class="space-y-2">
-            <Label for="customerId"
-              >关联客户 <span class="text-destructive">*</span></Label
-            >
-            <select
-              id="customerId"
-              v-model="formData.customerId"
-              required
-              class="flex h-10 w-full items-center justify-between rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              <option value="" disabled>请选择客户</option>
-              <option
-                v-for="customer in customersData?.data || []"
-                :key="customer.id"
-                :value="customer.id"
-              >
-                {{ customer.name }}
-              </option>
-            </select>
-          </div>
+          <CustomerSearchableSelect v-model="formData.customerId" required />
 
           <div class="space-y-2">
             <Label for="ownerId"
