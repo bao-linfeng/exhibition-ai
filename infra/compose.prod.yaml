@@ -1,5 +1,20 @@
 name: exhibition-ai
 
+x-tooling: &tooling
+  image: exhibition-ai-dev:local
+  build:
+    context: ..
+    dockerfile: infra/docker/dev.Dockerfile
+  working_dir: /workspace
+  init: true
+  env_file: ../.env
+  environment:
+    NODE_ENV: production
+  volumes:
+    - ..:/workspace
+    - tooling_modules:/workspace/node_modules
+  networks: [production]
+
 services:
   postgres:
     image: pgvector/pgvector:pg17@sha256:cf134a767f474095eeba57e0117be8e568e011a63f33fbf252f14c9b760f8e6f
@@ -56,6 +71,25 @@ services:
       retries: 30
       start_period: 15s
     networks: [production]
+
+  migrate:
+    <<: *tooling
+    profiles: [tools]
+    command: [pnpm, db:migrate]
+    depends_on:
+      postgres: { condition: service_healthy }
+
+  storage-init:
+    <<: *tooling
+    profiles: [tools]
+    command: [pnpm, storage:init]
+    depends_on:
+      rustfs: { condition: service_healthy }
+
+  devtools:
+    <<: *tooling
+    profiles: [tools]
+    command: [pnpm, check]
 
   api:
     image: ${REGISTRY:-ghcr.io/bao-linfeng}/exhibition-api:${IMAGE_TAG:-latest}
@@ -180,3 +214,4 @@ volumes:
   rustfs_data:
   nginx_certs:
   nginx_logs:
+  tooling_modules:
