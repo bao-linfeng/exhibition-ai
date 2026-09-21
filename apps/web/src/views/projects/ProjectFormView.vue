@@ -88,10 +88,7 @@ function cancel() {
         </div>
 
         <div class="grid gap-6 md:grid-cols-2">
-          <CustomerSearchableSelect
-            v-model="formData.customerId"
-            required
-          />
+          <CustomerSearchableSelect v-model="formData.customerId" required />
 
           <div class="space-y-2">
             <Label for="ownerId"

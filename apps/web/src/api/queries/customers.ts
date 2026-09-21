@@ -1,4 +1,9 @@
-import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/vue-query';
+import {
+  useInfiniteQuery,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from '@tanstack/vue-query';
 import { computed, toValue, type MaybeRefOrGetter } from 'vue';
 import { apiClient } from '../client.js';
 import type { paths } from '@exhibition/api-client';
@@ -47,7 +52,11 @@ export function useInfiniteCustomersQuery(
 ) {
   const resolvedParams = computed(() => toValue(params));
   return useInfiniteQuery({
-    queryKey: computed(() => [...customerKeys.lists(), 'infinite', resolvedParams.value || {}]),
+    queryKey: computed(() => [
+      ...customerKeys.lists(),
+      'infinite',
+      resolvedParams.value || {},
+    ]),
     queryFn: async ({ pageParam }) => {
       const p = resolvedParams.value;
       const { data, error } = await apiClient.GET('/api/v1/customers', {

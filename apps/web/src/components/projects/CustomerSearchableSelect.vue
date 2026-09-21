@@ -107,7 +107,10 @@ function handleLoadMore() {
         </div>
 
         <div class="max-h-64 overflow-y-auto">
-          <div v-if="isLoading" class="p-4 text-center text-sm text-muted-foreground">
+          <div
+            v-if="isLoading"
+            class="p-4 text-center text-sm text-muted-foreground"
+          >
             加载中...
           </div>
 
@@ -150,16 +153,8 @@ function handleLoadMore() {
         </div>
       </div>
 
-      <div
-        v-if="isOpen"
-        class="fixed inset-0 z-40"
-        @click="isOpen = false"
-      />
+      <div v-if="isOpen" class="fixed inset-0 z-40" @click="isOpen = false" />
     </div>
-    <input
-      type="hidden"
-      :value="props.modelValue"
-      :required="props.required"
-    >
+    <input type="hidden" :value="props.modelValue" :required="props.required" />
   </div>
 </template>
