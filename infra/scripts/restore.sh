@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
-# 必须从项目根目录运行：bash infra/scripts/restore.sh <backup-path>
+# 必须从项目根目录运行：bash infra/scripts/restore.sh <backup-path> [compose-file]
 # 用法：
 #   bash infra/scripts/restore.sh /backups/daily/backup_20260917_020000
+#   bash infra/scripts/restore.sh /backups/daily/backup_20260917_020000 infra/compose.prod.yaml
 #
 # ⚠️  警告：此脚本会覆盖当前数据库和对象存储！
 # ⚠️  恢复前请确认目标环境已停止 api 和 worker 服务，且已取得运维批准。
@@ -14,9 +15,11 @@
 set -euo pipefail
 
 BACKUP_PATH="${1:-}"
+COMPOSE_FILE="${2:-infra/compose.prod.yaml}"
+
 if [ -z "$BACKUP_PATH" ]; then
   echo "错误：请指定备份路径"
-  echo "用法：bash infra/scripts/restore.sh <backup-path>"
+  echo "用法：bash infra/scripts/restore.sh <backup-path> [compose-file]"
   exit 1
 fi
 
@@ -25,9 +28,15 @@ if [ ! -d "$BACKUP_PATH" ]; then
   exit 1
 fi
 
-COMPOSE="docker compose --env-file .env -f infra/compose.dev.yaml"
+if [ ! -f "$COMPOSE_FILE" ]; then
+  echo "错误：Compose 文件不存在：${COMPOSE_FILE}"
+  exit 1
+fi
+
+COMPOSE="docker compose --env-file .env -f ${COMPOSE_FILE}"
 
 echo "==> [restore] 开始从备份恢复：${BACKUP_PATH}"
+echo "==> [restore] 使用 Compose 配置：${COMPOSE_FILE}"
 echo "==> [restore] 当前时间：$(date)"
 
 # ---------- 1. 验证 SHA-256 校验清单 ----------
@@ -128,19 +137,24 @@ fi
 echo "==> [restore][4/4] 重启服务并检查健康状态..."
 
 # 运行数据库迁移（确保迁移版本与代码一致）
-$COMPOSE run --rm migrate 2>/dev/null || true
+echo "    运行数据库迁移..."
+if ! $COMPOSE run --rm migrate; then
+  echo "错误：数据库迁移失败"
+  exit 1
+fi
 
 # 启动 api 和 worker
 $COMPOSE up -d api worker
 
-# 等待服务就绪（最多 120 秒）
+# 等待服务就绪（最多 120 秒），使用 /api/ready 端点
 echo "    等待服务就绪（最多 120 秒）..."
 ATTEMPTS=0
 MAX_ATTEMPTS=24
+API_READY=false
 while [ "$ATTEMPTS" -lt "$MAX_ATTEMPTS" ]; do
-  HEALTH=$(curl -sf "http://localhost:3000/api/health" 2>/dev/null || echo "")
-  if [ -n "$HEALTH" ]; then
-    echo "    API 健康检查通过：${HEALTH}"
+  if curl -sf "http://localhost:3000/api/ready" >/dev/null 2>&1; then
+    echo "    API 就绪检查通过"
+    API_READY=true
     break
   fi
   ATTEMPTS=$((ATTEMPTS + 1))
@@ -148,8 +162,9 @@ while [ "$ATTEMPTS" -lt "$MAX_ATTEMPTS" ]; do
   sleep 5
 done
 
-if [ "$ATTEMPTS" -eq "$MAX_ATTEMPTS" ]; then
-  echo "警告：API 在 120 秒内未响应，请手动检查服务状态"
+if [ "$API_READY" = false ]; then
+  echo "错误：API 在 120 秒内未就绪"
+  exit 1
 fi
 
 # ---------- 队列对账：查询非终态任务并输出报告 ----------
@@ -186,7 +201,7 @@ else
 fi
 
 echo ""
-echo "==> [restore] 恢复完成"
+echo "==> [restore] 恢复完成（PostgreSQL、对象存储、迁移已应用，API 就绪）"
 echo ""
 echo "==> 恢复后验收清单（手动执行）："
 echo "    1. 登录系统验证用户认证正常"
