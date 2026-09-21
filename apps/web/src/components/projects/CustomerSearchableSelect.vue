@@ -54,11 +54,6 @@ function selectCustomer(id: string, name: string) {
   searchQuery.value = '';
 }
 
-function clearSelection() {
-  emit('update:modelValue', '');
-  selectedCustomerName.value = '';
-}
-
 function handleLoadMore() {
   if (hasNextPage.value && !isFetchingNextPage.value) {
     fetchNextPage();
@@ -68,9 +63,9 @@ function handleLoadMore() {
 
 <template>
   <div class="space-y-2">
-    <Label for="customerId"
-      >关联客户 <span class="text-destructive">*</span></Label
-    >
+    <Label for="customerId">
+      关联客户 <span class="text-destructive">*</span>
+    </Label>
     <div class="relative">
       <button
         type="button"
@@ -165,6 +160,6 @@ function handleLoadMore() {
       type="hidden"
       :value="props.modelValue"
       :required="props.required"
-    />
+    >
   </div>
 </template>
