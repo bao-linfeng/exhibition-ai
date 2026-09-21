@@ -14,6 +14,7 @@ import {
 import type { EventsService } from '../events/events.service.js';
 import type { AuditService } from '../audit/audit.service.js';
 import type { UserRepository } from '../users/users.repository.js';
+import type { ConversationService } from '../conversations/conversations.service.js';
 
 export class ProjectService {
   constructor(
@@ -21,6 +22,7 @@ export class ProjectService {
     private eventsService: EventsService,
     private auditService: AuditService,
     private userRepo: UserRepository,
+    private conversationService: ConversationService,
   ) {}
 
   async listProjects(
@@ -246,6 +248,11 @@ export class ProjectService {
     if (userId === project.ownerId) return 'forbidden';
 
     await this.repo.removeMember(projectId, userId);
+    await this.conversationService.expireConfirmationsForUser(
+      userId,
+      projectId,
+      'AUTHORIZATION_REVOKED',
+    );
 
     await this.auditService.log({
       eventType: 'project.member_removed',

@@ -3,7 +3,15 @@ import type {
   BriefContent,
   CreateGenerationRequest,
 } from '@exhibition/contracts';
-import type { Confirmation, Conversation } from '@exhibition/db';
+import type { Confirmation, Conversation, Database } from '@exhibition/db';
+import {
+  agentRuns,
+  confirmations,
+  conversations,
+  messages,
+  tasks,
+} from '@exhibition/db';
+import { and, desc, eq } from 'drizzle-orm';
 import type { BriefRepository } from '../briefs/index.js';
 import type { EventsService } from '../events/events.service.js';
 import type { GenerationService } from '../generations/index.js';
@@ -18,6 +26,7 @@ import {
 
 export class ConversationService {
   constructor(
+    private db: Database,
     private convRepo: ConversationRepository,
     private msgRepo: MessageRepository,
     private runRepo: AgentRunRepository,
@@ -210,31 +219,109 @@ export class ConversationService {
   async handleConfirmationExpiry(
     confirmationId: string,
   ): Promise<'ok' | 'not_found' | 'not_pending'> {
-    const confirmation = await this.confirmRepo.findById(confirmationId);
-    if (!confirmation) return 'not_found';
-    if (confirmation.status !== 'pending') return 'not_pending';
+    return this.expireConfirmationWithReason(
+      confirmationId,
+      'CONFIRMATION_EXPIRED',
+    );
+  }
 
-    await this.confirmRepo.updateStatus(confirmationId, 'expired');
-    const run = await this.runRepo.findById(confirmation.runId);
-    if (run?.status === 'awaiting_confirmation') {
-      const assistantMessage = await this.msgRepo.findByRunId(run.id);
-      if (assistantMessage?.status === 'streaming') {
-        await this.msgRepo.updateStatus(assistantMessage.id, 'interrupted');
+  async expireConfirmationWithReason(
+    confirmationId: string,
+    reason: string,
+  ): Promise<'ok' | 'not_found' | 'not_pending'> {
+    return this.db.transaction(async (tx) => {
+      const [confirmation] = await tx
+        .select({
+          id: confirmations.id,
+          runId: confirmations.runId,
+          status: confirmations.status,
+        })
+        .from(confirmations)
+        .where(eq(confirmations.id, confirmationId))
+        .limit(1);
+      if (!confirmation) return 'not_found' as const;
+      if (confirmation.status !== 'pending') return 'not_pending' as const;
+
+      const now = new Date();
+      const expired = await tx
+        .update(confirmations)
+        .set({ status: 'expired' })
+        .where(
+          and(
+            eq(confirmations.id, confirmation.id),
+            eq(confirmations.status, 'pending'),
+          ),
+        )
+        .returning({ id: confirmations.id });
+      if (expired.length === 0) return 'not_pending' as const;
+
+      const [run] = await tx
+        .select()
+        .from(agentRuns)
+        .where(eq(agentRuns.id, confirmation.runId))
+        .limit(1);
+      if (run?.status === 'awaiting_confirmation') {
+        const [assistantMessage] = await tx
+          .select({ id: messages.id, status: messages.status })
+          .from(messages)
+          .where(
+            and(eq(messages.runId, run.id), eq(messages.role, 'assistant')),
+          )
+          .orderBy(desc(messages.createdAt))
+          .limit(1);
+        if (assistantMessage?.status === 'streaming') {
+          await tx
+            .update(messages)
+            .set({ status: 'interrupted' })
+            .where(eq(messages.id, assistantMessage.id));
+        }
+        await tx
+          .update(agentRuns)
+          .set({ status: 'cancelled', finishedAt: now })
+          .where(eq(agentRuns.id, run.id));
+        await tx
+          .update(tasks)
+          .set({
+            status: 'failed',
+            finishedAt: now,
+            errorCode: reason,
+            errorMessage:
+              reason === 'CONFIRMATION_EXPIRED'
+                ? 'Confirmation expired'
+                : `Confirmation invalidated: ${reason}`,
+            canCancel: false,
+            canRetry: false,
+          })
+          .where(eq(tasks.id, run.taskId));
+        await tx
+          .update(conversations)
+          .set({ activeRunId: null, updatedAt: now })
+          .where(eq(conversations.id, run.conversationId));
       }
-      await this.runRepo.updateStatus(run.id, 'cancelled', {
-        finishedAt: new Date(),
-      });
-      await this.taskRepo.updateStatus(run.taskId, 'failed', {
-        finishedAt: new Date(),
-        errorCode: 'CONFIRMATION_EXPIRED',
-        errorMessage: 'Confirmation expired',
-        canCancel: false,
-        canRetry: false,
-      });
-      await this.convRepo.setActiveRun(run.conversationId, null);
-    }
 
-    return 'ok';
+      return 'ok' as const;
+    });
+  }
+
+  async expireConfirmationsForUser(
+    userId: string,
+    projectId: string,
+    reason: string,
+  ): Promise<void> {
+    const pendingConfirmations = await this.db
+      .select({ id: confirmations.id })
+      .from(confirmations)
+      .where(
+        and(
+          eq(confirmations.requestedBy, userId),
+          eq(confirmations.projectId, projectId),
+          eq(confirmations.status, 'pending'),
+        ),
+      );
+
+    for (const confirmation of pendingConfirmations) {
+      await this.expireConfirmationWithReason(confirmation.id, reason);
+    }
   }
 
   async approveConfirmation(

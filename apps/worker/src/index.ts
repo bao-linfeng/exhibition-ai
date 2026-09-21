@@ -155,6 +155,7 @@ const generationService = new GenerationService(
   imageVersionRepo,
 );
 const conversationService = new ConversationService(
+  db,
   convRepo,
   msgRepo,
   runRepo,

@@ -70,6 +70,7 @@ describe('Issue #159: Confirmation expiry cleanup', () => {
 
     // Minimal service setup (no queues, events, or side effects needed for this test)
     conversationService = new ConversationService(
+      db,
       convRepo,
       msgRepo,
       runRepo,
