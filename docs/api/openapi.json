@@ -7321,7 +7321,21 @@
                 { "type": "string", "enum": ["asset.uploaded"] },
                 { "type": "string", "enum": ["asset.hidden"] },
                 { "type": "string", "enum": ["version.selected"] },
-                { "type": "string", "enum": ["export.created"] }
+                { "type": "string", "enum": ["export.created"] },
+                { "type": "string", "enum": ["settings.model_config.update"] },
+                { "type": "string", "enum": ["quota.topup"] },
+                { "type": "string", "enum": ["prompt_template.create"] },
+                { "type": "string", "enum": ["prompt_version.create_draft"] },
+                { "type": "string", "enum": ["prompt_version.update_draft"] },
+                { "type": "string", "enum": ["prompt_version.publish"] },
+                { "type": "string", "enum": ["prompt_version.rollback"] },
+                { "type": "string", "enum": ["tag.create"] },
+                { "type": "string", "enum": ["tag.update"] },
+                { "type": "string", "enum": ["tag.delete"] },
+                { "type": "string", "enum": ["tag.assign"] },
+                { "type": "string", "enum": ["tag.unassign"] },
+                { "type": "string", "enum": ["favorite.set"] },
+                { "type": "string", "enum": ["favorite.unset"] }
               ]
             },
             "in": "query",
@@ -7428,7 +7442,39 @@
                                 "type": "string",
                                 "enum": ["version.selected"]
                               },
-                              { "type": "string", "enum": ["export.created"] }
+                              { "type": "string", "enum": ["export.created"] },
+                              {
+                                "type": "string",
+                                "enum": ["settings.model_config.update"]
+                              },
+                              { "type": "string", "enum": ["quota.topup"] },
+                              {
+                                "type": "string",
+                                "enum": ["prompt_template.create"]
+                              },
+                              {
+                                "type": "string",
+                                "enum": ["prompt_version.create_draft"]
+                              },
+                              {
+                                "type": "string",
+                                "enum": ["prompt_version.update_draft"]
+                              },
+                              {
+                                "type": "string",
+                                "enum": ["prompt_version.publish"]
+                              },
+                              {
+                                "type": "string",
+                                "enum": ["prompt_version.rollback"]
+                              },
+                              { "type": "string", "enum": ["tag.create"] },
+                              { "type": "string", "enum": ["tag.update"] },
+                              { "type": "string", "enum": ["tag.delete"] },
+                              { "type": "string", "enum": ["tag.assign"] },
+                              { "type": "string", "enum": ["tag.unassign"] },
+                              { "type": "string", "enum": ["favorite.set"] },
+                              { "type": "string", "enum": ["favorite.unset"] }
                             ]
                           },
                           "actorId": {

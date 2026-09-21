@@ -27,6 +27,20 @@ export const AuditEventTypeSchema = Type.Union([
   Type.Literal('asset.hidden'),
   Type.Literal('version.selected'),
   Type.Literal('export.created'),
+  Type.Literal('settings.model_config.update'),
+  Type.Literal('quota.topup'),
+  Type.Literal('prompt_template.create'),
+  Type.Literal('prompt_version.create_draft'),
+  Type.Literal('prompt_version.update_draft'),
+  Type.Literal('prompt_version.publish'),
+  Type.Literal('prompt_version.rollback'),
+  Type.Literal('tag.create'),
+  Type.Literal('tag.update'),
+  Type.Literal('tag.delete'),
+  Type.Literal('tag.assign'),
+  Type.Literal('tag.unassign'),
+  Type.Literal('favorite.set'),
+  Type.Literal('favorite.unset'),
 ]);
 
 // 审计日志
