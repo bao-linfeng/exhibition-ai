@@ -85,7 +85,6 @@ describe('NFR-02: 创建任务性能', () => {
         expectedProjectRevision: 1,
       },
       userId,
-      true,
     );
     assert.equal(typeof result, 'object');
     assert.ok(

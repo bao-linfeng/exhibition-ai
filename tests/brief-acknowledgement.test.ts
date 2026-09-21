@@ -108,7 +108,6 @@ describe('edit generation brief acknowledgement idempotency', () => {
         projectId,
         baseRequest,
         userId,
-        true,
       );
     assert.equal(typeof withoutAcknowledgement, 'object');
     if (typeof withoutAcknowledgement !== 'object') {
@@ -127,7 +126,6 @@ describe('edit generation brief acknowledgement idempotency', () => {
         projectId,
         acknowledgedRequest,
         userId,
-        true,
       );
     assert.equal(typeof withAcknowledgement, 'object');
     if (typeof withAcknowledgement !== 'object') {
@@ -141,7 +139,6 @@ describe('edit generation brief acknowledgement idempotency', () => {
         projectId,
         acknowledgedRequest,
         userId,
-        true,
       );
     assert.equal(typeof duplicateAcknowledgedRequest, 'object');
     if (typeof duplicateAcknowledgedRequest !== 'object') {

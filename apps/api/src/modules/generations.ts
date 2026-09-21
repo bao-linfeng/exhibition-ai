@@ -18,22 +18,6 @@ export async function generationRoutes(app: FastifyInstance) {
       : null;
   }
 
-  function canWrite(user: { role: string }) {
-    return user.role === 'admin' || user.role === 'designer';
-  }
-
-  async function isMemberOrAdmin(
-    projectId: string,
-    user: { id: string; role: string },
-  ) {
-    if (user.role === 'admin') return true;
-    const project = await app.services!.projectService.getProject(
-      projectId,
-      user,
-    );
-    return project !== null && project !== 'forbidden';
-  }
-
   // POST /api/v1/projects/:projectId/generations
   app.post(
     '/api/v1/projects/:projectId/generations',
@@ -52,7 +36,6 @@ export async function generationRoutes(app: FastifyInstance) {
     async (request, reply) => {
       const user = await currentUser(request.cookies.sessionId);
       if (!user) throw app.httpErrors.unauthorized('Not authenticated');
-      if (!canWrite(user)) throw app.httpErrors.forbidden();
 
       const { projectId } = request.params as { projectId: string };
       const body = request.body as CreateGenerationRequest;
@@ -60,7 +43,6 @@ export async function generationRoutes(app: FastifyInstance) {
         projectId,
         body,
         user.id,
-        await isMemberOrAdmin(projectId, user),
       );
 
       if (result === 'forbidden') throw app.httpErrors.forbidden();
@@ -121,12 +103,12 @@ export async function generationRoutes(app: FastifyInstance) {
       const query = request.query as ListGenerationsQuery;
       const result = await app.services!.generationService.listGenerations(
         projectId,
+        user.id,
         {
           status: query.status,
           cursor: query.cursor,
           limit: query.limit,
         },
-        await isMemberOrAdmin(projectId, user),
       );
 
       if (result === 'forbidden') throw app.httpErrors.forbidden();

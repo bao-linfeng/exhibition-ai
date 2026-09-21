@@ -18,6 +18,7 @@ import {
   CustomerRepository,
 } from './modules/customers/index.js';
 import { ProjectService, ProjectRepository } from './modules/projects/index.js';
+import { ProjectPolicy } from './modules/projects/project.policy.js';
 import { BriefService, BriefRepository } from './modules/briefs/index.js';
 import {
   BriefParseService,
@@ -318,11 +319,13 @@ export function createServices(): Services {
   );
   const directionService = new DirectionService(
     new DirectionRepository(drizzleDb),
+    new ProjectPolicy(pool),
     taskRepo,
     queues,
   );
   const generationService = new GenerationService(
     new GenerationRepository(drizzleDb, quotaRepo),
+    new ProjectPolicy(pool),
     taskRepo,
     modelConfigRepo,
     queues,
@@ -349,6 +352,7 @@ export function createServices(): Services {
     eventsService,
     new BriefRepository(drizzleDb),
     generationService,
+    new ProjectPolicy(pool),
   );
   const verificationRedis = new Redis(connection);
   verificationRedis.on('error', () => undefined);

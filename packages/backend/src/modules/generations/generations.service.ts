@@ -12,6 +12,7 @@ import type { BriefRepository } from '../briefs/briefs.repository.js';
 import type { DirectionRepository } from '../directions/directions.repository.js';
 import type { AssetRepository } from '../assets/assets.repository.js';
 import type { ProjectRepository } from '../projects/projects.repository.js';
+import { ProjectPolicy } from '../projects/project.policy.js';
 import {
   GenerationRepository,
   InsufficientQuotaError,
@@ -72,6 +73,7 @@ function toGenerationSummary(row: {
 export class GenerationService {
   constructor(
     private genRepo: GenerationRepository,
+    private policy: ProjectPolicy,
     private taskRepo: TaskRepository,
     private modelConfigRepo: ModelConfigRepository,
     private queues: Map<string, Queue>,
@@ -85,8 +87,7 @@ export class GenerationService {
   async createGeneration(
     projectId: string,
     body: CreateGenerationRequest,
-    requestedBy: string,
-    isMemberOrAdmin: boolean,
+    actorId: string,
   ): Promise<
     | { taskId: string; status: 'pending' }
     | 'forbidden'
@@ -98,7 +99,8 @@ export class GenerationService {
     | 'model_not_executable'
     | 'project_locked'
   > {
-    if (!isMemberOrAdmin) return 'forbidden';
+    if (!(await this.policy.canUseAgent(actorId, projectId)))
+      return 'forbidden';
 
     const directionId =
       body.mode === 'generate' ? body.directionId : (body.directionId ?? null);
@@ -116,7 +118,7 @@ export class GenerationService {
         body.mode === 'edit' ? body.acknowledgeBriefChange : undefined,
     });
     const idempotencyKey = createHash('sha256')
-      .update(`${projectId}:${requestedBy}:${paramHash}`)
+      .update(`${projectId}:${actorId}:${paramHash}`)
       .digest('hex');
 
     const existing = await this.genRepo.findByIdempotencyKey(idempotencyKey);
@@ -207,7 +209,7 @@ export class GenerationService {
         parameters: body.parameters as Record<string, unknown>,
         parametersHash: paramHash,
         idempotencyKey,
-        requestedBy,
+        requestedBy: actorId,
         outputCount,
         modelSnapshot: {
           providerId: modelConfig.providerId,
@@ -262,8 +264,8 @@ export class GenerationService {
 
   async listGenerations(
     projectId: string,
+    actorId: string,
     opts: { status?: string; cursor?: string; limit?: number },
-    isMemberOrAdmin: boolean,
   ): Promise<
     | {
         data: GenerationTaskSummary[];
@@ -271,7 +273,9 @@ export class GenerationService {
       }
     | 'forbidden'
   > {
-    if (!isMemberOrAdmin) return 'forbidden';
+    if (!(await this.policy.isMemberOrAdmin(actorId, projectId))) {
+      return 'forbidden';
+    }
 
     const result = await this.genRepo.listByProject({ projectId, ...opts });
     return {

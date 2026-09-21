@@ -7,6 +7,7 @@ import type { Confirmation, Conversation } from '@exhibition/db';
 import type { BriefRepository } from '../briefs/index.js';
 import type { EventsService } from '../events/events.service.js';
 import type { GenerationService } from '../generations/index.js';
+import type { ProjectPolicy } from '../projects/project.policy.js';
 import type { TaskRepository } from '../tasks/index.js';
 import {
   AgentRunRepository,
@@ -26,22 +27,29 @@ export class ConversationService {
     private eventsService: EventsService,
     private briefRepo: BriefRepository,
     private generationService: GenerationService,
+    private policy: ProjectPolicy,
   ) {}
 
   async getOrCreateConversation(
     projectId: string,
-    isMember: boolean,
+    actorId: string,
   ): Promise<Conversation | 'forbidden'> {
-    if (!isMember) return 'forbidden';
+    if (!(await this.policy.isMemberOrAdmin(actorId, projectId))) {
+      return 'forbidden';
+    }
     return this.convRepo.findOrCreateByProjectId(projectId);
   }
 
   async listMessages(
     conversationId: string,
+    actorId: string,
     opts: { before?: string; limit?: number },
-    isMember: boolean,
   ) {
-    if (!isMember) return 'forbidden' as const;
+    const conversation = await this.convRepo.findById(conversationId);
+    if (!conversation) return 'forbidden' as const;
+    if (!(await this.policy.isMemberOrAdmin(actorId, conversation.projectId))) {
+      return 'forbidden';
+    }
     return this.msgRepo.list(conversationId, opts);
   }
 
@@ -51,15 +59,16 @@ export class ConversationService {
     text: string;
     clientMessageId: string;
     assetIds?: string[];
-    requestedBy: string;
-    canGenerate: boolean;
+    actorId: string;
   }): Promise<
     | { messageId: string; runId: string; taskId: string | null }
     | 'forbidden'
     | 'active_run_exists'
     | 'duplicate'
   > {
-    if (!input.canGenerate) return 'forbidden';
+    if (!(await this.policy.canUseAgent(input.actorId, input.projectId))) {
+      return 'forbidden';
+    }
 
     const existing = await this.msgRepo.findByClientMessageId(
       input.clientMessageId,
@@ -98,13 +107,13 @@ export class ConversationService {
       ],
       status: 'completed',
       clientMessageId: input.clientMessageId,
-      createdBy: input.requestedBy,
+      createdBy: input.actorId,
     });
 
     const { task, outbox } = await this.taskRepo.createWithOutbox({
       projectId: input.projectId,
       kind: 'agent_run',
-      requestedBy: input.requestedBy,
+      requestedBy: input.actorId,
       queueName: 'exhibition-agent-run',
       payload: {
         conversationId: input.conversationId,
@@ -376,7 +385,6 @@ export class ConversationService {
           projectId,
           generation,
           requestedBy,
-          true,
         );
       } catch (err) {
         await this.confirmRepo.updateStatus(id, 'failed');
