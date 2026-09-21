@@ -20,36 +20,51 @@ export class UserRepository {
     page: { nextCursor: string | null; hasMore: boolean };
   }> {
     const limit = Math.min(Math.max(options.limit ?? 20, 1), 100);
+
+    const conditions = [
+      options.role ? eq(users.role, options.role) : undefined,
+      options.status ? eq(users.status, options.status) : undefined,
+      options.search
+        ? or(
+            ilike(users.displayName, `%${options.search}%`),
+            ilike(users.email, `%${options.search}%`),
+          )
+        : undefined,
+    ].filter(Boolean);
+
+    if (options.cursor) {
+      const { createdAt, id } = JSON.parse(
+        Buffer.from(options.cursor, 'base64url').toString(),
+      ) as { createdAt: string; id: string };
+      conditions.push(
+        or(
+          lt(users.createdAt, new Date(createdAt)),
+          and(eq(users.createdAt, new Date(createdAt)), lt(users.id, id)),
+        )!,
+      );
+    }
+
     const rows = await this.db
       .select()
       .from(users)
-      .where(
-        and(
-          options.role ? eq(users.role, options.role) : undefined,
-          options.status ? eq(users.status, options.status) : undefined,
-          options.search
-            ? or(
-                ilike(users.displayName, `%${options.search}%`),
-                ilike(users.email, `%${options.search}%`),
-              )
-            : undefined,
-          options.cursor
-            ? lt(users.createdAt, new Date(options.cursor))
-            : undefined,
-        ),
-      )
-      .orderBy(desc(users.createdAt))
+      .where(and(...(conditions as Parameters<typeof and>)))
+      .orderBy(desc(users.createdAt), desc(users.id))
       .limit(limit + 1);
+
     const hasMore = rows.length > limit;
     const data = hasMore ? rows.slice(0, limit) : rows;
     const last = data.at(-1);
-    return {
-      data,
-      page: {
-        hasMore,
-        nextCursor: hasMore && last ? last.createdAt.toISOString() : null,
-      },
-    };
+    const nextCursor =
+      hasMore && last
+        ? Buffer.from(
+            JSON.stringify({
+              createdAt: last.createdAt.toISOString(),
+              id: last.id,
+            }),
+          ).toString('base64url')
+        : null;
+
+    return { data, page: { hasMore, nextCursor } };
   }
 
   async findById(id: string): Promise<User | undefined> {

@@ -41,33 +41,48 @@ export class CustomerRepository {
       );
     }
 
+    const conditions = [
+      options.status ? eq(customers.status, options.status) : undefined,
+      options.search ? ilike(customers.name, `%${options.search}%`) : undefined,
+      scopeFilter,
+    ].filter(Boolean);
+
+    if (options.cursor) {
+      const { createdAt, id } = JSON.parse(
+        Buffer.from(options.cursor, 'base64url').toString(),
+      ) as { createdAt: string; id: string };
+      conditions.push(
+        or(
+          lt(customers.createdAt, new Date(createdAt)),
+          and(
+            eq(customers.createdAt, new Date(createdAt)),
+            lt(customers.id, id),
+          ),
+        )!,
+      );
+    }
+
     const rows = await this.db
       .select()
       .from(customers)
-      .where(
-        and(
-          options.status ? eq(customers.status, options.status) : undefined,
-          options.search
-            ? ilike(customers.name, `%${options.search}%`)
-            : undefined,
-          options.cursor
-            ? lt(customers.createdAt, new Date(options.cursor))
-            : undefined,
-          scopeFilter,
-        ),
-      )
-      .orderBy(desc(customers.createdAt))
+      .where(and(...(conditions as Parameters<typeof and>)))
+      .orderBy(desc(customers.createdAt), desc(customers.id))
       .limit(limit + 1);
+
     const hasMore = rows.length > limit;
     const data = hasMore ? rows.slice(0, limit) : rows;
     const last = data.at(-1);
-    return {
-      data,
-      page: {
-        hasMore,
-        nextCursor: hasMore && last ? last.createdAt.toISOString() : null,
-      },
-    };
+    const nextCursor =
+      hasMore && last
+        ? Buffer.from(
+            JSON.stringify({
+              createdAt: last.createdAt.toISOString(),
+              id: last.id,
+            }),
+          ).toString('base64url')
+        : null;
+
+    return { data, page: { nextCursor, hasMore } };
   }
 
   async findById(
