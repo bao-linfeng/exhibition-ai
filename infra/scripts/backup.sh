@@ -40,36 +40,68 @@ echo "    PostgreSQL dump 完成"
 # ---------- 2. 对象存储（使用 mc 命令行工具通过 S3 API 镜像）----------
 echo "==> [backup][2/3] 镜像对象存储..."
 
+STORAGE_BACKUP_SUCCESS=false
+
 # 尝试通过 mc（MinIO Client）进行镜像备份；若未安装则用 AWS CLI
 if command -v mc &>/dev/null; then
-  mc alias set backup-src \
+  if mc alias set backup-src \
     "${S3_ENDPOINT:-http://localhost:19000}" \
     "${S3_ACCESS_KEY:-}" \
     "${S3_SECRET_KEY:-}" \
     --api s3v4 \
-    --quiet 2>/dev/null || true
-  mc mirror "backup-src/${S3_BUCKET:-exhibition}" "${BACKUP_PATH}/objects/" \
-    --overwrite --quiet || {
-    echo "WARN: mc mirror 失败，跳过对象存储备份"
-  }
+    --quiet 2>/dev/null; then
+    if mc mirror "backup-src/${S3_BUCKET:-exhibition}" "${BACKUP_PATH}/objects/" \
+      --overwrite --quiet; then
+      STORAGE_BACKUP_SUCCESS=true
+      echo "    对象存储镜像完成（mc）"
+    else
+      echo "ERROR: mc mirror 失败"
+      exit 1
+    fi
+  else
+    echo "ERROR: mc alias 配置失败"
+    exit 1
+  fi
 elif command -v aws &>/dev/null; then
-  AWS_ACCESS_KEY_ID="${S3_ACCESS_KEY:-}" \
-  AWS_SECRET_ACCESS_KEY="${S3_SECRET_KEY:-}" \
-  aws s3 sync \
-    "s3://${S3_BUCKET:-exhibition}" \
-    "${BACKUP_PATH}/objects/" \
-    --endpoint-url "${S3_ENDPOINT:-http://localhost:19000}" \
-    --no-progress || {
-    echo "WARN: aws s3 sync 失败，跳过对象存储备份"
-  }
+  if AWS_ACCESS_KEY_ID="${S3_ACCESS_KEY:-}" \
+    AWS_SECRET_ACCESS_KEY="${S3_SECRET_KEY:-}" \
+    aws s3 sync \
+      "s3://${S3_BUCKET:-exhibition}" \
+      "${BACKUP_PATH}/objects/" \
+      --endpoint-url "${S3_ENDPOINT:-http://localhost:19000}" \
+      --no-progress; then
+    STORAGE_BACKUP_SUCCESS=true
+    echo "    对象存储镜像完成（aws）"
+  else
+    echo "ERROR: aws s3 sync 失败"
+    exit 1
+  fi
 else
-  echo "WARN: 未找到 mc 或 aws 工具，跳过对象存储备份"
+  echo "ERROR: 未找到 mc 或 aws 工具，无法备份对象存储"
   echo "      请安装 MinIO Client (mc) 或 AWS CLI 以启用对象存储备份"
+  exit 1
 fi
-echo "    对象存储镜像完成"
+
+# 验证对象存储备份确实创建了文件
+if [ "$STORAGE_BACKUP_SUCCESS" = true ] && [ ! -d "${BACKUP_PATH}/objects" ]; then
+  echo "ERROR: 对象存储备份目录未创建"
+  exit 1
+fi
 
 # ---------- 3. 生成 SHA-256 校验清单 ----------
 echo "==> [backup][3/3] 生成 SHA-256 校验清单..."
+
+# 验证备份完整性：必须包含 PostgreSQL dump 和对象存储
+if [ ! -f "${BACKUP_PATH}/postgres.dump" ]; then
+  echo "ERROR: PostgreSQL dump 文件不存在"
+  exit 1
+fi
+
+if [ ! -d "${BACKUP_PATH}/objects" ]; then
+  echo "ERROR: 对象存储备份目录不存在"
+  exit 1
+fi
+
 (
   cd "${BACKUP_PATH}"
   find . -type f ! -name "SHA256SUMS" | sort | xargs sha256sum > SHA256SUMS
