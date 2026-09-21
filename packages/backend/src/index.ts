@@ -269,12 +269,6 @@ export function createServices(): Services {
     /* 事件订阅连接错误由上层日志处理 */
   });
   const eventsService = new EventsService(pool, eventsPubRedis, eventsSubRedis);
-  const projectService = new ProjectService(
-    new ProjectRepository(drizzleDb),
-    eventsService,
-    auditService,
-    userRepository,
-  );
   const briefService = new BriefService(
     new BriefRepository(drizzleDb),
     eventsService,
@@ -343,6 +337,7 @@ export function createServices(): Services {
   const agentRunRepo = new AgentRunRepository(drizzleDb);
   const confirmRepo = new ConfirmationRepository(drizzleDb);
   const conversationService = new ConversationService(
+    drizzleDb,
     convRepo,
     msgRepo,
     agentRunRepo,
@@ -353,6 +348,13 @@ export function createServices(): Services {
     new BriefRepository(drizzleDb),
     generationService,
     new ProjectPolicy(pool),
+  );
+  const projectService = new ProjectService(
+    new ProjectRepository(drizzleDb),
+    eventsService,
+    auditService,
+    userRepository,
+    conversationService,
   );
   const verificationRedis = new Redis(connection);
   verificationRedis.on('error', () => undefined);
