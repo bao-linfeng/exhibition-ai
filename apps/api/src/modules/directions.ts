@@ -19,18 +19,6 @@ export async function directionRoutes(app: FastifyInstance) {
       : null;
   }
 
-  async function isMemberOrAdmin(
-    projectId: string,
-    user: { id: string; role: string },
-  ) {
-    if (user.role === 'admin') return true;
-    const project = await app.services!.projectService.getProject(
-      projectId,
-      user,
-    );
-    return project !== null && project !== 'forbidden';
-  }
-
   app.post(
     '/api/v1/projects/:projectId/design-directions',
     {
@@ -61,7 +49,6 @@ export async function directionRoutes(app: FastifyInstance) {
         body.inputAssetIds ?? [],
         body.count ?? 3,
         user.id,
-        user.role,
       );
       if (result === 'forbidden') throw app.httpErrors.forbidden();
       return reply.status(202).send({ data: result });
@@ -89,8 +76,8 @@ export async function directionRoutes(app: FastifyInstance) {
       const query = request.query as ListDirectionsQuery;
       const result = await app.services!.directionService.listDirections(
         projectId,
+        user.id,
         query,
-        await isMemberOrAdmin(projectId, user),
       );
       if (result === 'forbidden') throw app.httpErrors.forbidden();
       return reply.send(result);
@@ -123,7 +110,7 @@ export async function directionRoutes(app: FastifyInstance) {
       const result = await app.services!.directionService.getDirection(
         projectId,
         directionId,
-        await isMemberOrAdmin(projectId, user),
+        user.id,
       );
       if (result === 'forbidden') throw app.httpErrors.forbidden();
       if (!result) throw app.httpErrors.notFound('Design direction not found');

@@ -3,6 +3,7 @@ import type { Queue } from 'bullmq';
 import type { DesignDirection } from '@exhibition/contracts';
 import type { DesignDirectionRow } from '@exhibition/db';
 import { QUEUE_DESIGN_DIRECTION } from '../../infrastructure/queue.js';
+import type { ProjectPolicy } from '../projects/project.policy.js';
 import type { TaskRepository } from '../tasks/tasks.repository.js';
 import type { DirectionRepository } from './directions.repository.js';
 
@@ -27,6 +28,7 @@ function toDirection(row: DesignDirectionRow): DesignDirection {
 export class DirectionService {
   constructor(
     private repo: DirectionRepository,
+    private policy: ProjectPolicy,
     private taskRepo: TaskRepository,
     private queues: Map<string, Queue>,
   ) {}
@@ -36,12 +38,12 @@ export class DirectionService {
     briefRevisionId: string,
     inputAssetIds: string[],
     count: number,
-    requestedBy: string,
-    role: string,
+    actorId: string,
   ): Promise<{ taskId: string; status: 'pending' } | 'forbidden'> {
-    if (role === 'sales' || role === 'viewer') return 'forbidden';
+    if (!(await this.policy.canUseAgent(actorId, projectId)))
+      return 'forbidden';
     const idempotencyKey = createHash('sha256')
-      .update(`design_direction:${projectId}:${briefRevisionId}:${requestedBy}`)
+      .update(`design_direction:${projectId}:${briefRevisionId}:${actorId}`)
       .digest('hex');
     const existing = await this.taskRepo.findByIdempotencyKey(idempotencyKey);
     if (existing) return { taskId: existing.id, status: 'pending' };
@@ -57,7 +59,7 @@ export class DirectionService {
       briefRevisionId,
       inputAssetIds,
       count,
-      requestedBy,
+      requestedBy: actorId,
       idempotencyKey,
       inputSnapshot,
     });
@@ -71,8 +73,8 @@ export class DirectionService {
 
   async listDirections(
     projectId: string,
+    actorId: string,
     opts: { briefRevisionId?: string; cursor?: string; limit?: number },
-    isMemberOrAdmin: boolean,
   ): Promise<
     | {
         data: DesignDirection[];
@@ -80,7 +82,9 @@ export class DirectionService {
       }
     | 'forbidden'
   > {
-    if (!isMemberOrAdmin) return 'forbidden';
+    if (!(await this.policy.isMemberOrAdmin(actorId, projectId))) {
+      return 'forbidden';
+    }
     const result = await this.repo.listByProject({ projectId, ...opts });
     return { data: result.data.map(toDirection), page: result.page };
   }
@@ -88,9 +92,11 @@ export class DirectionService {
   async getDirection(
     projectId: string,
     directionId: string,
-    isMemberOrAdmin: boolean,
+    actorId: string,
   ): Promise<DesignDirection | null | 'forbidden'> {
-    if (!isMemberOrAdmin) return 'forbidden';
+    if (!(await this.policy.isMemberOrAdmin(actorId, projectId))) {
+      return 'forbidden';
+    }
     const row = await this.repo.findByIdAndProject(directionId, projectId);
     return row ? toDirection(row) : null;
   }

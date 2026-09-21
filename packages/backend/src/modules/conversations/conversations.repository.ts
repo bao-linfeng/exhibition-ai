@@ -40,6 +40,16 @@ export class ConversationRepository {
     return conversation ?? null;
   }
 
+  async findById(id: string): Promise<Conversation | null> {
+    const [conversation] = await this.db
+      .select()
+      .from(conversations)
+      .where(eq(conversations.id, id))
+      .limit(1);
+
+    return conversation ?? null;
+  }
+
   async setActiveRun(
     conversationId: string,
     runId: string | null,

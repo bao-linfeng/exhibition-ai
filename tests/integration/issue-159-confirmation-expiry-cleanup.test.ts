@@ -79,6 +79,7 @@ describe('Issue #159: Confirmation expiry cleanup', () => {
       {} as any, // eventsService not needed
       {} as any, // briefRepo not needed
       {} as any, // generationService not needed
+      {} as any, // policy not needed
     );
 
     // Create test user and project

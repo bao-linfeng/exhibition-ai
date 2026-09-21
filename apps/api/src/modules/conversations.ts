@@ -91,7 +91,7 @@ export async function conversationRoutes(app: FastifyInstance) {
       const conversation =
         await app.services!.conversationService.getOrCreateConversation(
           projectId,
-          true,
+          user.id,
         );
       if (conversation === 'forbidden') throw app.httpErrors.forbidden();
 
@@ -133,14 +133,14 @@ export async function conversationRoutes(app: FastifyInstance) {
       const conversation =
         await app.services!.conversationService.getOrCreateConversation(
           projectId,
-          true,
+          user.id,
         );
       if (conversation === 'forbidden') throw app.httpErrors.forbidden();
 
       const result = await app.services!.conversationService.listMessages(
         conversation.id,
+        user.id,
         query,
-        true,
       );
       if (result === 'forbidden') throw app.httpErrors.forbidden();
 
@@ -182,19 +182,10 @@ export async function conversationRoutes(app: FastifyInstance) {
         throw app.httpErrors.notFound('Project not found');
       }
 
-      // Only admin and designer can start Agent sessions and generation
-      const canGenerate =
-        actorContext.role === 'admin' || actorContext.role === 'designer';
-      if (!canGenerate) {
-        throw app.httpErrors.forbidden(
-          'Only admin and designer roles can start Agent sessions',
-        );
-      }
-
       const conversation =
         await app.services!.conversationService.getOrCreateConversation(
           projectId,
-          true,
+          user.id,
         );
       if (conversation === 'forbidden') throw app.httpErrors.forbidden();
 
@@ -204,8 +195,7 @@ export async function conversationRoutes(app: FastifyInstance) {
         text: body.text,
         clientMessageId: body.clientMessageId,
         assetIds: body.assetIds,
-        requestedBy: actorContext.userId,
-        canGenerate: true,
+        actorId: user.id,
       });
       if (result === 'forbidden') throw app.httpErrors.forbidden();
       if (result === 'active_run_exists') {

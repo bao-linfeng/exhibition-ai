@@ -39,6 +39,7 @@ import {
   createExportQueue,
   QUEUE_EXPORT,
   ProjectRepository,
+  ProjectPolicy,
   GenerationService,
   ConversationService,
 } from '@exhibition/backend';
@@ -143,6 +144,7 @@ const queues = new Map<string, Queue>([
 const taskService = new TaskService(taskRepo, queues, quotaService);
 const generationService = new GenerationService(
   generationRepo,
+  new ProjectPolicy(pool),
   taskRepo,
   new ModelConfigRepository(db),
   queues,
@@ -162,6 +164,7 @@ const conversationService = new ConversationService(
   eventsService,
   briefRepo,
   generationService,
+  new ProjectPolicy(pool),
 );
 
 // Probe worker (existing)
