@@ -4582,7 +4582,21 @@ export interface operations {
           | 'asset.uploaded'
           | 'asset.hidden'
           | 'version.selected'
-          | 'export.created';
+          | 'export.created'
+          | 'settings.model_config.update'
+          | 'quota.topup'
+          | 'prompt_template.create'
+          | 'prompt_version.create_draft'
+          | 'prompt_version.update_draft'
+          | 'prompt_version.publish'
+          | 'prompt_version.rollback'
+          | 'tag.create'
+          | 'tag.update'
+          | 'tag.delete'
+          | 'tag.assign'
+          | 'tag.unassign'
+          | 'favorite.set'
+          | 'favorite.unset';
         actorId?: string;
         projectId?: string;
         resourceType?: string;
@@ -4625,7 +4639,21 @@ export interface operations {
                 | 'asset.uploaded'
                 | 'asset.hidden'
                 | 'version.selected'
-                | 'export.created';
+                | 'export.created'
+                | 'settings.model_config.update'
+                | 'quota.topup'
+                | 'prompt_template.create'
+                | 'prompt_version.create_draft'
+                | 'prompt_version.update_draft'
+                | 'prompt_version.publish'
+                | 'prompt_version.rollback'
+                | 'tag.create'
+                | 'tag.update'
+                | 'tag.delete'
+                | 'tag.assign'
+                | 'tag.unassign'
+                | 'favorite.set'
+                | 'favorite.unset';
               actorId: string | null;
               actorEmail: string | null;
               projectId: string | null;
