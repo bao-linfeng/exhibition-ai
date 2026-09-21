@@ -77,7 +77,7 @@ export class CasesRepository {
         ? sql`EXISTS (
             SELECT 1 FROM ${userImageVersionFavorites}
             WHERE ${userImageVersionFavorites.userId} = ${requestingUser.id}
-              AND ${userImageVersionFavorites.projectId} = ${projects.id}
+              AND ${userImageVersionFavorites.versionId} = ${projects.selectedVersionId}
           )`
         : undefined,
     ].filter(Boolean);
