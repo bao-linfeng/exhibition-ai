@@ -98,7 +98,9 @@ export function listModelConfigsOptions() {
   return queryOptions({
     queryKey: settingsKeys.models(),
     queryFn: async () => {
-      const { data, error } = await apiClient.GET('/api/v1/settings/model-configs');
+      const { data, error } = await apiClient.GET(
+        '/api/v1/settings/model-configs',
+      );
       if (error) throw new Error('Failed to fetch models');
       return data;
     },
